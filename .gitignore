@@ -1,0 +1,8 @@
+node_modules/
+dist/
+.env
+storage/sessions/*.json
+storage/output/*.json
+storage/screenshots/*.png
+storage/debug-html/*.html
+*.log

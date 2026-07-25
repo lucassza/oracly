@@ -1,0 +1,939 @@
+- generic [active] [ref=f3e1]:
+  - generic [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - heading "SokkerPRO" [level=1] [ref=f3e4]
+      - generic [ref=f3e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f3e6]:
+      - button "Jogos" [ref=f3e7] [cursor=pointer]
+      - button "Hoje" [ref=f3e8] [cursor=pointer]
+      - button "Laboratório de gols" [ref=f3e9] [cursor=pointer]
+      - button "Previsões O0.5 HT" [ref=f3e10] [cursor=pointer]
+    - option "sokkerpro-2026-07-19-f7d83512-94e8-4619-95bd-ccf538fe7eae.json" [selected]
+    - option "sokkerpro-2026-07-20-d0b01c27-3d90-4084-807d-27111fc35c11.json"
+    - option "sokkerpro-2026-07-21-4a97ecab-a392-4260-bfd3-9181359c0128.json"
+    - option "sokkerpro-2026-07-22-15ff3847-c789-44e6-a763-34dba5a13972.json"
+    - option "sokkerpro-2026-07-23-37f05837-40ce-4bb6-b21a-dd851da3aa36.json"
+    - option "sokkerpro-2026-07-23-b38d3e9d-3488-45a6-9a47-5bb11730ec5d.json"
+    - option "sokkerpro-2026-07-24-21c8a791-d31b-4857-a6a0-e9224f8c1b32.json"
+    - option "sokkerpro-2026-07-24-2c005ce0-98e2-45b5-ad54-222d07d98eee.json"
+    - option "sokkerpro-2026-07-24-962fd81f-6050-439c-b002-e2e421cac3a1.json"
+    - option "sokkerpro-2026-07-24-b5686b97-1e74-41b4-b3fc-922c759f368f.json"
+    - option "sokkerpro-2026-07-25-b2c21f23-24e3-4f29-87fd-d77aaa5b98bb.json"
+    - option "sokkerpro-2026-07-25-e64a1ab1-ac04-4ec0-9b9f-a84157bb1f87.json"
+    - option "Todos" [selected]
+    - option "Aguardando"
+    - option "Ao Vivo"
+    - option "Finalizado"
+  - main [ref=f3e32]:
+    - generic [ref=f3e33]:
+      - generic [ref=f3e934]: Banco local · previsão pré-jogo × placar HT · somente ligas principais
+      - generic [ref=f3e935]:
+        - heading "Over 0.5 1º tempo." [level=1] [ref=f3e936]: Over 0.51º tempo.
+        - paragraph [ref=f3e937]: Histórico consolidado com a última previsão registrada antes do início da partida. Amador, juvenil, feminino e regional/reserva ficam de fora.
+      - generic [ref=f3e938]:
+        - button "Próximos jogos" [ref=f3e939] [cursor=pointer]
+        - button "Histórico" [ref=f3e940] [cursor=pointer]
+      - generic [ref=f3e941]:
+        - button "≥ 70%" [ref=f3e942] [cursor=pointer]
+        - button "≥ 75%" [ref=f3e943] [cursor=pointer]
+        - button "≥ 80%" [ref=f3e944] [cursor=pointer]
+        - button "≥ 85%" [ref=f3e945] [cursor=pointer]
+        - button "≥ 90%" [ref=f3e946] [cursor=pointer]
+      - generic [ref=f3e947]:
+        - generic [ref=f3e948]:
+          - generic [ref=f3e949]: Corte ≥ 70% · HT
+          - generic [ref=f3e950]: 79%
+          - paragraph [ref=f3e951]: "69 acertos HT em 87 previsões selecionadas. FT: 93% (81 acertos)."
+        - generic [ref=f3e952]:
+          - generic [ref=f3e953]:
+            - generic [ref=f3e954]: "69"
+            - generic [ref=f3e955]: Green HT
+          - generic [ref=f3e956]:
+            - generic [ref=f3e957]: "81"
+            - generic [ref=f3e958]: Green FT
+          - generic [ref=f3e959]:
+            - generic [ref=f3e960]: "18"
+            - generic [ref=f3e961]: Red HT
+          - generic [ref=f3e962]:
+            - generic [ref=f3e963]: "6"
+            - generic [ref=f3e964]: Red FT
+      - generic [ref=f3e965]:
+        - heading "Resultados históricos" [level=2] [ref=f3e966]
+        - generic [ref=f3e967]: Ordenados pela previsão X7
+      - generic [ref=f3e968]:
+        - generic [ref=f3e969]:
+          - generic [ref=f3e970]: Partida
+          - generic [ref=f3e971]: Previsão
+          - generic [ref=f3e972]: Placar
+          - generic [ref=f3e973]: Ritmo
+          - generic [ref=f3e974]: HT / FT
+        - generic [ref=f3e975]:
+          - generic [ref=f3e976]:
+            - text: East Timor × Vietnam
+            - generic [ref=f3e977]: ASEAN Championship
+          - generic [ref=f3e978]: 84% previsto
+          - generic [ref=f3e979]: "HT: 5 · FT: 7"
+          - generic [ref=f3e980]: "1º gol: 7'"
+          - generic [ref=f3e981]:
+            - generic [ref=f3e982]: HT Green
+            - generic [ref=f3e983]: FT Green
+        - generic [ref=f3e984]:
+          - generic [ref=f3e985]:
+            - text: Shakhter Karagandy × Arys
+            - generic [ref=f3e986]: First Division
+          - generic [ref=f3e987]: 82% previsto
+          - generic [ref=f3e988]: "HT: 2 · FT: 5"
+          - generic [ref=f3e989]: "1º gol: 9'"
+          - generic [ref=f3e990]:
+            - generic [ref=f3e991]: HT Green
+            - generic [ref=f3e992]: FT Green
+        - generic [ref=f3e993]:
+          - generic [ref=f3e994]:
+            - text: Víkingur Reykjavík × Keflavík
+            - generic [ref=f3e995]: Besta deild
+          - generic [ref=f3e996]: 81% previsto
+          - generic [ref=f3e997]: "HT: 2 · FT: 6"
+          - generic [ref=f3e998]: "1º gol: 6'"
+          - generic [ref=f3e999]:
+            - generic [ref=f3e1000]: HT Green
+            - generic [ref=f3e1001]: FT Green
+        - generic [ref=f3e1002]:
+          - generic [ref=f3e1003]:
+            - text: Aktobe Jas × Sport Academy Kairat
+            - generic [ref=f3e1004]: First Division
+          - generic [ref=f3e1005]: 81% previsto
+          - generic [ref=f3e1006]: "HT: 3 · FT: 4"
+          - generic [ref=f3e1007]: "1º gol: 10'"
+          - generic [ref=f3e1008]:
+            - generic [ref=f3e1009]: HT Green
+            - generic [ref=f3e1010]: FT Green
+        - generic [ref=f3e1011]:
+          - generic [ref=f3e1012]:
+            - text: Yelimay II × Taraz
+            - generic [ref=f3e1013]: First Division
+          - generic [ref=f3e1014]: 80% previsto
+          - generic [ref=f3e1015]: "HT: 1 · FT: 1"
+          - generic [ref=f3e1016]: "1º gol: 4'"
+          - generic [ref=f3e1017]:
+            - generic [ref=f3e1018]: HT Green
+            - generic [ref=f3e1019]: FT Green
+        - generic [ref=f3e1020]:
+          - generic [ref=f3e1021]:
+            - text: FC Turan × Tobol II
+            - generic [ref=f3e1022]: First Division
+          - generic [ref=f3e1023]: 80% previsto
+          - generic [ref=f3e1024]: "HT: 0 · FT: 3"
+          - generic [ref=f3e1025]: "1º gol: 52'"
+          - generic [ref=f3e1026]:
+            - generic [ref=f3e1027]: HT Red
+            - generic [ref=f3e1028]: FT Green
+        - generic [ref=f3e1029]:
+          - generic [ref=f3e1030]:
+            - text: Tauras × Kauno Žalgiris II
+            - generic [ref=f3e1031]: 1. Lyga
+          - generic [ref=f3e1032]: 80% previsto
+          - generic [ref=f3e1033]: "HT: 3 · FT: 6"
+          - generic [ref=f3e1034]: "1º gol: 4'"
+          - generic [ref=f3e1035]:
+            - generic [ref=f3e1036]: HT Green
+            - generic [ref=f3e1037]: FT Green
+        - generic [ref=f3e1038]:
+          - generic [ref=f3e1039]:
+            - text: Gorila do Universo × Artilheiros
+            - generic [ref=f3e1040]: Primeira Division
+          - generic [ref=f3e1041]: 80% previsto
+          - generic [ref=f3e1042]: "HT: 2 · FT: 4"
+          - generic [ref=f3e1043]: "1º gol: 17'"
+          - generic [ref=f3e1044]:
+            - generic [ref=f3e1045]: HT Green
+            - generic [ref=f3e1046]: FT Green
+        - generic [ref=f3e1047]:
+          - generic [ref=f3e1048]:
+            - text: Deportivo Recoleta Res. × San Lorenzo Res.
+            - generic [ref=f3e1049]: Division Profesional Reserva
+          - generic [ref=f3e1050]: 80% previsto
+          - generic [ref=f3e1051]: "HT: 3 · FT: 5"
+          - generic [ref=f3e1052]: "1º gol: 6'"
+          - generic [ref=f3e1053]:
+            - generic [ref=f3e1054]: HT Green
+            - generic [ref=f3e1055]: FT Green
+        - generic [ref=f3e1056]:
+          - generic [ref=f3e1057]:
+            - text: 2 de Mayo Res. × Rubio Ñú Res.
+            - generic [ref=f3e1058]: Division Profesional Reserva
+          - generic [ref=f3e1059]: 80% previsto
+          - generic [ref=f3e1060]: "HT: 2 · FT: 3"
+          - generic [ref=f3e1061]: "1º gol: 26'"
+          - generic [ref=f3e1062]:
+            - generic [ref=f3e1063]: HT Green
+            - generic [ref=f3e1064]: FT Green
+        - generic [ref=f3e1065]:
+          - generic [ref=f3e1066]:
+            - text: Polonia Bytom × Warta Poznań
+            - generic [ref=f3e1067]: 1. Liga
+          - generic [ref=f3e1068]: 80% previsto
+          - generic [ref=f3e1069]: "HT: 3 · FT: 7"
+          - generic [ref=f3e1070]: "1º gol: 28'"
+          - generic [ref=f3e1071]:
+            - generic [ref=f3e1072]: HT Green
+            - generic [ref=f3e1073]: FT Green
+        - generic [ref=f3e1074]:
+          - generic [ref=f3e1075]:
+            - text: Osipovichy × BATE II
+            - generic [ref=f3e1076]: Pershaya Liga
+          - generic [ref=f3e1077]: 79% previsto
+          - generic [ref=f3e1078]: "HT: 3 · FT: 4"
+          - generic [ref=f3e1079]: "1º gol: 8'"
+          - generic [ref=f3e1080]:
+            - generic [ref=f3e1081]: HT Green
+            - generic [ref=f3e1082]: FT Green
+        - generic [ref=f3e1083]:
+          - generic [ref=f3e1084]:
+            - text: P-Iirot × Ilves II
+            - generic [ref=f3e1085]: Kakkonen
+          - generic [ref=f3e1086]: 78% previsto
+          - generic [ref=f3e1087]: "HT: 2 · FT: 3"
+          - generic [ref=f3e1088]: "1º gol: 7'"
+          - generic [ref=f3e1089]:
+            - generic [ref=f3e1090]: HT Green
+            - generic [ref=f3e1091]: FT Green
+        - generic [ref=f3e1092]:
+          - generic [ref=f3e1093]:
+            - text: Leoben × Voitsberg
+            - generic [ref=f3e1094]: Austrian Cup
+          - generic [ref=f3e1095]: 77% previsto
+          - generic [ref=f3e1096]: "HT: 5 · FT: 6"
+          - generic [ref=f3e1097]: "1º gol: 3'"
+          - generic [ref=f3e1098]:
+            - generic [ref=f3e1099]: HT Green
+            - generic [ref=f3e1100]: FT Green
+        - generic [ref=f3e1101]:
+          - generic [ref=f3e1102]:
+            - text: HFX Wanderers × Supra du Québec
+            - generic [ref=f3e1103]: Premier League
+          - generic [ref=f3e1104]: 77% previsto
+          - generic [ref=f3e1105]: "HT: 2 · FT: 5"
+          - generic [ref=f3e1106]: "1º gol: 28'"
+          - generic [ref=f3e1107]:
+            - generic [ref=f3e1108]: HT Green
+            - generic [ref=f3e1109]: FT Green
+        - generic [ref=f3e1110]:
+          - generic [ref=f3e1111]:
+            - text: HJS Akatemia × EBK
+            - generic [ref=f3e1112]: Kakkonen
+          - generic [ref=f3e1113]: 76% previsto
+          - generic [ref=f3e1114]: "HT: 3 · FT: 8"
+          - generic [ref=f3e1115]: "1º gol: 21'"
+          - generic [ref=f3e1116]:
+            - generic [ref=f3e1117]: HT Green
+            - generic [ref=f3e1118]: FT Green
+        - generic [ref=f3e1119]:
+          - generic [ref=f3e1120]:
+            - text: PPJ × Union Plaani
+            - generic [ref=f3e1121]: Kakkonen
+          - generic [ref=f3e1122]: 76% previsto
+          - generic [ref=f3e1123]: "HT: 0 · FT: 1"
+          - generic [ref=f3e1124]: "1º gol: 67'"
+          - generic [ref=f3e1125]:
+            - generic [ref=f3e1126]: HT Red
+            - generic [ref=f3e1127]: FT Green
+        - generic [ref=f3e1128]:
+          - generic [ref=f3e1129]:
+            - text: Vermont Green × Asheville City
+            - generic [ref=f3e1130]: USL League Two
+          - generic [ref=f3e1131]: 75% previsto
+          - generic [ref=f3e1132]: "HT: 3 · FT: 4"
+          - generic [ref=f3e1133]: "1º gol: 3'"
+          - generic [ref=f3e1134]:
+            - generic [ref=f3e1135]: HT Green
+            - generic [ref=f3e1136]: FT Green
+        - generic [ref=f3e1137]:
+          - generic [ref=f3e1138]:
+            - text: Vipers × Guelleh / GR
+            - generic [ref=f3e1139]: CECAFA Club Cup
+          - generic [ref=f3e1140]: 74% previsto
+          - generic [ref=f3e1141]: "HT: 3 · FT: 3"
+          - generic [ref=f3e1142]: "1º gol: 16'"
+          - generic [ref=f3e1143]:
+            - generic [ref=f3e1144]: HT Green
+            - generic [ref=f3e1145]: FT Green
+        - generic [ref=f3e1146]:
+          - generic [ref=f3e1147]:
+            - text: Mitchelton × Souths United
+            - generic [ref=f3e1148]: Queensland Premier League 2
+          - generic [ref=f3e1149]: 74% previsto
+          - generic [ref=f3e1150]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1151]: "1º gol: 18'"
+          - generic [ref=f3e1152]:
+            - generic [ref=f3e1153]: HT Green
+            - generic [ref=f3e1154]: FT Green
+        - generic [ref=f3e1155]:
+          - generic [ref=f3e1156]:
+            - text: Eltham Redbacks × Melbourne Srbija
+            - generic [ref=f3e1157]: Victoria Premier League 2
+          - generic [ref=f3e1158]: 74% previsto
+          - generic [ref=f3e1159]: "HT: 0 · FT: 2"
+          - generic [ref=f3e1160]: "1º gol: 76'"
+          - generic [ref=f3e1161]:
+            - generic [ref=f3e1162]: HT Red
+            - generic [ref=f3e1163]: FT Green
+        - generic [ref=f3e1164]:
+          - generic [ref=f3e1165]:
+            - text: Brunswick City × Western United II
+            - generic [ref=f3e1166]: Victoria Premier League 2
+          - generic [ref=f3e1167]: 74% previsto
+          - generic [ref=f3e1168]: "HT: 1 · FT: 5"
+          - generic [ref=f3e1169]: "1º gol: 17'"
+          - generic [ref=f3e1170]:
+            - generic [ref=f3e1171]: HT Green
+            - generic [ref=f3e1172]: FT Green
+        - generic [ref=f3e1173]:
+          - generic [ref=f3e1174]:
+            - text: Manly United × Sydney Olympic
+            - generic [ref=f3e1175]: New South Wales
+          - generic [ref=f3e1176]: 74% previsto
+          - generic [ref=f3e1177]: "HT: 1 · FT: 4"
+          - generic [ref=f3e1178]: "1º gol: 22'"
+          - generic [ref=f3e1179]:
+            - generic [ref=f3e1180]: HT Green
+            - generic [ref=f3e1181]: FT Green
+        - generic [ref=f3e1182]:
+          - generic [ref=f3e1183]:
+            - text: Wieselburg × WSG Tirol
+            - generic [ref=f3e1184]: Austrian Cup
+          - generic [ref=f3e1185]: 74% previsto
+          - generic [ref=f3e1186]: "HT: 2 · FT: 6"
+          - generic [ref=f3e1187]: "1º gol: 23'"
+          - generic [ref=f3e1188]:
+            - generic [ref=f3e1189]: HT Green
+            - generic [ref=f3e1190]: FT Green
+        - generic [ref=f3e1191]:
+          - generic [ref=f3e1192]:
+            - text: Dornbirn × Ried
+            - generic [ref=f3e1193]: Austrian Cup
+          - generic [ref=f3e1194]: 74% previsto
+          - generic [ref=f3e1195]: "HT: 2 · FT: 6"
+          - generic [ref=f3e1196]: "1º gol: 30'"
+          - generic [ref=f3e1197]:
+            - generic [ref=f3e1198]: HT Green
+            - generic [ref=f3e1199]: FT Green
+        - generic [ref=f3e1200]:
+          - generic [ref=f3e1201]:
+            - text: Leobendorf × Rheindorf Altach
+            - generic [ref=f3e1202]: Austrian Cup
+          - generic [ref=f3e1203]: 74% previsto
+          - generic [ref=f3e1204]: "HT: 0 · FT: 1"
+          - generic [ref=f3e1205]: "1º gol: 67'"
+          - generic [ref=f3e1206]:
+            - generic [ref=f3e1207]: HT Red
+            - generic [ref=f3e1208]: FT Green
+        - generic [ref=f3e1209]:
+          - generic [ref=f3e1210]:
+            - text: Lauterach × Wolfsberger AC
+            - generic [ref=f3e1211]: Austrian Cup
+          - generic [ref=f3e1212]: 74% previsto
+          - generic [ref=f3e1213]: "HT: 3 · FT: 6"
+          - generic [ref=f3e1214]: "1º gol: 27'"
+          - generic [ref=f3e1215]:
+            - generic [ref=f3e1216]: HT Green
+            - generic [ref=f3e1217]: FT Green
+        - generic [ref=f3e1218]:
+          - generic [ref=f3e1219]:
+            - text: Lafnitz × Scheiblingkirchen
+            - generic [ref=f3e1220]: Austrian Cup
+          - generic [ref=f3e1221]: 74% previsto
+          - generic [ref=f3e1222]: "HT: 2 · FT: 4"
+          - generic [ref=f3e1223]: "1º gol: 14'"
+          - generic [ref=f3e1224]:
+            - generic [ref=f3e1225]: HT Green
+            - generic [ref=f3e1226]: FT Green
+        - generic [ref=f3e1227]:
+          - generic [ref=f3e1228]:
+            - text: Velden × Austria Klagenfurt
+            - generic [ref=f3e1229]: Austrian Cup
+          - generic [ref=f3e1230]: 74% previsto
+          - generic [ref=f3e1231]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1232]: "1º gol: 21'"
+          - generic [ref=f3e1233]:
+            - generic [ref=f3e1234]: HT Green
+            - generic [ref=f3e1235]: FT Green
+        - generic [ref=f3e1236]:
+          - generic [ref=f3e1237]:
+            - text: Traiskirchen × Bleiburg
+            - generic [ref=f3e1238]: Austrian Cup
+          - generic [ref=f3e1239]: 74% previsto
+          - generic [ref=f3e1240]: "HT: 1 · FT: 4"
+          - generic [ref=f3e1241]: "1º gol: 33'"
+          - generic [ref=f3e1242]:
+            - generic [ref=f3e1243]: HT Green
+            - generic [ref=f3e1244]: FT Green
+        - generic [ref=f3e1245]:
+          - generic [ref=f3e1246]:
+            - text: Seekirchen × Sturm Graz
+            - generic [ref=f3e1247]: Austrian Cup
+          - generic [ref=f3e1248]: 74% previsto
+          - generic [ref=f3e1249]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1250]: "1º gol: 40'"
+          - generic [ref=f3e1251]:
+            - generic [ref=f3e1252]: HT Green
+            - generic [ref=f3e1253]: FT Green
+        - generic [ref=f3e1254]:
+          - generic [ref=f3e1255]:
+            - text: Energetik-BGU × Dinamo Minsk II
+            - generic [ref=f3e1256]: Pershaya Liga
+          - generic [ref=f3e1257]: 74% previsto
+          - generic [ref=f3e1258]: "HT: 0 · FT: 0"
+          - generic [ref=f3e1259]: "1º gol: Sem timeline"
+          - generic [ref=f3e1260]:
+            - generic [ref=f3e1261]: HT Red
+            - generic [ref=f3e1262]: FT Red
+        - generic [ref=f3e1263]:
+          - generic [ref=f3e1264]:
+            - text: St. Albert Impact × Calgary Foothills
+            - generic [ref=f3e1265]: League 1 Alberta
+          - generic [ref=f3e1266]: 74% previsto
+          - generic [ref=f3e1267]: "HT: 0 · FT: 0"
+          - generic [ref=f3e1268]: "1º gol: Sem timeline"
+          - generic [ref=f3e1269]:
+            - generic [ref=f3e1270]: HT Red
+            - generic [ref=f3e1271]: FT Red
+        - generic [ref=f3e1272]:
+          - generic [ref=f3e1273]:
+            - text: Dukla Praha × Arsenal Česká Lípa
+            - generic [ref=f3e1274]: Chance Národní Liga
+          - generic [ref=f3e1275]: 74% previsto
+          - generic [ref=f3e1276]: "HT: 0 · FT: 2"
+          - generic [ref=f3e1277]: "1º gol: 67'"
+          - generic [ref=f3e1278]:
+            - generic [ref=f3e1279]: HT Red
+            - generic [ref=f3e1280]: FT Green
+        - generic [ref=f3e1281]:
+          - generic [ref=f3e1282]:
+            - text: Kravaře × Bospor Bohumín
+            - generic [ref=f3e1283]: Czech Cup
+          - generic [ref=f3e1284]: 74% previsto
+          - generic [ref=f3e1285]: "HT: 4 · FT: 7"
+          - generic [ref=f3e1286]: "1º gol: 10'"
+          - generic [ref=f3e1287]:
+            - generic [ref=f3e1288]: HT Green
+            - generic [ref=f3e1289]: FT Green
+        - generic [ref=f3e1290]:
+          - generic [ref=f3e1291]:
+            - text: Strani × FC Vsetin
+            - generic [ref=f3e1292]: Czech Cup
+          - generic [ref=f3e1293]: 74% previsto
+          - generic [ref=f3e1294]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1295]: "1º gol: 7'"
+          - generic [ref=f3e1296]:
+            - generic [ref=f3e1297]: HT Green
+            - generic [ref=f3e1298]: FT Green
+        - generic [ref=f3e1299]:
+          - generic [ref=f3e1300]:
+            - text: Vejle Boldklub × AB
+            - generic [ref=f3e1301]: First Division
+          - generic [ref=f3e1302]: 74% previsto
+          - generic [ref=f3e1303]: "HT: 2 · FT: 4"
+          - generic [ref=f3e1304]: "1º gol: 13'"
+          - generic [ref=f3e1305]:
+            - generic [ref=f3e1306]: HT Green
+            - generic [ref=f3e1307]: FT Green
+        - generic [ref=f3e1308]:
+          - generic [ref=f3e1309]:
+            - text: Aalborg BK × Hillerød
+            - generic [ref=f3e1310]: First Division
+          - generic [ref=f3e1311]: 74% previsto
+          - generic [ref=f3e1312]: "HT: 0 · FT: 1"
+          - generic [ref=f3e1313]: "1º gol: 70'"
+          - generic [ref=f3e1314]:
+            - generic [ref=f3e1315]: HT Red
+            - generic [ref=f3e1316]: FT Green
+        - generic [ref=f3e1317]:
+          - generic [ref=f3e1318]:
+            - text: Viborg FF × Odense BK
+            - generic [ref=f3e1319]: Superliga
+          - generic [ref=f3e1320]: 74% previsto
+          - generic [ref=f3e1321]: "HT: 0 · FT: 1"
+          - generic [ref=f3e1322]: "1º gol: 56'"
+          - generic [ref=f3e1323]:
+            - generic [ref=f3e1324]: HT Red
+            - generic [ref=f3e1325]: FT Green
+        - generic [ref=f3e1326]:
+          - generic [ref=f3e1327]:
+            - text: Tammeka × Zealot Sporting
+            - generic [ref=f3e1328]: Estonian Cup
+          - generic [ref=f3e1329]: 74% previsto
+          - generic [ref=f3e1330]: "HT: 9 · FT: 19"
+          - generic [ref=f3e1331]: "1º gol: 10'"
+          - generic [ref=f3e1332]:
+            - generic [ref=f3e1333]: HT Green
+            - generic [ref=f3e1334]: FT Green
+        - generic [ref=f3e1335]:
+          - generic [ref=f3e1336]:
+            - text: Tampere United × Inter Turku II
+            - generic [ref=f3e1337]: Ykkönen
+          - generic [ref=f3e1338]: 74% previsto
+          - generic [ref=f3e1339]: "HT: 2 · FT: 4"
+          - generic [ref=f3e1340]: "1º gol: 15'"
+          - generic [ref=f3e1341]:
+            - generic [ref=f3e1342]: HT Green
+            - generic [ref=f3e1343]: FT Green
+        - generic [ref=f3e1344]:
+          - generic [ref=f3e1345]:
+            - text: Jazz × TPV
+            - generic [ref=f3e1346]: Ykkönen
+          - generic [ref=f3e1347]: 74% previsto
+          - generic [ref=f3e1348]: "HT: 1 · FT: 4"
+          - generic [ref=f3e1349]: "1º gol: 38'"
+          - generic [ref=f3e1350]:
+            - generic [ref=f3e1351]: HT Green
+            - generic [ref=f3e1352]: FT Green
+        - generic [ref=f3e1353]:
+          - generic [ref=f3e1354]:
+            - text: NJS × ÅIFK
+            - generic [ref=f3e1355]: Kakkonen
+          - generic [ref=f3e1356]: 74% previsto
+          - generic [ref=f3e1357]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1358]: "1º gol: 45'"
+          - generic [ref=f3e1359]:
+            - generic [ref=f3e1360]: HT Green
+            - generic [ref=f3e1361]: FT Green
+        - generic [ref=f3e1362]:
+          - generic [ref=f3e1363]:
+            - text: PEPO × PuiU Helsinki
+            - generic [ref=f3e1364]: Kakkonen
+          - generic [ref=f3e1365]: 74% previsto
+          - generic [ref=f3e1366]: "HT: 3 · FT: 5"
+          - generic [ref=f3e1367]: "1º gol: 4'"
+          - generic [ref=f3e1368]:
+            - generic [ref=f3e1369]: HT Green
+            - generic [ref=f3e1370]: FT Green
+        - generic [ref=f3e1371]:
+          - generic [ref=f3e1372]:
+            - text: Margveti × FC Iberia 1999
+            - generic [ref=f3e1373]: David Kipiani Cup
+          - generic [ref=f3e1374]: 74% previsto
+          - generic [ref=f3e1375]: "HT: 1 · FT: 4"
+          - generic [ref=f3e1376]: "1º gol: 44'"
+          - generic [ref=f3e1377]:
+            - generic [ref=f3e1378]: HT Green
+            - generic [ref=f3e1379]: FT Green
+        - generic [ref=f3e1380]:
+          - generic [ref=f3e1381]:
+            - text: Völsungur × Grindavík
+            - generic [ref=f3e1382]: Inkasso-Deildin
+          - generic [ref=f3e1383]: 74% previsto
+          - generic [ref=f3e1384]: "HT: 1 · FT: 2"
+          - generic [ref=f3e1385]: "1º gol: 6'"
+          - generic [ref=f3e1386]:
+            - generic [ref=f3e1387]: HT Green
+            - generic [ref=f3e1388]: FT Green
+        - generic [ref=f3e1389]:
+          - generic [ref=f3e1390]:
+            - text: Njardvík × HK
+            - generic [ref=f3e1391]: Inkasso-Deildin
+          - generic [ref=f3e1392]: 74% previsto
+          - generic [ref=f3e1393]: "HT: 2 · FT: 5"
+          - generic [ref=f3e1394]: "1º gol: 5'"
+          - generic [ref=f3e1395]:
+            - generic [ref=f3e1396]: HT Green
+            - generic [ref=f3e1397]: FT Green
+        - generic [ref=f3e1398]:
+          - generic [ref=f3e1399]:
+            - text: Fjölnir × Haukar
+            - generic [ref=f3e1400]: 2. Deild
+          - generic [ref=f3e1401]: 74% previsto
+          - generic [ref=f3e1402]: "HT: 2 · FT: 3"
+          - generic [ref=f3e1403]: "1º gol: 31'"
+          - generic [ref=f3e1404]:
+            - generic [ref=f3e1405]: HT Green
+            - generic [ref=f3e1406]: FT Green
+        - generic [ref=f3e1407]:
+          - generic [ref=f3e1408]:
+            - text: Hvíti riddarinn × Kári
+            - generic [ref=f3e1409]: 2. Deild
+          - generic [ref=f3e1410]: 74% previsto
+          - generic [ref=f3e1411]: "HT: 1 · FT: 4"
+          - generic [ref=f3e1412]: "1º gol: 44'"
+          - generic [ref=f3e1413]:
+            - generic [ref=f3e1414]: HT Green
+            - generic [ref=f3e1415]: FT Green
+        - generic [ref=f3e1416]:
+          - generic [ref=f3e1417]:
+            - text: Predators FC × Eagles
+            - generic [ref=f3e1418]: Concacaf Caribbean Club Shield
+          - generic [ref=f3e1419]: 74% previsto
+          - generic [ref=f3e1420]: "HT: 1 · FT: 4"
+          - generic [ref=f3e1421]: "1º gol: 22'"
+          - generic [ref=f3e1422]:
+            - generic [ref=f3e1423]: HT Green
+            - generic [ref=f3e1424]: FT Green
+        - generic [ref=f3e1425]:
+          - generic [ref=f3e1426]:
+            - text: St. Pauls United × Helenites SC
+            - generic [ref=f3e1427]: Concacaf Caribbean Club Shield
+          - generic [ref=f3e1428]: 74% previsto
+          - generic [ref=f3e1429]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1430]: "1º gol: Sem timeline"
+          - generic [ref=f3e1431]:
+            - generic [ref=f3e1432]: HT Green
+            - generic [ref=f3e1433]: FT Green
+        - generic [ref=f3e1434]:
+          - generic [ref=f3e1435]:
+            - text: Elite × VG United
+            - generic [ref=f3e1436]: Concacaf Caribbean Club Shield
+          - generic [ref=f3e1437]: 74% previsto
+          - generic [ref=f3e1438]: "HT: 1 · FT: 2"
+          - generic [ref=f3e1439]: "1º gol: 16'"
+          - generic [ref=f3e1440]:
+            - generic [ref=f3e1441]: HT Green
+            - generic [ref=f3e1442]: FT Green
+        - generic [ref=f3e1443]:
+          - generic [ref=f3e1444]:
+            - text: Radomiak Radom × Wieczysta Kraków
+            - generic [ref=f3e1445]: Ekstraklasa
+          - generic [ref=f3e1446]: 74% previsto
+          - generic [ref=f3e1447]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1448]: "1º gol: 43'"
+          - generic [ref=f3e1449]:
+            - generic [ref=f3e1450]: HT Green
+            - generic [ref=f3e1451]: FT Green
+        - generic [ref=f3e1452]:
+          - generic [ref=f3e1453]:
+            - text: Pogoń Szczecin × Legia Warszawa
+            - generic [ref=f3e1454]: Ekstraklasa
+          - generic [ref=f3e1455]: 74% previsto
+          - generic [ref=f3e1456]: "HT: 0 · FT: 1"
+          - generic [ref=f3e1457]: "1º gol: 90'"
+          - generic [ref=f3e1458]:
+            - generic [ref=f3e1459]: HT Red
+            - generic [ref=f3e1460]: FT Green
+        - generic [ref=f3e1461]:
+          - generic [ref=f3e1462]:
+            - text: Znicz Pruszków × Resovia Rzeszów
+            - generic [ref=f3e1463]: 2. Liga
+          - generic [ref=f3e1464]: 74% previsto
+          - generic [ref=f3e1465]: "HT: 0 · FT: 1"
+          - generic [ref=f3e1466]: "1º gol: 49'"
+          - generic [ref=f3e1467]:
+            - generic [ref=f3e1468]: HT Red
+            - generic [ref=f3e1469]: FT Green
+        - generic [ref=f3e1470]:
+          - generic [ref=f3e1471]:
+            - text: Odra Opole × Arka Gdynia
+            - generic [ref=f3e1472]: 1. Liga
+          - generic [ref=f3e1473]: 74% previsto
+          - generic [ref=f3e1474]: "HT: 1 · FT: 1"
+          - generic [ref=f3e1475]: "1º gol: 35'"
+          - generic [ref=f3e1476]:
+            - generic [ref=f3e1477]: HT Green
+            - generic [ref=f3e1478]: FT Green
+        - generic [ref=f3e1479]:
+          - generic [ref=f3e1480]:
+            - text: UTA Arad × Otelul
+            - generic [ref=f3e1481]: Superliga
+          - generic [ref=f3e1482]: 74% previsto
+          - generic [ref=f3e1483]: "HT: 2 · FT: 4"
+          - generic [ref=f3e1484]: "1º gol: 21'"
+          - generic [ref=f3e1485]:
+            - generic [ref=f3e1486]: HT Green
+            - generic [ref=f3e1487]: FT Green
+        - generic [ref=f3e1488]:
+          - generic [ref=f3e1489]:
+            - text: Yenisey II × Torpedo Vladimir
+            - generic [ref=f3e1490]: FNL 2 - Group 2
+          - generic [ref=f3e1491]: 74% previsto
+          - generic [ref=f3e1492]: "HT: 0 · FT: 0"
+          - generic [ref=f3e1493]: "1º gol: Sem timeline"
+          - generic [ref=f3e1494]:
+            - generic [ref=f3e1495]: HT Red
+            - generic [ref=f3e1496]: FT Red
+        - generic [ref=f3e1497]:
+          - generic [ref=f3e1498]:
+            - text: CSKA Moskva × Baltika Kaliningrad
+            - generic [ref=f3e1499]: Premier League
+          - generic [ref=f3e1500]: 74% previsto
+          - generic [ref=f3e1501]: "HT: 3 · FT: 3"
+          - generic [ref=f3e1502]: "1º gol: 1'"
+          - generic [ref=f3e1503]:
+            - generic [ref=f3e1504]: HT Green
+            - generic [ref=f3e1505]: FT Green
+        - generic [ref=f3e1506]:
+          - generic [ref=f3e1507]:
+            - text: Hwacheon KSPO W × Boeun Sangmu W
+            - generic [ref=f3e1508]: WK-League
+          - generic [ref=f3e1509]: 74% previsto
+          - generic [ref=f3e1510]: "HT: 2 · FT: 2"
+          - generic [ref=f3e1511]: "1º gol: 34'"
+          - generic [ref=f3e1512]:
+            - generic [ref=f3e1513]: HT Green
+            - generic [ref=f3e1514]: FT Green
+        - generic [ref=f3e1515]:
+          - generic [ref=f3e1516]:
+            - text: Suwon FMC W × Incheon Red Angels W
+            - generic [ref=f3e1517]: WK-League
+          - generic [ref=f3e1518]: 74% previsto
+          - generic [ref=f3e1519]: "HT: 2 · FT: 4"
+          - generic [ref=f3e1520]: "1º gol: 17'"
+          - generic [ref=f3e1521]:
+            - generic [ref=f3e1522]: HT Green
+            - generic [ref=f3e1523]: FT Green
+        - generic [ref=f3e1524]:
+          - generic [ref=f3e1525]:
+            - text: Seoul W × Gumi Sportstoto W
+            - generic [ref=f3e1526]: WK-League
+          - generic [ref=f3e1527]: 74% previsto
+          - generic [ref=f3e1528]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1529]: "1º gol: 45'"
+          - generic [ref=f3e1530]:
+            - generic [ref=f3e1531]: HT Green
+            - generic [ref=f3e1532]: FT Green
+        - generic [ref=f3e1533]:
+          - generic [ref=f3e1534]:
+            - text: Gyeongju W × Changnyeong W
+            - generic [ref=f3e1535]: WK-League
+          - generic [ref=f3e1536]: 74% previsto
+          - generic [ref=f3e1537]: "HT: 3 · FT: 7"
+          - generic [ref=f3e1538]: "1º gol: 19'"
+          - generic [ref=f3e1539]:
+            - generic [ref=f3e1540]: HT Green
+            - generic [ref=f3e1541]: FT Green
+        - generic [ref=f3e1542]:
+          - generic [ref=f3e1543]:
+            - text: Seoul E. × Cheonan City
+            - generic [ref=f3e1544]: K League 2
+          - generic [ref=f3e1545]: 74% previsto
+          - generic [ref=f3e1546]: "HT: 2 · FT: 7"
+          - generic [ref=f3e1547]: "1º gol: 13'"
+          - generic [ref=f3e1548]:
+            - generic [ref=f3e1549]: HT Green
+            - generic [ref=f3e1550]: FT Green
+        - generic [ref=f3e1551]:
+          - generic [ref=f3e1552]:
+            - text: Västerås SK × Örgryte
+            - generic [ref=f3e1553]: Allsvenskan
+          - generic [ref=f3e1554]: 74% previsto
+          - generic [ref=f3e1555]: "HT: 1 · FT: 2"
+          - generic [ref=f3e1556]: "1º gol: 13'"
+          - generic [ref=f3e1557]:
+            - generic [ref=f3e1558]: HT Green
+            - generic [ref=f3e1559]: FT Green
+        - generic [ref=f3e1560]:
+          - generic [ref=f3e1561]:
+            - text: Rapperswil-Jona × Wil
+            - generic [ref=f3e1562]: Challenge League
+          - generic [ref=f3e1563]: 74% previsto
+          - generic [ref=f3e1564]: "HT: 5 · FT: 9"
+          - generic [ref=f3e1565]: "1º gol: 3'"
+          - generic [ref=f3e1566]:
+            - generic [ref=f3e1567]: HT Green
+            - generic [ref=f3e1568]: FT Green
+        - generic [ref=f3e1569]:
+          - generic [ref=f3e1570]:
+            - text: Stade Lausanne-Ouchy × Stade Nyonnais
+            - generic [ref=f3e1571]: Challenge League
+          - generic [ref=f3e1572]: 74% previsto
+          - generic [ref=f3e1573]: "HT: 1 · FT: 2"
+          - generic [ref=f3e1574]: "1º gol: 24'"
+          - generic [ref=f3e1575]:
+            - generic [ref=f3e1576]: HT Green
+            - generic [ref=f3e1577]: FT Green
+        - generic [ref=f3e1578]:
+          - generic [ref=f3e1579]:
+            - text: Neuchâtel Xamax × Kriens
+            - generic [ref=f3e1580]: Challenge League
+          - generic [ref=f3e1581]: 74% previsto
+          - generic [ref=f3e1582]: "HT: 4 · FT: 5"
+          - generic [ref=f3e1583]: "1º gol: 2'"
+          - generic [ref=f3e1584]:
+            - generic [ref=f3e1585]: HT Green
+            - generic [ref=f3e1586]: FT Green
+        - generic [ref=f3e1587]:
+          - generic [ref=f3e1588]:
+            - text: Étoile Carouge × Aarau
+            - generic [ref=f3e1589]: Challenge League
+          - generic [ref=f3e1590]: 74% previsto
+          - generic [ref=f3e1591]: "HT: 0 · FT: 3"
+          - generic [ref=f3e1592]: "1º gol: 52'"
+          - generic [ref=f3e1593]:
+            - generic [ref=f3e1594]: HT Red
+            - generic [ref=f3e1595]: FT Green
+        - generic [ref=f3e1596]:
+          - generic [ref=f3e1597]:
+            - text: Winterthur × Yverdon Sport
+            - generic [ref=f3e1598]: Challenge League
+          - generic [ref=f3e1599]: 74% previsto
+          - generic [ref=f3e1600]: "HT: 0 · FT: 4"
+          - generic [ref=f3e1601]: "1º gol: 48'"
+          - generic [ref=f3e1602]:
+            - generic [ref=f3e1603]: HT Red
+            - generic [ref=f3e1604]: FT Green
+        - generic [ref=f3e1605]:
+          - generic [ref=f3e1606]:
+            - text: Ballard × Ventura County Fusion
+            - generic [ref=f3e1607]: USL League Two
+          - generic [ref=f3e1608]: 74% previsto
+          - generic [ref=f3e1609]: "HT: 3 · FT: 3"
+          - generic [ref=f3e1610]: "1º gol: 8'"
+          - generic [ref=f3e1611]:
+            - generic [ref=f3e1612]: HT Green
+            - generic [ref=f3e1613]: FT Green
+        - generic [ref=f3e1614]:
+          - generic [ref=f3e1615]:
+            - text: Aral × Shurtan
+            - generic [ref=f3e1616]: Pro Liga
+          - generic [ref=f3e1617]: 74% previsto
+          - generic [ref=f3e1618]: "HT: 1 · FT: 4"
+          - generic [ref=f3e1619]: "1º gol: 47'"
+          - generic [ref=f3e1620]:
+            - generic [ref=f3e1621]: HT Green
+            - generic [ref=f3e1622]: FT Green
+        - generic [ref=f3e1623]:
+          - generic [ref=f3e1624]:
+            - text: Buxoro University × Pakhtakor II
+            - generic [ref=f3e1625]: Pro Liga
+          - generic [ref=f3e1626]: 74% previsto
+          - generic [ref=f3e1627]: "HT: 1 · FT: 2"
+          - generic [ref=f3e1628]: "1º gol: 12'"
+          - generic [ref=f3e1629]:
+            - generic [ref=f3e1630]: HT Green
+            - generic [ref=f3e1631]: FT Green
+        - generic [ref=f3e1632]:
+          - generic [ref=f3e1633]:
+            - text: Olympic Mobiuz × TerDU
+            - generic [ref=f3e1634]: Pro Liga
+          - generic [ref=f3e1635]: 74% previsto
+          - generic [ref=f3e1636]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1637]: "1º gol: 9'"
+          - generic [ref=f3e1638]:
+            - generic [ref=f3e1639]: HT Green
+            - generic [ref=f3e1640]: FT Green
+        - generic [ref=f3e1641]:
+          - generic [ref=f3e1642]:
+            - text: Ittihad Hadramout FC × Ahli Sana'a FC
+            - generic [ref=f3e1643]: Yemeni League
+          - generic [ref=f3e1644]: 74% previsto
+          - generic [ref=f3e1645]: "HT: 0 · FT: 0"
+          - generic [ref=f3e1646]: "1º gol: Sem timeline"
+          - generic [ref=f3e1647]:
+            - generic [ref=f3e1648]: HT Red
+            - generic [ref=f3e1649]: FT Red
+        - generic [ref=f3e1650]:
+          - generic [ref=f3e1651]:
+            - text: APR × Gor Mahia
+            - generic [ref=f3e1652]: CECAFA Club Cup
+          - generic [ref=f3e1653]: 72% previsto
+          - generic [ref=f3e1654]: "HT: 2 · FT: 5"
+          - generic [ref=f3e1655]: "1º gol: 34'"
+          - generic [ref=f3e1656]:
+            - generic [ref=f3e1657]: HT Green
+            - generic [ref=f3e1658]: FT Green
+        - generic [ref=f3e1659]:
+          - generic [ref=f3e1660]:
+            - text: Beroe × Hebar 1918
+            - generic [ref=f3e1661]: Second League
+          - generic [ref=f3e1662]: 72% previsto
+          - generic [ref=f3e1663]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1664]: "1º gol: 25'"
+          - generic [ref=f3e1665]:
+            - generic [ref=f3e1666]: HT Green
+            - generic [ref=f3e1667]: FT Green
+        - generic [ref=f3e1668]:
+          - generic [ref=f3e1669]:
+            - text: Ústí nad Labem × Kladno
+            - generic [ref=f3e1670]: Chance Národní Liga
+          - generic [ref=f3e1671]: 72% previsto
+          - generic [ref=f3e1672]: "HT: 2 · FT: 3"
+          - generic [ref=f3e1673]: "1º gol: 43'"
+          - generic [ref=f3e1674]:
+            - generic [ref=f3e1675]: HT Green
+            - generic [ref=f3e1676]: FT Green
+        - generic [ref=f3e1677]:
+          - generic [ref=f3e1678]:
+            - text: Prostějov × Třinec
+            - generic [ref=f3e1679]: Chance Národní Liga
+          - generic [ref=f3e1680]: 72% previsto
+          - generic [ref=f3e1681]: "HT: 0 · FT: 2"
+          - generic [ref=f3e1682]: "1º gol: 87'"
+          - generic [ref=f3e1683]:
+            - generic [ref=f3e1684]: HT Red
+            - generic [ref=f3e1685]: FT Green
+        - generic [ref=f3e1686]:
+          - generic [ref=f3e1687]:
+            - text: El Nacional × Gualaceo
+            - generic [ref=f3e1688]: Liga Pro Serie B
+          - generic [ref=f3e1689]: 72% previsto
+          - generic [ref=f3e1690]: "HT: 0 · FT: 0"
+          - generic [ref=f3e1691]: "1º gol: Sem timeline"
+          - generic [ref=f3e1692]:
+            - generic [ref=f3e1693]: HT Red
+            - generic [ref=f3e1694]: FT Red
+        - generic [ref=f3e1695]:
+          - generic [ref=f3e1696]:
+            - text: Tikves × Aresimi
+            - generic [ref=f3e1697]: First League
+          - generic [ref=f3e1698]: 72% previsto
+          - generic [ref=f3e1699]: "HT: 5 · FT: 6"
+          - generic [ref=f3e1700]: "1º gol: 19'"
+          - generic [ref=f3e1701]:
+            - generic [ref=f3e1702]: HT Green
+            - generic [ref=f3e1703]: FT Green
+        - generic [ref=f3e1704]:
+          - generic [ref=f3e1705]:
+            - text: Costa del Este × Champions Academy
+            - generic [ref=f3e1706]: Liga Prom
+          - generic [ref=f3e1707]: 72% previsto
+          - generic [ref=f3e1708]: "HT: 1 · FT: 1"
+          - generic [ref=f3e1709]: "1º gol: 35'"
+          - generic [ref=f3e1710]:
+            - generic [ref=f3e1711]: HT Green
+            - generic [ref=f3e1712]: FT Green
+        - generic [ref=f3e1713]:
+          - generic [ref=f3e1714]:
+            - text: Cambodia × Singapore
+            - generic [ref=f3e1715]: ASEAN Championship
+          - generic [ref=f3e1716]: 71% previsto
+          - generic [ref=f3e1717]: "HT: 1 · FT: 3"
+          - generic [ref=f3e1718]: "1º gol: 22'"
+          - generic [ref=f3e1719]:
+            - generic [ref=f3e1720]: HT Green
+            - generic [ref=f3e1721]: FT Green
+        - generic [ref=f3e1722]:
+          - generic [ref=f3e1723]:
+            - text: Deportivo Cuenca Juniors × Atlético JBG
+            - generic [ref=f3e1724]: Liga Pro Serie B
+          - generic [ref=f3e1725]: 71% previsto
+          - generic [ref=f3e1726]: "HT: 0 · FT: 0"
+          - generic [ref=f3e1727]: "1º gol: Sem timeline"
+          - generic [ref=f3e1728]:
+            - generic [ref=f3e1729]: HT Red
+            - generic [ref=f3e1730]: FT Red
+        - generic [ref=f3e1731]:
+          - generic [ref=f3e1732]:
+            - text: Cobh Ramblers × Bray Wanderers
+            - generic [ref=f3e1733]: First Division
+          - generic [ref=f3e1734]: 71% previsto
+          - generic [ref=f3e1735]: "HT: 2 · FT: 3"
+          - generic [ref=f3e1736]: "1º gol: 13'"
+          - generic [ref=f3e1737]:
+            - generic [ref=f3e1738]: HT Green
+            - generic [ref=f3e1739]: FT Green
+        - generic [ref=f3e1740]:
+          - generic [ref=f3e1741]:
+            - text: Kerry × Finn Harps
+            - generic [ref=f3e1742]: First Division
+          - generic [ref=f3e1743]: 71% previsto
+          - generic [ref=f3e1744]: "HT: 3 · FT: 3"
+          - generic [ref=f3e1745]: "1º gol: 10'"
+          - generic [ref=f3e1746]:
+            - generic [ref=f3e1747]: HT Green
+            - generic [ref=f3e1748]: FT Green
+        - generic [ref=f3e1749]:
+          - generic [ref=f3e1750]:
+            - text: St Patrick's × Dundalk
+            - generic [ref=f3e1751]: Premier Division
+          - generic [ref=f3e1752]: 71% previsto
+          - generic [ref=f3e1753]: "HT: 1 · FT: 2"
+          - generic [ref=f3e1754]: "1º gol: 57'"
+          - generic [ref=f3e1755]:
+            - generic [ref=f3e1756]: HT Green
+            - generic [ref=f3e1757]: FT Green

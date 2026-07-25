@@ -1,0 +1,40 @@
+{
+  "name": "sokkerpro-scraper",
+  "version": "1.0.0",
+  "description": "Scraper for SokkerPRO football statistics",
+  "type": "module",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc && cp src/dashboard/index.html dist/dashboard/",
+    "scrape": "node dist/cli/run.js scrape",
+    "database:import": "node dist/cli/run.js database:import",
+    "dashboard": "node dist/cli/run.js dashboard",
+    "inspect": "node dist/cli/run.js inspect",
+    "session:create": "node dist/cli/run.js session:create",
+    "session:validate": "node dist/cli/run.js session:validate",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "lint": "eslint src/ --ext .ts",
+    "format": "prettier --write src/",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7",
+    "pino": "^9.6.0",
+    "pino-pretty": "^13.0.0",
+    "playwright": "^1.49.1",
+    "uuid": "^11.1.0",
+    "zod": "^3.24.2"
+  },
+  "devDependencies": {
+    "@types/node": "^22.12.0",
+    "@types/uuid": "^10.0.0",
+    "@typescript-eslint/eslint-plugin": "^8.22.0",
+    "@typescript-eslint/parser": "^8.22.0",
+    "eslint": "^9.20.0",
+    "globals": "^17.7.0",
+    "prettier": "^3.5.1",
+    "typescript": "^5.7.3",
+    "vitest": "^3.0.5"
+  }
+}

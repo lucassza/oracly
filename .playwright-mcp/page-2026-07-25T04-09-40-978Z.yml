@@ -1,0 +1,873 @@
+- generic [ref=f4e1]:
+  - generic [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - heading "SokkerPRO" [level=1] [ref=f4e4]
+      - generic [ref=f4e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f4e6]:
+      - button "Jogos" [ref=f4e7] [cursor=pointer]
+      - button "Hoje" [ref=f4e8] [cursor=pointer]
+      - button "Laboratório de gols" [ref=f4e9] [cursor=pointer]
+      - button "Previsões" [active] [ref=f4e10] [cursor=pointer]
+    - option "sokkerpro-2026-07-19-f7d83512-94e8-4619-95bd-ccf538fe7eae.json" [selected]
+    - option "sokkerpro-2026-07-20-d0b01c27-3d90-4084-807d-27111fc35c11.json"
+    - option "sokkerpro-2026-07-21-4a97ecab-a392-4260-bfd3-9181359c0128.json"
+    - option "sokkerpro-2026-07-22-15ff3847-c789-44e6-a763-34dba5a13972.json"
+    - option "sokkerpro-2026-07-23-37f05837-40ce-4bb6-b21a-dd851da3aa36.json"
+    - option "sokkerpro-2026-07-23-b38d3e9d-3488-45a6-9a47-5bb11730ec5d.json"
+    - option "sokkerpro-2026-07-24-21c8a791-d31b-4857-a6a0-e9224f8c1b32.json"
+    - option "sokkerpro-2026-07-24-2c005ce0-98e2-45b5-ad54-222d07d98eee.json"
+    - option "sokkerpro-2026-07-24-962fd81f-6050-439c-b002-e2e421cac3a1.json"
+    - option "sokkerpro-2026-07-24-b5686b97-1e74-41b4-b3fc-922c759f368f.json"
+    - option "sokkerpro-2026-07-25-b2c21f23-24e3-4f29-87fd-d77aaa5b98bb.json"
+    - option "sokkerpro-2026-07-25-e64a1ab1-ac04-4ec0-9b9f-a84157bb1f87.json"
+    - option "Todos" [selected]
+    - option "Aguardando"
+    - option "Ao Vivo"
+    - option "Finalizado"
+  - main [ref=f4e32]:
+    - generic [ref=f4e33]:
+      - generic [ref=f4e34]: Banco local · modelo X7 · somente ligas principais
+      - generic [ref=f4e35]:
+        - heading "Próximos jogos Over 0.5 1º tempo." [level=1] [ref=f4e36]: Próximos jogosOver 0.51º tempo.
+        - paragraph [ref=f4e37]: Sinais ordenados por horário. A odd exibida pelo modelo não é uma cotação real de aposta. Amador, juvenil, feminino e regional/reserva ficam de fora.
+      - generic [ref=f4e38]:
+        - button "O0.5 HT" [ref=f4e39] [cursor=pointer]
+        - button "O1.5 FT" [ref=f4e40] [cursor=pointer]
+      - generic [ref=f4e41]:
+        - button "Próximos jogos" [ref=f4e42] [cursor=pointer]
+        - button "Histórico" [ref=f4e43] [cursor=pointer]
+      - generic [ref=f4e44]:
+        - button "≥ 70%" [ref=f4e45] [cursor=pointer]
+        - button "≥ 75%" [ref=f4e46] [cursor=pointer]
+        - button "≥ 80%" [ref=f4e47] [cursor=pointer]
+        - button "≥ 85%" [ref=f4e48] [cursor=pointer]
+        - button "≥ 90%" [ref=f4e49] [cursor=pointer]
+      - generic [ref=f4e50]:
+        - heading "82 oportunidades encontradas" [level=2] [ref=f4e51]
+        - generic [ref=f4e52]: "Corte atual: 80%"
+      - generic [ref=f4e53]:
+        - generic [ref=f4e54]:
+          - generic [ref=f4e55]: sábado, 25 de julho
+          - article [ref=f4e56]:
+            - generic [ref=f4e57]: 08:00
+            - generic [ref=f4e58]:
+              - text: Cheng Fung × Universidade de Macau
+              - generic [ref=f4e59]: Primeira Division
+            - generic [ref=f4e60]:
+              - generic [ref=f4e61]: 80%
+              - generic [ref=f4e62]: O0.5 HT
+            - generic [ref=f4e63]: "Média gols: 3.4Over 0.5: 90%"
+            - generic [ref=f4e64]: Monitorar
+          - article [ref=f4e65]:
+            - generic [ref=f4e66]: 09:00
+            - generic [ref=f4e67]:
+              - text: Atmosfera × Hegelmann II
+              - generic [ref=f4e68]: 1. Lyga
+            - generic [ref=f4e69]:
+              - generic [ref=f4e70]: 80%
+              - generic [ref=f4e71]: O0.5 HT
+            - generic [ref=f4e72]: "Média gols: 1.6Over 0.5: 70%"
+            - generic [ref=f4e73]: Monitorar
+          - article [ref=f4e74]:
+            - generic [ref=f4e75]: 09:30
+            - generic [ref=f4e76]:
+              - text: Grorud × Stjørdals-Blink
+              - generic [ref=f4e77]: "2. Division: Group 2"
+            - generic [ref=f4e78]:
+              - generic [ref=f4e79]: 80%
+              - generic [ref=f4e80]: O0.5 HT
+            - generic [ref=f4e81]: "Média gols: 4.4Over 0.5: 95%"
+            - generic [ref=f4e82]: Monitorar
+          - article [ref=f4e83]:
+            - generic [ref=f4e84]: 10:00
+            - generic [ref=f4e85]:
+              - text: Laos × Thailand
+              - generic [ref=f4e86]: ASEAN Championship
+            - generic [ref=f4e87]:
+              - generic [ref=f4e88]: 81%
+              - generic [ref=f4e89]: O0.5 HT
+            - generic [ref=f4e90]: "Média gols: 3.2Over 0.5: 90%"
+            - generic [ref=f4e91]: Monitorar
+          - article [ref=f4e92]:
+            - generic [ref=f4e93]: 10:00
+            - generic [ref=f4e94]:
+              - text: Junkeren × Lørenskog
+              - generic [ref=f4e95]: "2. Division: Group 2"
+            - generic [ref=f4e96]:
+              - generic [ref=f4e97]: 80%
+              - generic [ref=f4e98]: O0.5 HT
+            - generic [ref=f4e99]: "Média gols: 4.2Over 0.5: 95%"
+            - generic [ref=f4e100]: Monitorar
+          - article [ref=f4e101]:
+            - generic [ref=f4e102]: 11:00
+            - generic [ref=f4e103]:
+              - text: Afturelding × Grótta
+              - generic [ref=f4e104]: Inkasso-Deildin
+            - generic [ref=f4e105]:
+              - generic [ref=f4e106]: 82%
+              - generic [ref=f4e107]: O0.5 HT
+            - generic [ref=f4e108]: "Média gols: 5.6Over 0.5: 95%"
+            - generic [ref=f4e109]: Monitorar
+          - article [ref=f4e110]:
+            - generic [ref=f4e111]: 11:00
+            - generic [ref=f4e112]:
+              - text: ÍR × Fylkir
+              - generic [ref=f4e113]: Inkasso-Deildin
+            - generic [ref=f4e114]:
+              - generic [ref=f4e115]: 80%
+              - generic [ref=f4e116]: O0.5 HT
+            - generic [ref=f4e117]: "Média gols: 4.6Over 0.5: 95%"
+            - generic [ref=f4e118]: Monitorar
+          - article [ref=f4e119]:
+            - generic [ref=f4e120]: 11:00
+            - generic [ref=f4e121]:
+              - text: Neptūną Klaipėda × FA Šiauliai II
+              - generic [ref=f4e122]: 1. Lyga
+            - generic [ref=f4e123]:
+              - generic [ref=f4e124]: 80%
+              - generic [ref=f4e125]: O0.5 HT
+            - generic [ref=f4e126]: "Média gols: 2.6Over 0.5: 85%"
+            - generic [ref=f4e127]: Monitorar
+          - article [ref=f4e128]:
+            - generic [ref=f4e129]: 12:00
+            - generic [ref=f4e130]:
+              - text: Tromsdalen × Follo
+              - generic [ref=f4e131]: "2. Division: Group 2"
+            - generic [ref=f4e132]:
+              - generic [ref=f4e133]: 80%
+              - generic [ref=f4e134]: O0.5 HT
+            - generic [ref=f4e135]: "Média gols: 2.2Over 0.5: 85%"
+            - generic [ref=f4e136]: Monitorar
+          - article [ref=f4e137]:
+            - generic [ref=f4e138]: 12:00
+            - generic [ref=f4e139]:
+              - text: Slav. Moravský Svätý Ján × Holíč
+              - generic [ref=f4e140]: Slovakia Cup
+            - generic [ref=f4e141]:
+              - generic [ref=f4e142]: 80%
+              - generic [ref=f4e143]: O0.5 HT
+            - generic [ref=f4e144]: "Média gols: 1.0Over 0.5: 50%"
+            - generic [ref=f4e145]: Monitorar
+          - article [ref=f4e146]:
+            - generic [ref=f4e147]: 12:00
+            - generic [ref=f4e148]:
+              - text: Baník Sebedražie × TEMPO Partizánske
+              - generic [ref=f4e149]: Slovakia Cup
+            - generic [ref=f4e150]:
+              - generic [ref=f4e151]: 80%
+              - generic [ref=f4e152]: O0.5 HT
+            - generic [ref=f4e153]: "Média gols: 0.4Over 0.5: 40%"
+            - generic [ref=f4e154]: Monitorar
+          - article [ref=f4e155]:
+            - generic [ref=f4e156]: 12:00
+            - generic [ref=f4e157]:
+              - text: Sokol Borský Mikuláš × Spartak Šaštín-Stráže
+              - generic [ref=f4e158]: Slovakia Cup
+            - generic [ref=f4e159]:
+              - generic [ref=f4e160]: 80%
+              - generic [ref=f4e161]: O0.5 HT
+            - generic [ref=f4e162]: "Média gols: 9.0Over 0.5: 95%"
+            - generic [ref=f4e163]: Monitorar
+          - article [ref=f4e164]:
+            - generic [ref=f4e165]: 12:00
+            - generic [ref=f4e166]:
+              - text: Senkvice × Slovenský Grob
+              - generic [ref=f4e167]: Slovakia Cup
+            - generic [ref=f4e168]:
+              - generic [ref=f4e169]: 80%
+              - generic [ref=f4e170]: O0.5 HT
+            - generic [ref=f4e171]: "Média gols: 0.8Over 0.5: 50%"
+            - generic [ref=f4e172]: Monitorar
+          - article [ref=f4e173]:
+            - generic [ref=f4e174]: 12:00
+            - generic [ref=f4e175]:
+              - text: Žitavany × Kalná nad Hronom
+              - generic [ref=f4e176]: Slovakia Cup
+            - generic [ref=f4e177]:
+              - generic [ref=f4e178]: 80%
+              - generic [ref=f4e179]: O0.5 HT
+            - generic [ref=f4e180]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e181]: Monitorar
+          - article [ref=f4e182]:
+            - generic [ref=f4e183]: 12:00
+            - generic [ref=f4e184]:
+              - text: Iskra Nováky × Kanianka
+              - generic [ref=f4e185]: Slovakia Cup
+            - generic [ref=f4e186]:
+              - generic [ref=f4e187]: 80%
+              - generic [ref=f4e188]: O0.5 HT
+            - generic [ref=f4e189]: "Média gols: 0.8Over 0.5: 50%"
+            - generic [ref=f4e190]: Monitorar
+          - article [ref=f4e191]:
+            - generic [ref=f4e192]: 12:00
+            - generic [ref=f4e193]:
+              - text: Košeca × Slovan KP
+              - generic [ref=f4e194]: Slovakia Cup
+            - generic [ref=f4e195]:
+              - generic [ref=f4e196]: 80%
+              - generic [ref=f4e197]: O0.5 HT
+            - generic [ref=f4e198]: "Média gols: 0.5Over 0.5: 45%"
+            - generic [ref=f4e199]: Monitorar
+          - article [ref=f4e200]:
+            - generic [ref=f4e201]: 12:00
+            - generic [ref=f4e202]:
+              - text: Lokomotíva Michaľany × Tj Internacional Hran
+              - generic [ref=f4e203]: Slovakia Cup
+            - generic [ref=f4e204]:
+              - generic [ref=f4e205]: 80%
+              - generic [ref=f4e206]: O0.5 HT
+            - generic [ref=f4e207]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e208]: Monitorar
+          - article [ref=f4e209]:
+            - generic [ref=f4e210]: 12:00
+            - generic [ref=f4e211]:
+              - text: Čenkovce × Cífer
+              - generic [ref=f4e212]: Slovakia Cup
+            - generic [ref=f4e213]:
+              - generic [ref=f4e214]: 80%
+              - generic [ref=f4e215]: O0.5 HT
+            - generic [ref=f4e216]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e217]: Monitorar
+          - article [ref=f4e218]:
+            - generic [ref=f4e219]: 12:00
+            - generic [ref=f4e220]:
+              - text: Družstevník Rišňovce × Dolné Krškany
+              - generic [ref=f4e221]: Slovakia Cup
+            - generic [ref=f4e222]:
+              - generic [ref=f4e223]: 80%
+              - generic [ref=f4e224]: O0.5 HT
+            - generic [ref=f4e225]: "Média gols: 0.5Over 0.5: 45%"
+            - generic [ref=f4e226]: Monitorar
+          - article [ref=f4e227]:
+            - generic [ref=f4e228]: 12:00
+            - generic [ref=f4e229]:
+              - text: Slovan Dubovce × Senica
+              - generic [ref=f4e230]: Slovakia Cup
+            - generic [ref=f4e231]:
+              - generic [ref=f4e232]: 80%
+              - generic [ref=f4e233]: O0.5 HT
+            - generic [ref=f4e234]: "Média gols: 2.1Over 0.5: 85%"
+            - generic [ref=f4e235]: Monitorar
+          - article [ref=f4e236]:
+            - generic [ref=f4e237]: 12:00
+            - generic [ref=f4e238]:
+              - text: Veľký Cetín × Slovan Nitra-Chrenová
+              - generic [ref=f4e239]: Slovakia Cup
+            - generic [ref=f4e240]:
+              - generic [ref=f4e241]: 80%
+              - generic [ref=f4e242]: O0.5 HT
+            - generic [ref=f4e243]: "Média gols: 2.7Over 0.5: 85%"
+            - generic [ref=f4e244]: Monitorar
+          - article [ref=f4e245]:
+            - generic [ref=f4e246]: 12:00
+            - generic [ref=f4e247]:
+              - text: Družstevník Rybky × Družstevník Hlboké
+              - generic [ref=f4e248]: Slovakia Cup
+            - generic [ref=f4e249]:
+              - generic [ref=f4e250]: 80%
+              - generic [ref=f4e251]: O0.5 HT
+            - generic [ref=f4e252]: "Média gols: 2.8Over 0.5: 85%"
+            - generic [ref=f4e253]: Monitorar
+          - article [ref=f4e254]:
+            - generic [ref=f4e255]: 12:00
+            - generic [ref=f4e256]:
+              - text: Vysoká pri Morave × Lozorno
+              - generic [ref=f4e257]: Slovakia Cup
+            - generic [ref=f4e258]:
+              - generic [ref=f4e259]: 80%
+              - generic [ref=f4e260]: O0.5 HT
+            - generic [ref=f4e261]: "Média gols: 0.8Over 0.5: 50%"
+            - generic [ref=f4e262]: Monitorar
+          - article [ref=f4e263]:
+            - generic [ref=f4e264]: 12:00
+            - generic [ref=f4e265]:
+              - text: Slovan Most × NMŠK 1922 Bratislava
+              - generic [ref=f4e266]: Slovakia Cup
+            - generic [ref=f4e267]:
+              - generic [ref=f4e268]: 80%
+              - generic [ref=f4e269]: O0.5 HT
+            - generic [ref=f4e270]: "Média gols: 0.8Over 0.5: 50%"
+            - generic [ref=f4e271]: Monitorar
+          - article [ref=f4e272]:
+            - generic [ref=f4e273]: 12:00
+            - generic [ref=f4e274]:
+              - text: Tisa Trakany × Ferenc Borša
+              - generic [ref=f4e275]: Slovakia Cup
+            - generic [ref=f4e276]:
+              - generic [ref=f4e277]: 80%
+              - generic [ref=f4e278]: O0.5 HT
+            - generic [ref=f4e279]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e280]: Monitorar
+          - article [ref=f4e281]:
+            - generic [ref=f4e282]: 12:00
+            - generic [ref=f4e283]:
+              - text: Pokrok Stará Bystrica × Nededza
+              - generic [ref=f4e284]: Slovakia Cup
+            - generic [ref=f4e285]:
+              - generic [ref=f4e286]: 80%
+              - generic [ref=f4e287]: O0.5 HT
+            - generic [ref=f4e288]: "Média gols: 1.8Over 0.5: 70%"
+            - generic [ref=f4e289]: Monitorar
+          - article [ref=f4e290]:
+            - generic [ref=f4e291]: 12:00
+            - generic [ref=f4e292]:
+              - text: Slovan Vavrečka × Družstevník Dlhá nad O.
+              - generic [ref=f4e293]: Slovakia Cup
+            - generic [ref=f4e294]:
+              - generic [ref=f4e295]: 80%
+              - generic [ref=f4e296]: O0.5 HT
+            - generic [ref=f4e297]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e298]: Monitorar
+          - article [ref=f4e299]:
+            - generic [ref=f4e300]: 12:00
+            - generic [ref=f4e301]:
+              - text: Závod × Malacky
+              - generic [ref=f4e302]: Slovakia Cup
+            - generic [ref=f4e303]:
+              - generic [ref=f4e304]: 80%
+              - generic [ref=f4e305]: O0.5 HT
+            - generic [ref=f4e306]: "Média gols: 0.4Over 0.5: 40%"
+            - generic [ref=f4e307]: Monitorar
+          - article [ref=f4e308]:
+            - generic [ref=f4e309]: 12:00
+            - generic [ref=f4e310]:
+              - text: Malé Leváre × Jakubov
+              - generic [ref=f4e311]: Slovakia Cup
+            - generic [ref=f4e312]:
+              - generic [ref=f4e313]: 80%
+              - generic [ref=f4e314]: O0.5 HT
+            - generic [ref=f4e315]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e316]: Monitorar
+          - article [ref=f4e317]:
+            - generic [ref=f4e318]: 12:00
+            - generic [ref=f4e319]:
+              - text: Petrova Ves × Slovan Šaštín-Stráže
+              - generic [ref=f4e320]: Slovakia Cup
+            - generic [ref=f4e321]:
+              - generic [ref=f4e322]: 80%
+              - generic [ref=f4e323]: O0.5 HT
+            - generic [ref=f4e324]: "Média gols: 1.0Over 0.5: 50%"
+            - generic [ref=f4e325]: Monitorar
+          - article [ref=f4e326]:
+            - generic [ref=f4e327]: 12:00
+            - generic [ref=f4e328]:
+              - text: Radoľa × Slovan Bystrička
+              - generic [ref=f4e329]: Slovakia Cup
+            - generic [ref=f4e330]:
+              - generic [ref=f4e331]: 80%
+              - generic [ref=f4e332]: O0.5 HT
+            - generic [ref=f4e333]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e334]: Monitorar
+          - article [ref=f4e335]:
+            - generic [ref=f4e336]: 12:00
+            - generic [ref=f4e337]:
+              - text: Slovan Belá nad Cirochou × Jasenov
+              - generic [ref=f4e338]: Slovakia Cup
+            - generic [ref=f4e339]:
+              - generic [ref=f4e340]: 80%
+              - generic [ref=f4e341]: O0.5 HT
+            - generic [ref=f4e342]: "Média gols: 2.0Over 0.5: 80%"
+            - generic [ref=f4e343]: Monitorar
+          - article [ref=f4e344]:
+            - generic [ref=f4e345]: 12:00
+            - generic [ref=f4e346]:
+              - text: Plavecké Podhradie × Veľké Leváre
+              - generic [ref=f4e347]: Slovakia Cup
+            - generic [ref=f4e348]:
+              - generic [ref=f4e349]: 80%
+              - generic [ref=f4e350]: O0.5 HT
+            - generic [ref=f4e351]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e352]: Monitorar
+          - article [ref=f4e353]:
+            - generic [ref=f4e354]: 12:00
+            - generic [ref=f4e355]:
+              - text: Výčapy-Opatovce × Čeľadice
+              - generic [ref=f4e356]: Slovakia Cup
+            - generic [ref=f4e357]:
+              - generic [ref=f4e358]: 80%
+              - generic [ref=f4e359]: O0.5 HT
+            - generic [ref=f4e360]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e361]: Monitorar
+          - article [ref=f4e362]:
+            - generic [ref=f4e363]: 12:00
+            - generic [ref=f4e364]:
+              - text: Kolíňany × Tj Start Nitrianske Hrnciarovce
+              - generic [ref=f4e365]: Slovakia Cup
+            - generic [ref=f4e366]:
+              - generic [ref=f4e367]: 80%
+              - generic [ref=f4e368]: O0.5 HT
+            - generic [ref=f4e369]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e370]: Monitorar
+          - article [ref=f4e371]:
+            - generic [ref=f4e372]: 12:00
+            - generic [ref=f4e373]:
+              - text: Nová Ľubovňa × Družstevník Čirč
+              - generic [ref=f4e374]: Slovakia Cup
+            - generic [ref=f4e375]:
+              - generic [ref=f4e376]: 80%
+              - generic [ref=f4e377]: O0.5 HT
+            - generic [ref=f4e378]: "Média gols: 4.0Over 0.5: 90%"
+            - generic [ref=f4e379]: Monitorar
+          - article [ref=f4e380]:
+            - generic [ref=f4e381]: 12:00
+            - generic [ref=f4e382]:
+              - text: Skačany × Priehrada Nitr. Rudno
+              - generic [ref=f4e383]: Slovakia Cup
+            - generic [ref=f4e384]:
+              - generic [ref=f4e385]: 80%
+              - generic [ref=f4e386]: O0.5 HT
+            - generic [ref=f4e387]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e388]: Monitorar
+          - article [ref=f4e389]:
+            - generic [ref=f4e390]: 12:00
+            - generic [ref=f4e391]:
+              - text: Dynamo Nová Stráž × Svätý Peter
+              - generic [ref=f4e392]: Slovakia Cup
+            - generic [ref=f4e393]:
+              - generic [ref=f4e394]: 80%
+              - generic [ref=f4e395]: O0.5 HT
+            - generic [ref=f4e396]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e397]: Monitorar
+          - article [ref=f4e398]:
+            - generic [ref=f4e399]: 12:00
+            - generic [ref=f4e400]:
+              - text: Prakovce × Gelnica
+              - generic [ref=f4e401]: Slovakia Cup
+            - generic [ref=f4e402]:
+              - generic [ref=f4e403]: 80%
+              - generic [ref=f4e404]: O0.5 HT
+            - generic [ref=f4e405]: "Média gols: 1.8Over 0.5: 70%"
+            - generic [ref=f4e406]: Monitorar
+          - article [ref=f4e407]:
+            - generic [ref=f4e408]: 12:00
+            - generic [ref=f4e409]:
+              - text: Holice × Kostolne Kracany
+              - generic [ref=f4e410]: Slovakia Cup
+            - generic [ref=f4e411]:
+              - generic [ref=f4e412]: 80%
+              - generic [ref=f4e413]: O0.5 HT
+            - generic [ref=f4e414]: "Média gols: 0.7Over 0.5: 50%"
+            - generic [ref=f4e415]: Monitorar
+          - article [ref=f4e416]:
+            - generic [ref=f4e417]: 12:00
+            - generic [ref=f4e418]:
+              - text: Dúbravka Bratislava × Rusovce
+              - generic [ref=f4e419]: Slovakia Cup
+            - generic [ref=f4e420]:
+              - generic [ref=f4e421]: 80%
+              - generic [ref=f4e422]: O0.5 HT
+            - generic [ref=f4e423]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e424]: Monitorar
+          - article [ref=f4e425]:
+            - generic [ref=f4e426]: 12:00
+            - generic [ref=f4e427]:
+              - text: Attack Vrútky × Jednota Banova
+              - generic [ref=f4e428]: Slovakia Cup
+            - generic [ref=f4e429]:
+              - generic [ref=f4e430]: 80%
+              - generic [ref=f4e431]: O0.5 HT
+            - generic [ref=f4e432]: "Média gols: 1.6Over 0.5: 70%"
+            - generic [ref=f4e433]: Monitorar
+          - article [ref=f4e434]:
+            - generic [ref=f4e435]: 12:00
+            - generic [ref=f4e436]:
+              - text: Vápeč Horná Poruba × TJ Partizan Domaniza
+              - generic [ref=f4e437]: Slovakia Cup
+            - generic [ref=f4e438]:
+              - generic [ref=f4e439]: 80%
+              - generic [ref=f4e440]: O0.5 HT
+            - generic [ref=f4e441]: "Média gols: 2.1Over 0.5: 85%"
+            - generic [ref=f4e442]: Monitorar
+          - article [ref=f4e443]:
+            - generic [ref=f4e444]: 12:00
+            - generic [ref=f4e445]:
+              - text: Zabokreky × Belá Dulice
+              - generic [ref=f4e446]: Slovakia Cup
+            - generic [ref=f4e447]:
+              - generic [ref=f4e448]: 80%
+              - generic [ref=f4e449]: O0.5 HT
+            - generic [ref=f4e450]: "Média gols: 0.3Over 0.5: 40%"
+            - generic [ref=f4e451]: Monitorar
+          - article [ref=f4e452]:
+            - generic [ref=f4e453]: 12:00
+            - generic [ref=f4e454]:
+              - text: Dolný Ohaj × Kmetovo
+              - generic [ref=f4e455]: Slovakia Cup
+            - generic [ref=f4e456]:
+              - generic [ref=f4e457]: 80%
+              - generic [ref=f4e458]: O0.5 HT
+            - generic [ref=f4e459]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e460]: Monitorar
+          - article [ref=f4e461]:
+            - generic [ref=f4e462]: 12:00
+            - generic [ref=f4e463]:
+              - text: Perín × Družstevník Malá Ida
+              - generic [ref=f4e464]: Slovakia Cup
+            - generic [ref=f4e465]:
+              - generic [ref=f4e466]: 80%
+              - generic [ref=f4e467]: O0.5 HT
+            - generic [ref=f4e468]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e469]: Monitorar
+          - article [ref=f4e470]:
+            - generic [ref=f4e471]: 12:00
+            - generic [ref=f4e472]:
+              - text: Horný Hričov × Predmier
+              - generic [ref=f4e473]: Slovakia Cup
+            - generic [ref=f4e474]:
+              - generic [ref=f4e475]: 80%
+              - generic [ref=f4e476]: O0.5 HT
+            - generic [ref=f4e477]: "Média gols: 1.2Over 0.5: 60%"
+            - generic [ref=f4e478]: Monitorar
+          - article [ref=f4e479]:
+            - generic [ref=f4e480]: 12:00
+            - generic [ref=f4e481]:
+              - text: FC Komoca × Kolarovo
+              - generic [ref=f4e482]: Slovakia Cup
+            - generic [ref=f4e483]:
+              - generic [ref=f4e484]: 80%
+              - generic [ref=f4e485]: O0.5 HT
+            - generic [ref=f4e486]: "Média gols: 0.2Over 0.5: 20%"
+            - generic [ref=f4e487]: Monitorar
+          - article [ref=f4e488]:
+            - generic [ref=f4e489]: 12:00
+            - generic [ref=f4e490]:
+              - text: Kovarce × Radošina
+              - generic [ref=f4e491]: Slovakia Cup
+            - generic [ref=f4e492]:
+              - generic [ref=f4e493]: 80%
+              - generic [ref=f4e494]: O0.5 HT
+            - generic [ref=f4e495]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e496]: Monitorar
+          - article [ref=f4e497]:
+            - generic [ref=f4e498]: 12:00
+            - generic [ref=f4e499]:
+              - text: Majcichov × Matúšova HS / Tomášikovo
+              - generic [ref=f4e500]: Slovakia Cup
+            - generic [ref=f4e501]:
+              - generic [ref=f4e502]: 80%
+              - generic [ref=f4e503]: O0.5 HT
+            - generic [ref=f4e504]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e505]: Monitorar
+          - article [ref=f4e506]:
+            - generic [ref=f4e507]: 12:00
+            - generic [ref=f4e508]:
+              - text: Viničné × Pezinok
+              - generic [ref=f4e509]: Slovakia Cup
+            - generic [ref=f4e510]:
+              - generic [ref=f4e511]: 80%
+              - generic [ref=f4e512]: O0.5 HT
+            - generic [ref=f4e513]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e514]: Monitorar
+          - article [ref=f4e515]:
+            - generic [ref=f4e516]: 12:00
+            - generic [ref=f4e517]:
+              - text: Vechec × Nacina Ves
+              - generic [ref=f4e518]: Slovakia Cup
+            - generic [ref=f4e519]:
+              - generic [ref=f4e520]: 80%
+              - generic [ref=f4e521]: O0.5 HT
+            - generic [ref=f4e522]: "Média gols: 1.6Over 0.5: 70%"
+            - generic [ref=f4e523]: Monitorar
+          - article [ref=f4e524]:
+            - generic [ref=f4e525]: 12:00
+            - generic [ref=f4e526]:
+              - text: Gbeľany × TJ Družstevník Bitarová
+              - generic [ref=f4e527]: Slovakia Cup
+            - generic [ref=f4e528]:
+              - generic [ref=f4e529]: 80%
+              - generic [ref=f4e530]: O0.5 HT
+            - generic [ref=f4e531]: "Média gols: 0.7Over 0.5: 50%"
+            - generic [ref=f4e532]: Monitorar
+          - article [ref=f4e533]:
+            - generic [ref=f4e534]: 12:00
+            - generic [ref=f4e535]:
+              - text: Želiezovce × TJ Salka
+              - generic [ref=f4e536]: Slovakia Cup
+            - generic [ref=f4e537]:
+              - generic [ref=f4e538]: 80%
+              - generic [ref=f4e539]: O0.5 HT
+            - generic [ref=f4e540]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e541]: Monitorar
+          - article [ref=f4e542]:
+            - generic [ref=f4e543]: 12:00
+            - generic [ref=f4e544]:
+              - text: Družstevník Topoľníky × FC Nádszeg
+              - generic [ref=f4e545]: Slovakia Cup
+            - generic [ref=f4e546]:
+              - generic [ref=f4e547]: 80%
+              - generic [ref=f4e548]: O0.5 HT
+            - generic [ref=f4e549]: "Média gols: 0.5Over 0.5: 45%"
+            - generic [ref=f4e550]: Monitorar
+          - article [ref=f4e551]:
+            - generic [ref=f4e552]: 12:00
+            - generic [ref=f4e553]:
+              - text: Harichovce × Jamník
+              - generic [ref=f4e554]: Slovakia Cup
+            - generic [ref=f4e555]:
+              - generic [ref=f4e556]: 80%
+              - generic [ref=f4e557]: O0.5 HT
+            - generic [ref=f4e558]: "Média gols: 1.9Over 0.5: 80%"
+            - generic [ref=f4e559]: Monitorar
+          - article [ref=f4e560]:
+            - generic [ref=f4e561]: 12:00
+            - generic [ref=f4e562]:
+              - text: Igram × Danubia Hrubý Šúr
+              - generic [ref=f4e563]: Slovakia Cup
+            - generic [ref=f4e564]:
+              - generic [ref=f4e565]: 80%
+              - generic [ref=f4e566]: O0.5 HT
+            - generic [ref=f4e567]: "Média gols: 1.6Over 0.5: 70%"
+            - generic [ref=f4e568]: Monitorar
+          - article [ref=f4e569]:
+            - generic [ref=f4e570]: 12:00
+            - generic [ref=f4e571]:
+              - text: Sokol Torysa × Sokol Brezovica
+              - generic [ref=f4e572]: Slovakia Cup
+            - generic [ref=f4e573]:
+              - generic [ref=f4e574]: 80%
+              - generic [ref=f4e575]: O0.5 HT
+            - generic [ref=f4e576]: "Média gols: 3.5Over 0.5: 90%"
+            - generic [ref=f4e577]: Monitorar
+          - article [ref=f4e578]:
+            - generic [ref=f4e579]: 12:00
+            - generic [ref=f4e580]:
+              - text: Druzstevnik Jacovce × Chynorany Sports Centre
+              - generic [ref=f4e581]: Slovakia Cup
+            - generic [ref=f4e582]:
+              - generic [ref=f4e583]: 80%
+              - generic [ref=f4e584]: O0.5 HT
+            - generic [ref=f4e585]: "Média gols: 0.2Over 0.5: 20%"
+            - generic [ref=f4e586]: Monitorar
+          - article [ref=f4e587]:
+            - generic [ref=f4e588]: 12:00
+            - generic [ref=f4e589]:
+              - text: Batizovce × Vikartovce
+              - generic [ref=f4e590]: Slovakia Cup
+            - generic [ref=f4e591]:
+              - generic [ref=f4e592]: 80%
+              - generic [ref=f4e593]: O0.5 HT
+            - generic [ref=f4e594]: "Média gols: 1.8Over 0.5: 70%"
+            - generic [ref=f4e595]: Monitorar
+          - article [ref=f4e596]:
+            - generic [ref=f4e597]: 12:00
+            - generic [ref=f4e598]:
+              - text: Široké × Spišský Štvrtok
+              - generic [ref=f4e599]: Slovakia Cup
+            - generic [ref=f4e600]:
+              - generic [ref=f4e601]: 80%
+              - generic [ref=f4e602]: O0.5 HT
+            - generic [ref=f4e603]: "Média gols: 1.4Over 0.5: 60%"
+            - generic [ref=f4e604]: Monitorar
+          - article [ref=f4e605]:
+            - generic [ref=f4e606]: 12:00
+            - generic [ref=f4e607]:
+              - text: Báhoň × Bernolákovo
+              - generic [ref=f4e608]: Slovakia Cup
+            - generic [ref=f4e609]:
+              - generic [ref=f4e610]: 80%
+              - generic [ref=f4e611]: O0.5 HT
+            - generic [ref=f4e612]: "Média gols: 3.2Over 0.5: 90%"
+            - generic [ref=f4e613]: Monitorar
+          - article [ref=f4e614]:
+            - generic [ref=f4e615]: 12:00
+            - generic [ref=f4e616]:
+              - text: Nevidzany × Sokol Starý Tekov
+              - generic [ref=f4e617]: Slovakia Cup
+            - generic [ref=f4e618]:
+              - generic [ref=f4e619]: 80%
+              - generic [ref=f4e620]: O0.5 HT
+            - generic [ref=f4e621]: "Média gols: 2.2Over 0.5: 85%"
+            - generic [ref=f4e622]: Monitorar
+          - article [ref=f4e623]:
+            - generic [ref=f4e624]: 12:30
+            - generic [ref=f4e625]:
+              - text: Záhorák Plavecký Mikuláš × Rohožník
+              - generic [ref=f4e626]: Slovakia Cup
+            - generic [ref=f4e627]:
+              - generic [ref=f4e628]: 80%
+              - generic [ref=f4e629]: O0.5 HT
+            - generic [ref=f4e630]: "Média gols: 0.4Over 0.5: 40%"
+            - generic [ref=f4e631]: Monitorar
+          - article [ref=f4e632]:
+            - generic [ref=f4e633]: 13:00
+            - generic [ref=f4e634]:
+              - text: Mura × Olimpija
+              - generic [ref=f4e635]: 1. SNL
+            - generic [ref=f4e636]:
+              - generic [ref=f4e637]: 81%
+              - generic [ref=f4e638]: O0.5 HT
+            - generic [ref=f4e639]: "Média gols: 1.6Over 0.5: 70%"
+            - generic [ref=f4e640]: Monitorar
+          - article [ref=f4e641]:
+            - generic [ref=f4e642]: 13:00
+            - generic [ref=f4e643]:
+              - text: Strømsgodset × Lyn
+              - generic [ref=f4e644]: 1. Division
+            - generic [ref=f4e645]:
+              - generic [ref=f4e646]: 80%
+              - generic [ref=f4e647]: O0.5 HT
+            - generic [ref=f4e648]: "Média gols: 4.2Over 0.5: 95%"
+            - generic [ref=f4e649]: Monitorar
+          - article [ref=f4e650]:
+            - generic [ref=f4e651]: 13:00
+            - generic [ref=f4e652]:
+              - text: Spartak Trnava × Skalica
+              - generic [ref=f4e653]: Niké Liga
+            - generic [ref=f4e654]:
+              - generic [ref=f4e655]: 80%
+              - generic [ref=f4e656]: O0.5 HT
+            - generic [ref=f4e657]: "Média gols: 2.6Over 0.5: 85%"
+            - generic [ref=f4e658]: Monitorar
+          - article [ref=f4e659]:
+            - generic [ref=f4e660]: 15:00
+            - generic [ref=f4e661]:
+              - text: Haugesund × Bryne
+              - generic [ref=f4e662]: 1. Division
+            - generic [ref=f4e663]:
+              - generic [ref=f4e664]: 80%
+              - generic [ref=f4e665]: O0.5 HT
+            - generic [ref=f4e666]: "Média gols: 4.0Over 0.5: 90%"
+            - generic [ref=f4e667]: Monitorar
+          - article [ref=f4e668]:
+            - generic [ref=f4e669]: 15:15
+            - generic [ref=f4e670]:
+              - text: Maribor × Grosuplje
+              - generic [ref=f4e671]: 1. SNL
+            - generic [ref=f4e672]:
+              - generic [ref=f4e673]: 81%
+              - generic [ref=f4e674]: O0.5 HT
+            - generic [ref=f4e675]: "Média gols: 3.2Over 0.5: 90%"
+            - generic [ref=f4e676]: Monitorar
+          - article [ref=f4e677]:
+            - generic [ref=f4e678]: 15:30
+            - generic [ref=f4e679]:
+              - text: Poprad Stráže × Hranovnica
+              - generic [ref=f4e680]: Slovakia Cup
+            - generic [ref=f4e681]:
+              - generic [ref=f4e682]: 80%
+              - generic [ref=f4e683]: O0.5 HT
+            - generic [ref=f4e684]: "Média gols: 0.0Over 0.5: 0%"
+            - generic [ref=f4e685]: Monitorar
+          - article [ref=f4e686]:
+            - generic [ref=f4e687]: 15:30
+            - generic [ref=f4e688]:
+              - text: Podbrezová × Zemplín Michalovce
+              - generic [ref=f4e689]: Niké Liga
+            - generic [ref=f4e690]:
+              - generic [ref=f4e691]: 80%
+              - generic [ref=f4e692]: O0.5 HT
+            - generic [ref=f4e693]: "Média gols: 2.2Over 0.5: 85%"
+            - generic [ref=f4e694]: Monitorar
+          - article [ref=f4e695]:
+            - generic [ref=f4e696]: 17:00
+            - generic [ref=f4e697]:
+              - text: Vancouver Rise × Halifax Tides
+              - generic [ref=f4e698]: Northern Super League
+            - generic [ref=f4e699]:
+              - generic [ref=f4e700]: 81%
+              - generic [ref=f4e701]: O0.5 HT
+            - generic [ref=f4e702]: "Média gols: 2.8Over 0.5: 85%"
+            - generic [ref=f4e703]: Monitorar
+          - article [ref=f4e704]:
+            - generic [ref=f4e705]: 18:00
+            - generic [ref=f4e706]:
+              - text: Inter Miami II × Toronto II
+              - generic [ref=f4e707]: MLS Next Pro
+            - generic [ref=f4e708]:
+              - generic [ref=f4e709]: 80%
+              - generic [ref=f4e710]: O0.5 HT
+            - generic [ref=f4e711]: "Média gols: 2.0Over 0.5: 80%"
+            - generic [ref=f4e712]: Monitorar
+          - article [ref=f4e713]:
+            - generic [ref=f4e714]: 20:00
+            - generic [ref=f4e715]:
+              - text: Chattanooga × Philadelphia Union II
+              - generic [ref=f4e716]: MLS Next Pro
+            - generic [ref=f4e717]:
+              - generic [ref=f4e718]: 80%
+              - generic [ref=f4e719]: O0.5 HT
+            - generic [ref=f4e720]: "Média gols: 3.0Over 0.5: 85%"
+            - generic [ref=f4e721]: Monitorar
+          - article [ref=f4e722]:
+            - generic [ref=f4e723]: 20:00
+            - generic [ref=f4e724]:
+              - text: Ventura County × San Jose Earthquakes II
+              - generic [ref=f4e725]: MLS Next Pro
+            - generic [ref=f4e726]:
+              - generic [ref=f4e727]: 80%
+              - generic [ref=f4e728]: O0.5 HT
+            - generic [ref=f4e729]: "Média gols: 4.4Over 0.5: 95%"
+            - generic [ref=f4e730]: Monitorar
+          - article [ref=f4e731]:
+            - generic [ref=f4e732]: 20:15
+            - generic [ref=f4e733]:
+              - text: Columbus Crew × Cincinnati
+              - generic [ref=f4e734]: Major League Soccer
+            - generic [ref=f4e735]:
+              - generic [ref=f4e736]: 84%
+              - generic [ref=f4e737]: O0.5 HT
+            - generic [ref=f4e738]: "Média gols: 4.0Over 0.5: 90%"
+            - generic [ref=f4e739]: Monitorar
+          - article [ref=f4e740]:
+            - generic [ref=f4e741]: 20:30
+            - generic [ref=f4e742]:
+              - text: CF Montréal × Inter Miami
+              - generic [ref=f4e743]: Major League Soccer
+            - generic [ref=f4e744]:
+              - generic [ref=f4e745]: 84%
+              - generic [ref=f4e746]: O0.5 HT
+            - generic [ref=f4e747]: "Média gols: 4.6Over 0.5: 95%"
+            - generic [ref=f4e748]: Monitorar
+          - article [ref=f4e749]:
+            - generic [ref=f4e750]: 20:30
+            - generic [ref=f4e751]:
+              - text: Carolina Core × Chicago Fire II
+              - generic [ref=f4e752]: MLS Next Pro
+            - generic [ref=f4e753]:
+              - generic [ref=f4e754]: 80%
+              - generic [ref=f4e755]: O0.5 HT
+            - generic [ref=f4e756]: "Média gols: 3.4Over 0.5: 90%"
+            - generic [ref=f4e757]: Monitorar
+        - generic [ref=f4e758]:
+          - generic [ref=f4e759]: sábado, 25 de julho
+          - article [ref=f4e760]:
+            - generic [ref=f4e761]: 21:30
+            - generic [ref=f4e762]:
+              - text: Houston Dynamo × Austin
+              - generic [ref=f4e763]: Major League Soccer
+            - generic [ref=f4e764]:
+              - generic [ref=f4e765]: 81%
+              - generic [ref=f4e766]: O0.5 HT
+            - generic [ref=f4e767]: "Média gols: 2.4Over 0.5: 85%"
+            - generic [ref=f4e768]: Monitorar
+          - article [ref=f4e769]:
+            - generic [ref=f4e770]: 21:45
+            - generic [ref=f4e771]:
+              - text: North Texas × Los Angeles FC 2
+              - generic [ref=f4e772]: MLS Next Pro
+            - generic [ref=f4e773]:
+              - generic [ref=f4e774]: 80%
+              - generic [ref=f4e775]: O0.5 HT
+            - generic [ref=f4e776]: "Média gols: 3.6Over 0.5: 90%"
+            - generic [ref=f4e777]: Monitorar
+          - article [ref=f4e778]:
+            - generic [ref=f4e779]: 23:30
+            - generic [ref=f4e780]:
+              - text: Los Angeles FC × Sporting KC
+              - generic [ref=f4e781]: Major League Soccer
+            - generic [ref=f4e782]:
+              - generic [ref=f4e783]: 85%
+              - generic [ref=f4e784]: O0.5 HT
+            - generic [ref=f4e785]: "Média gols: 2.2Over 0.5: 85%"
+            - generic [ref=f4e786]: Monitorar
+          - article [ref=f4e787]:
+            - generic [ref=f4e788]: 23:30
+            - generic [ref=f4e789]:
+              - text: SJ Earthquakes × LA Galaxy
+              - generic [ref=f4e790]: Major League Soccer
+            - generic [ref=f4e791]:
+              - generic [ref=f4e792]: 81%
+              - generic [ref=f4e793]: O0.5 HT
+            - generic [ref=f4e794]: "Média gols: 4.2Over 0.5: 95%"
+            - generic [ref=f4e795]: Monitorar
+      - paragraph [ref=f4e796]: “Sinal forte” indica probabilidade do modelo ≥90%. Confirme escalações, mercado e cotação real antes de qualquer decisão.

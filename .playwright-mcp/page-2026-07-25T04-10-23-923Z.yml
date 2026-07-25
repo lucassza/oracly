@@ -1,0 +1,182 @@
+- generic [active] [ref=f4e1]:
+  - generic [ref=f4e2]:
+    - generic [ref=f4e3]:
+      - heading "SokkerPRO" [level=1] [ref=f4e4]
+      - generic [ref=f4e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f4e6]:
+      - button "Jogos" [ref=f4e7] [cursor=pointer]
+      - button "Hoje" [ref=f4e8] [cursor=pointer]
+      - button "Laboratório de gols" [ref=f4e9] [cursor=pointer]
+      - button "Previsões" [ref=f4e10] [cursor=pointer]
+    - option "sokkerpro-2026-07-19-f7d83512-94e8-4619-95bd-ccf538fe7eae.json" [selected]
+    - option "sokkerpro-2026-07-20-d0b01c27-3d90-4084-807d-27111fc35c11.json"
+    - option "sokkerpro-2026-07-21-4a97ecab-a392-4260-bfd3-9181359c0128.json"
+    - option "sokkerpro-2026-07-22-15ff3847-c789-44e6-a763-34dba5a13972.json"
+    - option "sokkerpro-2026-07-23-37f05837-40ce-4bb6-b21a-dd851da3aa36.json"
+    - option "sokkerpro-2026-07-23-b38d3e9d-3488-45a6-9a47-5bb11730ec5d.json"
+    - option "sokkerpro-2026-07-24-21c8a791-d31b-4857-a6a0-e9224f8c1b32.json"
+    - option "sokkerpro-2026-07-24-2c005ce0-98e2-45b5-ad54-222d07d98eee.json"
+    - option "sokkerpro-2026-07-24-962fd81f-6050-439c-b002-e2e421cac3a1.json"
+    - option "sokkerpro-2026-07-24-b5686b97-1e74-41b4-b3fc-922c759f368f.json"
+    - option "sokkerpro-2026-07-25-b2c21f23-24e3-4f29-87fd-d77aaa5b98bb.json"
+    - option "sokkerpro-2026-07-25-e64a1ab1-ac04-4ec0-9b9f-a84157bb1f87.json"
+    - option "Todos" [selected]
+    - option "Aguardando"
+    - option "Ao Vivo"
+    - option "Finalizado"
+  - main [ref=f4e32]:
+    - generic [ref=f4e33]:
+      - generic [ref=f4e4747]: Banco local · previsão pré-jogo × placar HT · somente ligas principais
+      - generic [ref=f4e4748]:
+        - heading "Over 0.5 1º tempo." [level=1] [ref=f4e4749]: Over 0.51º tempo.
+        - paragraph [ref=f4e4750]: Histórico consolidado com a última previsão registrada antes do início da partida. Amador, juvenil, feminino e regional/reserva ficam de fora.
+      - generic [ref=f4e4751]:
+        - button "O0.5 HT" [ref=f4e4752] [cursor=pointer]
+        - button "O1.5 FT" [ref=f4e4753] [cursor=pointer]
+      - generic [ref=f4e4754]:
+        - button "Próximos jogos" [ref=f4e4755] [cursor=pointer]
+        - button "Histórico" [ref=f4e4756] [cursor=pointer]
+      - generic [ref=f4e4757]:
+        - button "≥ 70%" [ref=f4e4758] [cursor=pointer]
+        - button "≥ 75%" [ref=f4e4759] [cursor=pointer]
+        - button "≥ 80%" [ref=f4e4760] [cursor=pointer]
+        - button "≥ 85%" [ref=f4e4761] [cursor=pointer]
+        - button "≥ 90%" [ref=f4e4762] [cursor=pointer]
+      - generic [ref=f4e4763]:
+        - generic [ref=f4e4764]:
+          - generic [ref=f4e4765]: Corte ≥ 80%
+          - generic [ref=f4e4766]: 91%
+          - paragraph [ref=f4e4767]: "10 acertos HT em 11 previsões selecionadas. FT: 100% (11 acertos)."
+        - generic [ref=f4e4768]:
+          - generic [ref=f4e4769]:
+            - generic [ref=f4e4770]: "10"
+            - generic [ref=f4e4771]: Green HT
+          - generic [ref=f4e4772]:
+            - generic [ref=f4e4773]: "11"
+            - generic [ref=f4e4774]: Green FT
+          - generic [ref=f4e4775]:
+            - generic [ref=f4e4776]: "1"
+            - generic [ref=f4e4777]: Red HT
+          - generic [ref=f4e4778]:
+            - generic [ref=f4e4779]: "0"
+            - generic [ref=f4e4780]: Red FT
+      - generic [ref=f4e4781]:
+        - heading "Resultados históricos" [level=2] [ref=f4e4782]
+        - generic [ref=f4e4783]: Ordenados pela previsão X7
+      - generic [ref=f4e4784]:
+        - generic [ref=f4e4785]:
+          - generic [ref=f4e4786]: Partida
+          - generic [ref=f4e4787]: Previsão
+          - generic [ref=f4e4788]: Placar
+          - generic [ref=f4e4789]: Ritmo
+          - generic [ref=f4e4790]: HT / FT
+        - generic [ref=f4e4791]:
+          - generic [ref=f4e4792]:
+            - text: East Timor × Vietnam
+            - generic [ref=f4e4793]: ASEAN Championship
+          - generic [ref=f4e4794]: 84% previsto
+          - generic [ref=f4e4795]: "HT: 5 · FT: 7"
+          - generic [ref=f4e4796]: "1º gol: 7'"
+          - generic [ref=f4e4797]:
+            - generic [ref=f4e4798]: HT Green
+            - generic [ref=f4e4799]: FT Green
+        - generic [ref=f4e4800]:
+          - generic [ref=f4e4801]:
+            - text: Shakhter Karagandy × Arys
+            - generic [ref=f4e4802]: First Division
+          - generic [ref=f4e4803]: 82% previsto
+          - generic [ref=f4e4804]: "HT: 2 · FT: 5"
+          - generic [ref=f4e4805]: "1º gol: 9'"
+          - generic [ref=f4e4806]:
+            - generic [ref=f4e4807]: HT Green
+            - generic [ref=f4e4808]: FT Green
+        - generic [ref=f4e4809]:
+          - generic [ref=f4e4810]:
+            - text: Víkingur Reykjavík × Keflavík
+            - generic [ref=f4e4811]: Besta deild
+          - generic [ref=f4e4812]: 81% previsto
+          - generic [ref=f4e4813]: "HT: 2 · FT: 6"
+          - generic [ref=f4e4814]: "1º gol: 6'"
+          - generic [ref=f4e4815]:
+            - generic [ref=f4e4816]: HT Green
+            - generic [ref=f4e4817]: FT Green
+        - generic [ref=f4e4818]:
+          - generic [ref=f4e4819]:
+            - text: Aktobe Jas × Sport Academy Kairat
+            - generic [ref=f4e4820]: First Division
+          - generic [ref=f4e4821]: 81% previsto
+          - generic [ref=f4e4822]: "HT: 3 · FT: 4"
+          - generic [ref=f4e4823]: "1º gol: 10'"
+          - generic [ref=f4e4824]:
+            - generic [ref=f4e4825]: HT Green
+            - generic [ref=f4e4826]: FT Green
+        - generic [ref=f4e4827]:
+          - generic [ref=f4e4828]:
+            - text: Yelimay II × Taraz
+            - generic [ref=f4e4829]: First Division
+          - generic [ref=f4e4830]: 80% previsto
+          - generic [ref=f4e4831]: "HT: 1 · FT: 1"
+          - generic [ref=f4e4832]: "1º gol: 4'"
+          - generic [ref=f4e4833]:
+            - generic [ref=f4e4834]: HT Green
+            - generic [ref=f4e4835]: FT Green
+        - generic [ref=f4e4836]:
+          - generic [ref=f4e4837]:
+            - text: FC Turan × Tobol II
+            - generic [ref=f4e4838]: First Division
+          - generic [ref=f4e4839]: 80% previsto
+          - generic [ref=f4e4840]: "HT: 0 · FT: 3"
+          - generic [ref=f4e4841]: "1º gol: 52'"
+          - generic [ref=f4e4842]:
+            - generic [ref=f4e4843]: HT Red
+            - generic [ref=f4e4844]: FT Green
+        - generic [ref=f4e4845]:
+          - generic [ref=f4e4846]:
+            - text: Tauras × Kauno Žalgiris II
+            - generic [ref=f4e4847]: 1. Lyga
+          - generic [ref=f4e4848]: 80% previsto
+          - generic [ref=f4e4849]: "HT: 3 · FT: 6"
+          - generic [ref=f4e4850]: "1º gol: 4'"
+          - generic [ref=f4e4851]:
+            - generic [ref=f4e4852]: HT Green
+            - generic [ref=f4e4853]: FT Green
+        - generic [ref=f4e4854]:
+          - generic [ref=f4e4855]:
+            - text: Gorila do Universo × Artilheiros
+            - generic [ref=f4e4856]: Primeira Division
+          - generic [ref=f4e4857]: 80% previsto
+          - generic [ref=f4e4858]: "HT: 2 · FT: 4"
+          - generic [ref=f4e4859]: "1º gol: 17'"
+          - generic [ref=f4e4860]:
+            - generic [ref=f4e4861]: HT Green
+            - generic [ref=f4e4862]: FT Green
+        - generic [ref=f4e4863]:
+          - generic [ref=f4e4864]:
+            - text: Deportivo Recoleta Res. × San Lorenzo Res.
+            - generic [ref=f4e4865]: Division Profesional Reserva
+          - generic [ref=f4e4866]: 80% previsto
+          - generic [ref=f4e4867]: "HT: 3 · FT: 5"
+          - generic [ref=f4e4868]: "1º gol: 6'"
+          - generic [ref=f4e4869]:
+            - generic [ref=f4e4870]: HT Green
+            - generic [ref=f4e4871]: FT Green
+        - generic [ref=f4e4872]:
+          - generic [ref=f4e4873]:
+            - text: 2 de Mayo Res. × Rubio Ñú Res.
+            - generic [ref=f4e4874]: Division Profesional Reserva
+          - generic [ref=f4e4875]: 80% previsto
+          - generic [ref=f4e4876]: "HT: 2 · FT: 3"
+          - generic [ref=f4e4877]: "1º gol: 26'"
+          - generic [ref=f4e4878]:
+            - generic [ref=f4e4879]: HT Green
+            - generic [ref=f4e4880]: FT Green
+        - generic [ref=f4e4881]:
+          - generic [ref=f4e4882]:
+            - text: Polonia Bytom × Warta Poznań
+            - generic [ref=f4e4883]: 1. Liga
+          - generic [ref=f4e4884]: 80% previsto
+          - generic [ref=f4e4885]: "HT: 3 · FT: 7"
+          - generic [ref=f4e4886]: "1º gol: 28'"
+          - generic [ref=f4e4887]:
+            - generic [ref=f4e4888]: HT Green
+            - generic [ref=f4e4889]: FT Green

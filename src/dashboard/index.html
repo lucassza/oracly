@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SokkerPRO Dashboard</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #0f1117;
+      color: #e4e6eb;
+      min-height: 100vh;
+    }
+
+    .header {
+      background: #1a1d24;
+      border-bottom: 1px solid #2d3139;
+      padding: 16px 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+
+    .header h1 {
+      font-size: 20px;
+      font-weight: 700;
+      color: #ffd21e;
+    }
+
+    .header .subtitle {
+      font-size: 13px;
+      color: #8b8f98;
+    }
+
+    .controls {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+
+    select, input {
+      background: #252830;
+      border: 1px solid #3a3d45;
+      color: #e4e6eb;
+      padding: 8px 12px;
+      border-radius: 8px;
+      font-size: 13px;
+      outline: none;
+    }
+
+    select:focus, input:focus {
+      border-color: #ffd21e;
+    }
+
+    .stats-bar {
+      display: flex;
+      gap: 24px;
+      padding: 12px 24px;
+      background: #15171c;
+      border-bottom: 1px solid #2d3139;
+    }
+
+    .stat {
+      text-align: center;
+    }
+
+    .stat-value {
+      font-size: 24px;
+      font-weight: 700;
+      color: #ffd21e;
+    }
+
+    .stat-label {
+      font-size: 11px;
+      color: #8b8f98;
+      text-transform: uppercase;
+    }
+
+    .container {
+      padding: 24px;
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    .match-grid {
+      display: grid;
+      gap: 12px;
+    }
+
+    .match-card {
+      background: #1a1d24;
+      border: 1px solid #2d3139;
+      border-radius: 12px;
+      padding: 16px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .match-card:hover {
+      border-color: #ffd21e;
+      transform: translateY(-1px);
+    }
+
+    .match-card.has-goals {
+      border-left: 3px solid #22c55e;
+    }
+
+    .match-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+
+    .competition {
+      font-size: 12px;
+      color: #8b8f98;
+    }
+
+    .status {
+      font-size: 11px;
+      padding: 3px 8px;
+      border-radius: 4px;
+      font-weight: 600;
+    }
+
+    .status-live { background: #dc2626; color: white; }
+    .status-finished { background: #22c55e; color: white; }
+    .status-not_started { background: #3a3d45; color: #8b8f98; }
+
+    .teams {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+    }
+
+    .team {
+      flex: 1;
+      text-align: center;
+    }
+
+    .team-name {
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .score {
+      font-size: 28px;
+      font-weight: 700;
+      color: #ffd21e;
+      min-width: 80px;
+      text-align: center;
+    }
+
+    .score .separator {
+      color: #8b8f98;
+      margin: 0 4px;
+    }
+
+    .match-meta {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 12px;
+      font-size: 12px;
+      color: #8b8f98;
+    }
+
+    .goals-list {
+      margin-top: 12px;
+      padding-top: 12px;
+      border-top: 1px solid #2d3139;
+    }
+
+    .goal {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 13px;
+      padding: 4px 0;
+    }
+
+    .goal-minute {
+      color: #ffd21e;
+      font-weight: 600;
+      min-width: 40px;
+    }
+
+    .goal-player {
+      color: #e4e6eb;
+    }
+
+    .goal-team {
+      color: #8b8f98;
+      font-size: 11px;
+    }
+
+    /* Detail Modal */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      z-index: 200;
+      justify-content: center;
+      align-items: center;
+      padding: 24px;
+    }
+
+    .modal-overlay.active {
+      display: flex;
+    }
+
+    .modal {
+      background: #1a1d24;
+      border: 1px solid #2d3139;
+      border-radius: 16px;
+      width: 100%;
+      max-width: 600px;
+      max-height: 80vh;
+      overflow-y: auto;
+      padding: 24px;
+    }
+
+    .modal-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 20px;
+    }
+
+    .modal-close {
+      background: none;
+      border: none;
+      color: #8b8f98;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .modal-close:hover {
+      color: #e4e6eb;
+    }
+
+    .timeline {
+      margin-top: 20px;
+    }
+
+    .timeline-item {
+      display: flex;
+      gap: 12px;
+      padding: 8px 0;
+      border-bottom: 1px solid #2d3139;
+    }
+
+    .timeline-icon {
+      font-size: 16px;
+      width: 24px;
+      text-align: center;
+    }
+
+    .timeline-minute {
+      color: #ffd21e;
+      font-weight: 600;
+      min-width: 40px;
+    }
+
+    .timeline-content {
+      flex: 1;
+    }
+
+    .timeline-player {
+      font-weight: 600;
+    }
+
+    .timeline-desc {
+      color: #8b8f98;
+      font-size: 12px;
+    }
+
+    .odds-row {
+      display: flex;
+      gap: 16px;
+      margin-top: 16px;
+      padding: 12px;
+      background: #252830;
+      border-radius: 8px;
+    }
+
+    .odd-item {
+      text-align: center;
+      flex: 1;
+    }
+
+    .odd-label {
+      font-size: 11px;
+      color: #8b8f98;
+      margin-bottom: 4px;
+    }
+
+    .odd-value {
+      font-size: 18px;
+      font-weight: 700;
+      color: #ffd21e;
+    }
+
+    .loading {
+      text-align: center;
+      padding: 48px;
+      color: #8b8f98;
+    }
+
+    .empty {
+      text-align: center;
+      padding: 48px;
+      color: #8b8f98;
+    }
+
+    :root {
+      --pitch: #10251d;
+      --canvas: #111714;
+      --surface: #18201c;
+      --surface-raised: #202a24;
+      --line: rgba(214, 230, 215, 0.12);
+      --ink: #edf4ed;
+      --muted: #91a096;
+      --signal: #f5c542;
+      --signal-wash: rgba(245, 197, 66, 0.14);
+      --win: #5fd28b;
+      --loss: #ea6e6e;
+    }
+
+    .view-tabs { display: flex; gap: 4px; margin-left: 24px; }
+    .view-tab {
+      background: transparent; border: 1px solid transparent; color: var(--muted); cursor: pointer;
+      font: inherit; font-size: 12px; font-weight: 700; letter-spacing: .06em; padding: 8px 10px;
+      text-transform: uppercase;
+    }
+    .view-tab:hover, .view-tab:focus-visible { color: var(--ink); outline: none; }
+    .view-tab.active { border-bottom-color: var(--signal); color: var(--signal); }
+    .lab-active .controls { visibility: hidden; }
+    .prediction-active .controls { visibility: hidden; }
+    .today-active .controls { visibility: hidden; }
+    .app-view { display: none; }
+    .app-view.active { display: block; }
+    .goals-lab { background: var(--canvas); color: var(--ink); min-height: calc(100vh - 75px); }
+    .lab-shell { max-width: 1240px; margin: 0 auto; padding: 44px 24px 72px; }
+    .lab-eyebrow { color: var(--signal); font-size: 11px; font-weight: 800; letter-spacing: .14em; text-transform: uppercase; }
+    .lab-title-row { align-items: end; display: flex; gap: 24px; justify-content: space-between; margin: 9px 0 30px; }
+    .lab-title { font-size: clamp(28px, 4vw, 48px); letter-spacing: -.045em; line-height: .95; max-width: 620px; }
+    .lab-source { color: var(--muted); font-size: 12px; max-width: 250px; text-align: right; }
+    .lab-hero { background: var(--pitch); border: 1px solid var(--line); display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, .7fr); margin-bottom: 22px; overflow: hidden; }
+    .hero-copy { padding: 30px; }
+    .hero-market { color: var(--muted); font-size: 12px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .hero-rate { color: var(--signal); font-size: clamp(56px, 10vw, 94px); font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.08em; line-height: .9; margin: 13px 0; }
+    .hero-caption { color: var(--muted); font-size: 14px; }
+    .hero-facts { border-left: 1px solid var(--line); display: grid; grid-template-columns: 1fr 1fr; }
+    .hero-fact { border-bottom: 1px solid var(--line); padding: 24px; }
+    .hero-fact:nth-child(odd) { border-right: 1px solid var(--line); }
+    .hero-fact-value { color: var(--ink); font-size: 27px; font-variant-numeric: tabular-nums; font-weight: 750; }
+    .hero-fact-label { color: var(--muted); font-size: 11px; margin-top: 5px; text-transform: uppercase; }
+    .market-strip { display: grid; gap: 8px; grid-template-columns: repeat(5, minmax(0, 1fr)); margin-bottom: 22px; }
+    .market-button { background: var(--surface); border: 1px solid var(--line); color: var(--ink); cursor: pointer; min-height: 95px; padding: 14px; text-align: left; }
+    .market-button:hover, .market-button:focus-visible { border-color: rgba(245, 197, 66, .65); outline: none; }
+    .market-button.active { background: var(--signal-wash); border-color: var(--signal); }
+    .market-name { color: var(--muted); display: block; font-size: 11px; line-height: 1.3; text-transform: uppercase; }
+    .market-score { display: block; font-size: 23px; font-variant-numeric: tabular-nums; font-weight: 750; margin-top: 9px; }
+    .section-heading { align-items: baseline; display: flex; justify-content: space-between; margin: 32px 0 12px; }
+    .section-heading h2 { font-size: 16px; letter-spacing: -.02em; }
+    .section-heading span { color: var(--muted); font-size: 12px; }
+    .threshold-rail { background: var(--surface); border: 1px solid var(--line); display: grid; grid-template-columns: repeat(5, 1fr); }
+    .threshold { background: none; border: 0; border-right: 1px solid var(--line); color: var(--ink); cursor: pointer; min-height: 145px; padding: 17px; position: relative; text-align: left; }
+    .threshold:last-child { border-right: 0; }
+    .threshold:hover, .threshold:focus-visible { background: var(--surface-raised); outline: none; }
+    .threshold.active { background: var(--signal-wash); }
+    .threshold.active::before { background: var(--signal); content: ''; height: 3px; left: 0; position: absolute; right: 0; top: 0; }
+    .threshold-cut { color: var(--muted); font-size: 12px; }
+    .threshold-rate { display: block; font-size: 30px; font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.05em; margin: 18px 0 4px; }
+    .threshold-meta { color: var(--muted); font-size: 11px; }
+    .lab-results { background: var(--surface); border: 1px solid var(--line); overflow: auto; }
+    .result-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(220px, 1.6fr) .7fr .55fr .7fr .8fr; min-width: 720px; padding: 13px 18px; }
+    .result-row:last-child { border-bottom: 0; }
+    .result-row.header { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .fixture { font-size: 13px; font-weight: 650; }
+    .fixture small { color: var(--muted); display: block; font-size: 11px; font-weight: 400; margin-top: 3px; }
+    .result-number { font-size: 13px; font-variant-numeric: tabular-nums; }
+    .outcome { font-size: 11px; font-weight: 800; letter-spacing: .06em; text-transform: uppercase; }
+    .outcome.win { color: var(--win); }
+    .outcome.loss { color: var(--loss); }
+    .outcome.unknown { color: var(--muted); }
+    .outcome-pair { display: flex; flex-direction: column; gap: 4px; }
+    .lab-note { border-left: 2px solid var(--signal); color: var(--muted); font-size: 12px; line-height: 1.55; margin-top: 22px; padding: 12px 15px; }
+    .lab-loading { color: var(--muted); padding: 70px 0; text-align: center; }
+    .prediction-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+    .prediction-filter { background: transparent; border: 1px solid var(--line); color: var(--muted); cursor: pointer; font-size: 12px; font-weight: 700; padding: 8px 12px; }
+    .prediction-filter.active, .prediction-filter:hover, .prediction-filter:focus-visible { border-color: var(--signal); color: var(--signal); outline: none; }
+    .prediction-runway { border: 1px solid var(--line); }
+    .prediction-date { background: var(--pitch); border-bottom: 1px solid var(--line); color: var(--signal); font-size: 11px; font-weight: 800; letter-spacing: .1em; padding: 11px 16px; text-transform: uppercase; }
+    .prediction-card { align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); display: grid; gap: 18px; grid-template-columns: 78px minmax(200px, 1fr) 110px 105px 130px; padding: 17px; }
+    .prediction-card:last-child { border-bottom: 0; }
+    .prediction-time { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+    .prediction-fixture { font-size: 14px; font-weight: 700; }
+    .prediction-fixture small { color: var(--muted); display: block; font-size: 11px; font-weight: 400; margin-top: 4px; }
+    .prediction-probability { color: var(--signal); font-size: 28px; font-variant-numeric: tabular-nums; font-weight: 800; letter-spacing: -.05em; }
+    .prediction-detail { color: var(--muted); font-size: 11px; line-height: 1.5; }
+    .prediction-signal { border: 1px solid rgba(95, 210, 139, .4); color: var(--win); font-size: 10px; font-weight: 800; letter-spacing: .08em; padding: 7px 8px; text-align: center; text-transform: uppercase; }
+    .prediction-signal.monitor { border-color: rgba(245, 197, 66, .45); color: var(--signal); }
+    @media (max-width: 800px) { .prediction-card { grid-template-columns: 62px 1fr 80px; } .prediction-detail, .prediction-signal { display: none; } }
+    .today-table { border: 1px solid var(--line); overflow-x: auto; }
+    .today-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 10px; grid-template-columns: 64px minmax(200px, 1fr) repeat(5, 78px); min-width: 780px; padding: 12px 16px; }
+    .today-row:last-child { border-bottom: 0; }
+    .today-row.header { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    .today-time { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
+    .today-fixture { font-size: 13px; font-weight: 650; }
+    .today-fixture small { color: var(--muted); display: block; font-size: 11px; font-weight: 400; margin-top: 3px; }
+    .today-chip { border: 1px solid var(--line); color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; padding: 6px 4px; text-align: center; }
+    .today-chip.strong { background: var(--signal-wash); border-color: var(--signal); color: var(--signal); }
+    .today-chip.empty { color: var(--line); }
+    .today-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+    .today-market-strip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    @media (max-width: 900px) { .today-market-strip { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 800px) {
+      .header { align-items: flex-start; flex-wrap: wrap; gap: 14px; }
+      .view-tabs { margin-left: 0; order: 3; width: 100%; }
+      .controls { flex-wrap: wrap; }
+      .lab-title-row, .lab-hero { display: block; }
+      .lab-source { margin-top: 15px; text-align: left; }
+      .hero-facts { border-left: 0; border-top: 1px solid var(--line); }
+      .market-strip { grid-template-columns: repeat(2, 1fr); }
+      .threshold-rail { grid-template-columns: 1fr; }
+      .threshold { border-bottom: 1px solid var(--line); border-right: 0; min-height: 92px; }
+    }
+  </style>
+</head>
+<body>
+    <div class="header">
+      <div>
+        <h1>SokkerPRO</h1>
+        <div class="subtitle">Dashboard de Jogos</div>
+      </div>
+      <div class="view-tabs" aria-label="Visões do dashboard">
+        <button class="view-tab active" data-view="matchesView">Jogos</button>
+        <button class="view-tab" data-view="todayView">Hoje</button>
+        <button class="view-tab" data-view="labView">Laboratório de gols</button>
+        <button class="view-tab" data-view="predictionsView">Previsões</button>
+      </div>
+    <div class="controls">
+      <select id="fileSelect">
+        <option value="">Carregando...</option>
+      </select>
+      <input type="text" id="searchInput" placeholder="Buscar time...">
+      <select id="statusFilter">
+        <option value="">Todos</option>
+        <option value="not_started">Aguardando</option>
+        <option value="live">Ao Vivo</option>
+        <option value="finished">Finalizado</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="app-view active" id="matchesView">
+  <div class="stats-bar" id="statsBar">
+    <div class="stat">
+      <div class="stat-value" id="totalMatches">-</div>
+      <div class="stat-label">Jogos</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="totalGoals">-</div>
+      <div class="stat-label">Gols</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="avgGoals">-</div>
+      <div class="stat-label">Média Gols</div>
+    </div>
+    <div class="stat">
+      <div class="stat-value" id="totalLeagues">-</div>
+      <div class="stat-label">Ligas</div>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="match-grid" id="matchGrid">
+      <div class="loading">Carregando dados...</div>
+    </div>
+  </div>
+  </div>
+
+  <main class="app-view goals-lab" id="todayView">
+    <div class="lab-shell" id="todayContent">
+      <div class="lab-loading">Carregando jogos de hoje…</div>
+    </div>
+  </main>
+
+  <main class="app-view goals-lab" id="labView">
+    <div class="lab-shell" id="labContent">
+      <div class="lab-loading">Carregue os arquivos de partidas para analisar as estratégias.</div>
+    </div>
+  </main>
+
+  <main class="app-view goals-lab" id="predictionsView">
+    <div class="lab-shell" id="predictionsContent">
+      <div class="lab-loading">Carregando previsões…</div>
+    </div>
+  </main>
+
+  <div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modal">
+      <div class="modal-header">
+        <h2 id="modalTitle">Detalhes</h2>
+        <button class="modal-close" onclick="closeModal()">&times;</button>
+      </div>
+      <div id="modalContent"></div>
+    </div>
+  </div>
+
+  <script>
+    let allMatches = [];
+    let currentData = null;
+    let availableFiles = [];
+    let strategyData = [];
+    let activeMarket = 'gols_1t_05_over';
+    let activeThreshold = 80;
+    let predictionThreshold = 80;
+    let predictionMode = 'upcoming';
+    let activePredictionMarket = 'over_05_ht';
+
+    const PREDICTION_MARKETS = {
+      over_05_ht: {
+        tabLabel: 'O0.5 HT',
+        badgeLabel: 'O0.5 HT',
+        title: 'Over 0.5<br>1º tempo.',
+        upcomingEndpoint: '/api/predictions/over-05-ht',
+        historyEndpoint: '/api/history/over-05-ht',
+        eyebrow: 'previsão pré-jogo × placar HT',
+        hasFtCompanion: true,
+      },
+      over_15_ft: {
+        tabLabel: 'O1.5 FT',
+        badgeLabel: 'O1.5 FT',
+        title: 'Over 1.5<br>final.',
+        upcomingEndpoint: '/api/predictions/over-15-ft',
+        historyEndpoint: '/api/history/over-15-ft',
+        eyebrow: 'previsão pré-jogo × placar final',
+        hasFtCompanion: false,
+      },
+    };
+
+    const GOALS_MARKETS = {
+      gols_1t_05_over: { label: 'Over 0.5 · 1º tempo', hit: match => halftimeGoals(match) >= 1 },
+      gols_1t_15_over: { label: 'Over 1.5 · 1º tempo', hit: match => halftimeGoals(match) >= 2 },
+      over_15_ft_over: { label: 'Over 1.5 · final', hit: match => finalGoals(match) >= 2 },
+      over_25_ft_over: { label: 'Over 2.5 · final', hit: match => finalGoals(match) >= 3 },
+      btts_sim: { label: 'Ambas marcam', hit: match => (match.score?.home ?? 0) >= 1 && (match.score?.away ?? 0) >= 1 },
+    };
+    const THRESHOLDS = [60, 65, 70, 75, 80];
+
+    const TODAY_MARKETS = [
+      { key: 'gols_1t_05_over', label: 'O0.5 1T' },
+      { key: 'gols_1t_15_over', label: 'O1.5 1T' },
+      { key: 'over_15_ft_over', label: 'O1.5 FT' },
+      { key: 'over_25_ft_over', label: 'O2.5 FT' },
+      { key: 'btts_sim', label: 'BTTS' },
+    ];
+    let todayMinProbability = 0;
+    let todayFocusMarket = 'all';
+    let todayMatches = [];
+    let todayRefreshing = false;
+    let todayLastUpdated = null;
+    let todayRefreshError = null;
+
+    const OPEN_STATUSES = new Set(['1st', '2nd', 'et', 'half_time', 'live']);
+    const isOpenStatus = status => OPEN_STATUSES.has(status);
+
+    const scoreCell = match => {
+      if (match.homeScore === undefined || match.homeScore === null) return '<div class="today-score muted">—</div>';
+      const placar = `${match.homeScore}–${match.awayScore ?? 0}`;
+      if (isOpenStatus(match.status)) return `<div class="today-score live">${placar}<small>${match.liveMinute ? `${match.liveMinute}'` : 'ao vivo'}</small></div>`;
+      if (match.status === 'finished') return `<div class="today-score">${placar}<small>fim</small></div>`;
+      return `<div class="today-score">${placar}</div>`;
+    };
+
+    async function refreshToday() {
+      todayRefreshing = true;
+      todayRefreshError = null;
+      renderTodayUI();
+      try {
+        const response = await fetch('/api/today/refresh', { method: 'POST' });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Falha ao atualizar');
+        todayMatches = payload.matches;
+        todayLastUpdated = payload.updatedAt;
+      } catch (error) {
+        todayRefreshError = error.message;
+      }
+      todayRefreshing = false;
+      renderTodayUI();
+    }
+
+    async function renderToday() {
+      const content = document.getElementById('todayContent');
+      content.innerHTML = '<div class="lab-loading">Carregando jogos de hoje…</div>';
+      try {
+        const response = await fetch('/api/today');
+        if (!response.ok) throw new Error('Banco local indisponível');
+        todayMatches = await response.json();
+        renderTodayUI();
+      } catch (error) {
+        content.innerHTML = `<div class="empty">Não foi possível carregar os jogos de hoje: ${error.message}</div>`;
+      }
+    }
+
+    function renderTodayUI() {
+      const content = document.getElementById('todayContent');
+      const filters = [0, 60, 70, 75, 80].map(threshold => `<button class="prediction-filter ${threshold === todayMinProbability ? 'active' : ''}" data-today-threshold="${threshold}">${threshold ? `≥ ${threshold}%` : 'Todos'}</button>`).join('');
+
+      const marketButtons = [{ key: 'all', label: 'Todos os mercados' }, ...TODAY_MARKETS].map(market => {
+        const count = market.key === 'all'
+          ? todayMatches.filter(match => TODAY_MARKETS.some(m => (match.predictions[m.key]?.probability ?? 0) >= 80)).length
+          : todayMatches.filter(match => (match.predictions[market.key]?.probability ?? 0) >= 80).length;
+        return `<button class="market-button ${market.key === todayFocusMarket ? 'active' : ''}" data-today-market="${market.key}"><span class="market-name">${market.label}</span><span class="market-score">${count}</span></button>`;
+      }).join('');
+
+      const matchesInThreshold = todayMatches.filter(match => {
+        if (!todayMinProbability) return true;
+        if (todayFocusMarket === 'all') return TODAY_MARKETS.some(market => (match.predictions[market.key]?.probability ?? 0) >= todayMinProbability);
+        return (match.predictions[todayFocusMarket]?.probability ?? 0) >= todayMinProbability;
+      });
+
+      const openCount = todayMatches.filter(match => isOpenStatus(match.status)).length;
+      const header = `<div class="today-row header"><div>Horário</div><div>Partida</div><div>Placar</div>${TODAY_MARKETS.map(m => `<div>${m.label}</div>`).join('')}</div>`;
+      const rows = matchesInThreshold.map(match => {
+        const time = match.kickoffAt ? formatKickoff(match.kickoffAt) : '—';
+        const chips = TODAY_MARKETS.map(market => {
+          const prediction = match.predictions[market.key];
+          const probability = prediction?.probability;
+          if (probability === undefined) return '<div class="today-chip empty">—</div>';
+          return `<div class="today-chip ${probability >= 80 ? 'strong' : ''}">${probability}%</div>`;
+        }).join('');
+        return `<div class="today-row ${isOpenStatus(match.status) ? 'is-live' : ''}"><div class="today-time">${time}</div><div class="today-fixture">${match.homeTeam} × ${match.awayTeam}<small>${competitionLabel(match)}</small></div>${scoreCell(match)}${chips}</div>`;
+      }).join('');
+
+      const focusLabel = todayFocusMarket === 'all' ? 'qualquer mercado' : TODAY_MARKETS.find(m => m.key === todayFocusMarket).label;
+      const updatedLabel = todayLastUpdated ? `Atualizado às ${formatKickoff(todayLastUpdated)}` : 'Ainda não atualizado ao vivo';
+      const refreshError = todayRefreshError ? `<div class="today-refresh-error">${todayRefreshError}</div>` : '';
+      content.innerHTML = `
+        <div class="lab-eyebrow">Hoje · ordenado por horário · somente ligas principais</div>
+        <div class="lab-title-row">
+          <h1 class="lab-title">Jogos de<br>hoje.</h1>
+          <div class="today-refresh">
+            <button class="today-refresh-button" id="todayRefreshButton" ${todayRefreshing ? 'disabled' : ''}>${todayRefreshing ? 'Atualizando…' : `Atualizar (${openCount} em aberto)`}</button>
+            <span class="today-refresh-meta">${updatedLabel}</span>
+            ${refreshError}
+          </div>
+        </div>
+        <p class="lab-source">${matchesInThreshold.length} de ${todayMatches.length} jogos hoje batem o corte em ${focusLabel}. Chip destacado = previsão do modelo ≥ 80%.</p>
+        <div class="market-strip today-market-strip">${marketButtons}</div>
+        <div class="today-controls">${filters}</div>
+        <section class="today-table">${header}${rows || '<div class="empty">Nenhum jogo encontrado para hoje.</div>'}</section>
+        <p class="lab-note">Horário em Brasília. A odd exibida pelo modelo não é uma cotação real de aposta. "Atualizar" busca placar e minuto ao vivo direto da SokkerPRO.</p>`;
+      content.querySelectorAll('[data-today-market]').forEach(button => button.addEventListener('click', () => { todayFocusMarket = button.dataset.todayMarket; renderTodayUI(); }));
+      content.querySelectorAll('[data-today-threshold]').forEach(button => button.addEventListener('click', () => { todayMinProbability = Number(button.dataset.todayThreshold); renderTodayUI(); }));
+      const refreshButton = document.getElementById('todayRefreshButton');
+      if (refreshButton) refreshButton.addEventListener('click', refreshToday);
+    }
+
+    // Load available files
+    async function loadFiles() {
+      const res = await fetch('/api/files');
+      const files = await res.json();
+      availableFiles = files;
+      const select = document.getElementById('fileSelect');
+      select.innerHTML = files.length 
+        ? files.map(f => `<option value="${f}">${f}</option>`).join('')
+        : '<option value="">Nenhum arquivo encontrado</option>';
+      
+      if (files.length > 0) {
+        await loadData(files[files.length - 1]);
+      }
+    }
+
+    // Load data from file
+    async function loadData(file) {
+      const res = await fetch(`/api/data?file=${file}`);
+      currentData = await res.json();
+      allMatches = currentData.matches || [];
+      updateStats();
+      renderMatches();
+      if (document.getElementById('labView').classList.contains('active')) renderGoalsLab();
+    }
+
+    const halftimeGoals = match => (match.score?.halftimeHome ?? 0) + (match.score?.halftimeAway ?? 0);
+    const finalGoals = match => (match.score?.home ?? 0) + (match.score?.away ?? 0);
+    const percent = (value, total) => total ? `${Math.round((value / total) * 100)}%` : '—';
+    const dateKey = file => file.match(/sokkerpro-(\d{4}-\d{2}-\d{2})-/)?.[1];
+
+    async function loadGoalsLabData() {
+      const response = await fetch('/api/history/snapshots');
+      if (!response.ok) throw new Error('Banco local indisponível');
+      const snapshots = [{ matches: await response.json() }];
+      const predictionsById = new Map();
+      const settledById = new Map();
+      snapshots.filter(Boolean).forEach(snapshot => snapshot.matches?.forEach(match => {
+        const predictionTime = new Date(match.collectedAt).getTime();
+        const kickoffTime = new Date(match.kickoffAt).getTime();
+        if (match.providerMatchId && Number.isFinite(predictionTime) && Number.isFinite(kickoffTime) && predictionTime < kickoffTime) {
+          const knownPrediction = predictionsById.get(match.providerMatchId);
+          if (!knownPrediction || new Date(knownPrediction.collectedAt) < new Date(match.collectedAt)) predictionsById.set(match.providerMatchId, match);
+        }
+        if (match.providerMatchId && match.status === 'finished') {
+          const knownResult = settledById.get(match.providerMatchId);
+          if (!knownResult || new Date(knownResult.collectedAt) < new Date(match.collectedAt)) settledById.set(match.providerMatchId, match);
+        }
+      }));
+      strategyData = [...settledById.values()]
+        .map(settled => {
+          const predicted = predictionsById.get(settled.providerMatchId);
+          return predicted ? { settled, predicted } : null;
+        })
+        .filter(Boolean);
+    }
+
+    function getStrategyRecords(market = activeMarket) {
+      return strategyData.map(({ settled, predicted }) => {
+        const prediction = predicted.statistics?.additional?.x7Predictions?.[market]?.pred;
+        if (typeof prediction !== 'number') return null;
+        return { settled, prediction, hit: GOALS_MARKETS[market].hit(settled) };
+      }).filter(Boolean);
+    }
+
+    function getMetrics(records, threshold) {
+      const selected = records.filter(record => record.prediction >= threshold);
+      const hits = selected.filter(record => record.hit).length;
+      return { selected, hits, accuracy: percent(hits, selected.length), coverage: percent(selected.length, records.length) };
+    }
+
+    async function renderGoalsLab() {
+      const content = document.getElementById('labContent');
+      content.innerHTML = '<div class="lab-loading">Cruzando previsões pré-jogo com resultados finalizados…</div>';
+      try {
+        await loadGoalsLabData();
+        const records = getStrategyRecords();
+        const metrics = getMetrics(records, activeThreshold);
+        const marketButtons = Object.entries(GOALS_MARKETS).map(([key, market]) => {
+          const marketMetrics = getMetrics(getStrategyRecords(key), activeThreshold);
+          return `<button class="market-button ${key === activeMarket ? 'active' : ''}" data-market="${key}"><span class="market-name">${market.label}</span><span class="market-score">${marketMetrics.accuracy}</span></button>`;
+        }).join('');
+        const thresholds = THRESHOLDS.map(threshold => {
+          const item = getMetrics(records, threshold);
+          return `<button class="threshold ${threshold === activeThreshold ? 'active' : ''}" data-threshold="${threshold}"><span class="threshold-cut">Probabilidade ≥ ${threshold}%</span><strong class="threshold-rate">${item.accuracy}</strong><span class="threshold-meta">${item.hits}/${item.selected.length} acertos · ${item.coverage} cobertura</span></button>`;
+        }).join('');
+        const selected = metrics.selected.sort((a, b) => b.prediction - a.prediction);
+        const rows = selected.length ? selected.map(({ settled, prediction, hit }) => {
+          const firstGoal = (settled.statistics?.goals || []).reduce((earliest, goal) => Math.min(earliest, goal.minute), Infinity);
+          const firstGoalLabel = Number.isFinite(firstGoal) ? `${firstGoal}'` : 'Sem timeline';
+          return `<div class="result-row"><div class="fixture">${settled.homeTeam.name} × ${settled.awayTeam.name}<small>${competitionLabel(settled)}</small></div><div class="result-number">${prediction}% previsto</div><div class="result-number">${settled.score?.home ?? '—'}–${settled.score?.away ?? '—'}</div><div class="result-number">1º gol: ${firstGoalLabel}</div><div class="outcome ${hit ? 'win' : 'loss'}">${hit ? 'Acerto' : 'Falha'}</div></div>`;
+        }).join('') : '<div class="empty">Nenhuma previsão disponível nesse corte.</div>';
+        content.innerHTML = `
+          <div class="lab-eyebrow">Análise pré-jogo × resultado real · somente ligas principais</div>
+          <div class="lab-title-row"><h1 class="lab-title">Laboratório de<br>gols.</h1><p class="lab-source">${strategyData.length} jogos finalizados com previsão capturada antes do apito inicial. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div>
+          <section class="lab-hero"><div class="hero-copy"><div class="hero-market">${GOALS_MARKETS[activeMarket].label} · corte ≥ ${activeThreshold}%</div><div class="hero-rate">${metrics.accuracy}</div><p class="hero-caption">${metrics.hits} acertos em ${metrics.selected.length} entradas selecionadas.</p></div><div class="hero-facts"><div class="hero-fact"><div class="hero-fact-value">${metrics.coverage}</div><div class="hero-fact-label">Cobertura</div></div><div class="hero-fact"><div class="hero-fact-value">${records.length}</div><div class="hero-fact-label">Amostra elegível</div></div><div class="hero-fact"><div class="hero-fact-value">${metrics.selected.length}</div><div class="hero-fact-label">Entradas</div></div><div class="hero-fact"><div class="hero-fact-value">${metrics.hits}</div><div class="hero-fact-label">Vitórias</div></div></div></section>
+          <section class="market-strip">${marketButtons}</section>
+          <div class="section-heading"><h2>Linha de confiança</h2><span>Escolha o corte operacional</span></div>
+          <section class="threshold-rail">${thresholds}</section>
+          <div class="section-heading"><h2>Jogos selecionados</h2><span>Ordenados pela previsão X7</span></div>
+          <section class="lab-results"><div class="result-row header"><div>Partida</div><div>Previsão</div><div>Final</div><div>Ritmo</div><div>Resultado</div></div>${rows}</section>
+          <p class="lab-note">A tela mede assertividade, não lucro. As odds de mercados de gols não estão registradas; “sem timeline” indica que o minuto do primeiro gol não pôde ser confirmado.</p>`;
+        content.querySelectorAll('[data-market]').forEach(button => button.addEventListener('click', () => { activeMarket = button.dataset.market; renderGoalsLab(); }));
+        content.querySelectorAll('[data-threshold]').forEach(button => button.addEventListener('click', () => { activeThreshold = Number(button.dataset.threshold); renderGoalsLab(); }));
+      } catch (error) {
+        content.innerHTML = `<div class="empty">Não foi possível montar o laboratório: ${error.message}</div>`;
+      }
+    }
+
+    const formatKickoff = kickoffAt => new Date(kickoffAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
+    const formatDate = kickoffAt => new Date(kickoffAt).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+    const competitionLabel = match => match.competition
+      ? (match.country ? `${match.country} · ${match.competition}` : match.competition)
+      : 'Competição não informada';
+
+    async function renderPredictions() {
+      const content = document.getElementById('predictionsContent');
+      content.innerHTML = '<div class="lab-loading">Consultando sinais no banco local…</div>';
+      try {
+        const config = PREDICTION_MARKETS[activePredictionMarket];
+        const endpoint = predictionMode === 'upcoming'
+          ? `${config.upcomingEndpoint}?minProbability=${predictionThreshold}`
+          : config.historyEndpoint;
+        const response = await fetch(endpoint);
+        if (!response.ok) throw new Error('Banco local indisponível');
+        const records = await response.json();
+        const selected = predictionMode === 'upcoming'
+          ? records
+          : records.filter(record => record.probability >= predictionThreshold);
+        const markets = Object.entries(PREDICTION_MARKETS).map(([key, market]) => `<button class="prediction-filter ${key === activePredictionMarket ? 'active' : ''}" data-prediction-market="${key}">${market.tabLabel}</button>`).join('');
+        const filters = [70, 75, 80, 85, 90].map(threshold => `<button class="prediction-filter ${threshold === predictionThreshold ? 'active' : ''}" data-prediction-threshold="${threshold}">≥ ${threshold}%</button>`).join('');
+        const modes = `<button class="prediction-filter ${predictionMode === 'upcoming' ? 'active' : ''}" data-prediction-mode="upcoming">Próximos jogos</button><button class="prediction-filter ${predictionMode === 'history' ? 'active' : ''}" data-prediction-mode="history">Histórico</button>`;
+
+        if (predictionMode === 'history') {
+          const hits = selected.filter(record => record.hit).length;
+          const accuracy = selected.length ? Math.round((hits / selected.length) * 100) : 0;
+          const ftHits = config.hasFtCompanion ? selected.filter(record => record.ftHit).length : 0;
+          const ftAccuracy = selected.length ? Math.round((ftHits / selected.length) * 100) : 0;
+          const outcomeHeader = config.hasFtCompanion ? 'HT / FT' : 'Resultado';
+          const heroCaption = config.hasFtCompanion
+            ? `${hits} acertos HT em ${selected.length} previsões selecionadas. FT: ${ftAccuracy}% (${ftHits} acertos).`
+            : `${hits} acertos em ${selected.length} previsões selecionadas.`;
+          const heroFacts = config.hasFtCompanion
+            ? `<div class="hero-fact"><div class="hero-fact-value">${hits}</div><div class="hero-fact-label">Green HT</div></div><div class="hero-fact"><div class="hero-fact-value">${ftHits}</div><div class="hero-fact-label">Green FT</div></div><div class="hero-fact"><div class="hero-fact-value">${selected.length - hits}</div><div class="hero-fact-label">Red HT</div></div><div class="hero-fact"><div class="hero-fact-value">${selected.length - ftHits}</div><div class="hero-fact-label">Red FT</div></div>`
+            : `<div class="hero-fact"><div class="hero-fact-value">${records.length}</div><div class="hero-fact-label">Jogos analisados</div></div><div class="hero-fact"><div class="hero-fact-value">${hits}</div><div class="hero-fact-label">Green</div></div><div class="hero-fact"><div class="hero-fact-value">${selected.length - hits}</div><div class="hero-fact-label">Red</div></div><div class="hero-fact"><div class="hero-fact-value">${records.length ? Math.round((selected.length / records.length) * 100) : 0}%</div><div class="hero-fact-label">Cobertura</div></div>`;
+          const rows = selected.sort((a, b) => b.probability - a.probability).map(record => {
+            const outcomeCell = config.hasFtCompanion
+              ? `<div class="outcome-pair"><span class="outcome ${record.hit ? 'win' : 'loss'}">HT ${record.hit ? 'Green' : 'Red'}</span><span class="outcome ${record.ftHit ? 'win' : 'loss'}">FT ${record.ftHit ? 'Green' : 'Red'}</span></div>`
+              : `<div class="outcome ${record.hit ? 'win' : 'loss'}">${record.hit ? 'Green' : 'Red'}</div>`;
+            return `<div class="result-row"><div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div><div class="result-number">${record.probability}% previsto</div><div class="result-number">HT: ${record.halftimeGoals} · FT: ${record.finalGoals}</div><div class="result-number">1º gol: ${record.firstGoalMinute ? `${record.firstGoalMinute}'` : 'Sem timeline'}</div>${outcomeCell}</div>`;
+          }).join('');
+          content.innerHTML = `<div class="lab-eyebrow">Banco local · ${config.eyebrow} · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">${config.title}</h1><p class="lab-source">Histórico consolidado com a última previsão registrada antes do início da partida. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div><div class="prediction-controls">${markets}</div><div class="prediction-controls">${modes}</div><div class="prediction-controls">${filters}</div><section class="lab-hero"><div class="hero-copy"><div class="hero-market">Corte ≥ ${predictionThreshold}%</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${heroCaption}</p></div><div class="hero-facts">${heroFacts}</div></section><div class="section-heading"><h2>Resultados históricos</h2><span>Ordenados pela previsão X7</span></div><section class="lab-results"><div class="result-row header"><div>Partida</div><div>Previsão</div><div>Placar</div><div>Ritmo</div><div>${outcomeHeader}</div></div>${rows || '<div class="empty">Nenhum jogo atende a este corte.</div>'}</section>`;
+        } else {
+          const groups = selected.reduce((grouped, prediction) => {
+          const key = prediction.kickoffAt?.slice(0, 10) || 'sem-data';
+          (grouped[key] ||= []).push(prediction);
+          return grouped;
+        }, {});
+        const runway = Object.values(groups).map(group => `
+          <section><div class="prediction-date">${formatDate(group[0].kickoffAt)}</div>
+          ${group.map(prediction => {
+            const strong = prediction.probability >= 90;
+            return `<article class="prediction-card"><div class="prediction-time">${formatKickoff(prediction.kickoffAt)}</div><div class="prediction-fixture">${prediction.homeTeam} × ${prediction.awayTeam}<small>${competitionLabel(prediction)}</small></div><div><div class="prediction-probability">${prediction.probability}%</div><div class="prediction-detail">${config.badgeLabel}</div></div><div class="prediction-detail">Média gols: ${prediction.combinedGoalsAverage != null ? prediction.combinedGoalsAverage.toFixed(1) : '—'}<br>Over 0.5: ${prediction.over05Percentage ?? '—'}%</div><div class="prediction-signal ${strong ? '' : 'monitor'}">${strong ? 'Sinal forte' : 'Monitorar'}</div></article>`;
+          }).join('')}</section>`).join('');
+          content.innerHTML = `<div class="lab-eyebrow">Banco local · modelo X7 · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">Próximos jogos<br>${config.title}</h1><p class="lab-source">Sinais ordenados por horário. A odd exibida pelo modelo não é uma cotação real de aposta. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div><div class="prediction-controls">${markets}</div><div class="prediction-controls">${modes}</div><div class="prediction-controls">${filters}</div><div class="section-heading"><h2>${selected.length} oportunidades encontradas</h2><span>Corte atual: ${predictionThreshold}%</span></div><div class="prediction-runway">${runway || '<div class="empty">Nenhum próximo jogo atende a este corte.</div>'}</div><p class="lab-note">“Sinal forte” indica probabilidade do modelo ≥90%. Confirme escalações, mercado e cotação real antes de qualquer decisão.</p>`;
+        }
+        content.querySelectorAll('[data-prediction-market]').forEach(button => button.addEventListener('click', () => { activePredictionMarket = button.dataset.predictionMarket; renderPredictions(); }));
+        content.querySelectorAll('[data-prediction-threshold]').forEach(button => button.addEventListener('click', () => { predictionThreshold = Number(button.dataset.predictionThreshold); renderPredictions(); }));
+        content.querySelectorAll('[data-prediction-mode]').forEach(button => button.addEventListener('click', () => { predictionMode = button.dataset.predictionMode; renderPredictions(); }));
+      } catch (error) {
+        content.innerHTML = `<div class="empty">Não foi possível carregar as previsões: ${error.message}</div>`;
+      }
+    }
+
+    // Update stats bar
+    function updateStats() {
+      const matches = getFilteredMatches();
+      const totalGoals = matches.reduce((sum, m) => {
+        const goals = m.statistics?.goals || [];
+        return sum + goals.length;
+      }, 0);
+      const leagues = new Set(matches.map(m => m.competition)).size;
+
+      document.getElementById('totalMatches').textContent = matches.length;
+      document.getElementById('totalGoals').textContent = totalGoals;
+      document.getElementById('avgGoals').textContent = matches.length > 0 
+        ? (totalGoals / matches.length).toFixed(1) 
+        : '0';
+      document.getElementById('totalLeagues').textContent = leagues;
+    }
+
+    // Get filtered matches
+    function getFilteredMatches() {
+      const search = document.getElementById('searchInput').value.toLowerCase();
+      const status = document.getElementById('statusFilter').value;
+
+      return allMatches.filter(m => {
+        if (search && !m.homeTeam.name.toLowerCase().includes(search) 
+            && !m.awayTeam.name.toLowerCase().includes(search)) {
+          return false;
+        }
+        if (status && m.status !== status) {
+          return false;
+        }
+        return true;
+      });
+    }
+
+    // Render matches
+    function renderMatches() {
+      const matches = getFilteredMatches();
+      const grid = document.getElementById('matchGrid');
+
+      if (matches.length === 0) {
+        grid.innerHTML = '<div class="empty">Nenhum jogo encontrado</div>';
+        return;
+      }
+
+      // Group by competition
+      const grouped = {};
+      matches.forEach(m => {
+        const key = m.competition || 'Desconhecido';
+        if (!grouped[key]) grouped[key] = [];
+        grouped[key].push(m);
+      });
+
+      let html = '';
+      for (const [comp, compMatches] of Object.entries(grouped)) {
+        html += `<div style="margin-bottom: 24px;">`;
+        html += `<h3 style="font-size: 14px; color: #8b8f98; margin-bottom: 12px; padding-bottom: 8px; border-bottom: 1px solid #2d3139;">${comp} (${compMatches.length})</h3>`;
+        html += `<div class="match-grid">`;
+        
+        compMatches.forEach(m => {
+          const hasGoals = m.statistics?.goals?.length > 0;
+          const statusClass = `status-${m.status || 'not_started'}`;
+          const statusText = {
+            'not_started': 'Aguardando',
+            'live': 'Ao Vivo',
+            'finished': 'Finalizado',
+            'cancelled': 'Cancelado'
+          }[m.status] || m.status;
+
+          const kickoffBrasilia = m.kickoffBrasilia 
+            ? new Date(m.kickoffBrasilia).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            : '';
+
+          const scoreHome = m.score?.home ?? '-';
+          const scoreAway = m.score?.away ?? '-';
+
+          html += `
+            <div class="match-card ${hasGoals ? 'has-goals' : ''}" onclick='showDetail(${JSON.stringify(m).replace(/'/g, "&#39;")})'>
+              <div class="match-header">
+                <span class="competition">${m.country || ''} ${kickoffBrasilia ? '• ' + kickoffBrasilia : ''}</span>
+                <span class="status ${statusClass}">${statusText}</span>
+              </div>
+              <div class="teams">
+                <div class="team">
+                  <div class="team-name">${m.homeTeam.name}</div>
+                </div>
+                <div class="score">
+                  ${scoreHome}<span class="separator">:</span>${scoreAway}
+                </div>
+                <div class="team">
+                  <div class="team-name">${m.awayTeam.name}</div>
+                </div>
+              </div>
+              ${hasGoals ? renderGoals(m.statistics.goals) : ''}
+            </div>
+          `;
+        });
+        
+        html += `</div></div>`;
+      }
+
+      grid.innerHTML = html;
+    }
+
+    // Render goals
+    function renderGoals(goals) {
+      if (!goals || goals.length === 0) return '';
+      
+      let html = '<div class="goals-list">';
+      goals.forEach(g => {
+        const minute = g.extraMinute ? `${g.minute}+${g.extraMinute}` : g.minute;
+        const team = g.team === 'home' ? '🏠' : '✈️';
+        html += `
+          <div class="goal">
+            <span class="goal-minute">${minute}'</span>
+            <span>${team}</span>
+            <span class="goal-player">${g.player || 'Gol'}</span>
+          </div>
+        `;
+      });
+      html += '</div>';
+      return html;
+    }
+
+    // Show match detail
+    function showDetail(match) {
+      const modal = document.getElementById('modal');
+      const title = document.getElementById('modalTitle');
+      const content = document.getElementById('modalContent');
+
+      title.textContent = `${match.homeTeam.name} vs ${match.awayTeam.name}`;
+
+      let html = '';
+
+      // Score
+      html += `
+        <div class="teams" style="margin-bottom: 20px;">
+          <div class="team"><div class="team-name">${match.homeTeam.name}</div></div>
+          <div class="score">${match.score?.home ?? '-'}<span class="separator">:</span>${match.score?.away ?? '-'}</div>
+          <div class="team"><div class="team-name">${match.awayTeam.name}</div></div>
+        </div>
+      `;
+
+      // Odds
+      if (match.odds) {
+        html += `
+          <div class="odds-row">
+            <div class="odd-item">
+              <div class="odd-label">Casa</div>
+              <div class="odd-value">${match.odds.home || '-'}</div>
+            </div>
+            <div class="odd-item">
+              <div class="odd-label">Empate</div>
+              <div class="odd-value">${match.odds.draw || '-'}</div>
+            </div>
+            <div class="odd-item">
+              <div class="odd-label">Fora</div>
+              <div class="odd-value">${match.odds.away || '-'}</div>
+            </div>
+          </div>
+        `;
+      }
+
+      // Statistics
+      if (match.statistics) {
+        const s = match.statistics;
+        html += `<h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 14px; color: #8b8f98;">Estatísticas</h3>`;
+        html += `<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">`;
+        
+        const stats = [
+          ['Média Gols Casa', s.homeGoalsAverage],
+          ['Média Gols Fora', s.awayGoalsAverage],
+          ['Over 0.5', s.over05Percentage ? `${s.over05Percentage}%` : null],
+          ['Over 1.5', s.over15Percentage ? `${s.over15Percentage}%` : null],
+          ['Over 2.5', s.over25Percentage ? `${s.over25Percentage}%` : null],
+          ['BTTS', s.bttsPercentage ? `${s.bttsPercentage}%` : null],
+        ];
+
+        stats.forEach(([label, value]) => {
+          if (value !== null && value !== undefined) {
+            html += `
+              <div style="background: #252830; padding: 8px 12px; border-radius: 6px;">
+                <div style="font-size: 11px; color: #8b8f98;">${label}</div>
+                <div style="font-size: 16px; font-weight: 600; color: #ffd21e;">${value}</div>
+              </div>
+            `;
+          }
+        });
+        html += `</div>`;
+      }
+
+      // Goals
+      if (match.statistics?.goals?.length > 0) {
+        html += `<h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 14px; color: #8b8f98;">Gols</h3>`;
+        match.statistics.goals.forEach(g => {
+          const minute = g.extraMinute ? `${g.minute}+${g.extraMinute}` : g.minute;
+          const team = g.team === 'home' ? match.homeTeam.name : match.awayTeam.name;
+          html += `
+            <div class="goal">
+              <span class="goal-minute">${minute}'</span>
+              <span class="goal-player">${g.player || 'Gol'}</span>
+              <span class="goal-team">(${team})</span>
+            </div>
+          `;
+        });
+      }
+
+      // Timeline
+      if (match.statistics?.timeline?.length > 0) {
+        html += `<h3 style="margin-top: 20px; margin-bottom: 12px; font-size: 14px; color: #8b8f98;">Timeline</h3>`;
+        const icons = { goal: '⚽', yellow_card: '🟨', substitution: '🔄', offside: '🚩' };
+        
+        match.statistics.timeline.forEach(t => {
+          const minute = t.extraMinute ? `${t.minute}+${t.extraMinute}` : t.minute;
+          const icon = icons[t.type] || '📋';
+          const team = t.team === 'home' ? match.homeTeam.name : match.awayTeam.name;
+          
+          html += `
+            <div class="timeline-item">
+              <span class="timeline-icon">${icon}</span>
+              <span class="timeline-minute">${minute}'</span>
+              <div class="timeline-content">
+                <div class="timeline-player">${t.player || t.description || t.type}</div>
+                <div class="timeline-desc">${team}</div>
+              </div>
+            </div>
+          `;
+        });
+      }
+
+      // Source
+      html += `
+        <div style="margin-top: 20px; padding-top: 16px; border-top: 1px solid #2d3139;">
+          <a href="${match.sourceUrl}" target="_blank" style="color: #ffd21e; font-size: 12px; text-decoration: none;">
+            Ver no SokkerPRO →
+          </a>
+        </div>
+      `;
+
+      content.innerHTML = html;
+      document.getElementById('modalOverlay').classList.add('active');
+    }
+
+    function closeModal() {
+      document.getElementById('modalOverlay').classList.remove('active');
+    }
+
+    // Event listeners
+    document.getElementById('fileSelect').addEventListener('change', (e) => {
+      if (e.target.value) loadData(e.target.value);
+    });
+
+    document.getElementById('searchInput').addEventListener('input', () => {
+      updateStats();
+      renderMatches();
+    });
+
+    document.getElementById('statusFilter').addEventListener('change', () => {
+      updateStats();
+      renderMatches();
+    });
+
+    document.getElementById('modalOverlay').addEventListener('click', (e) => {
+      if (e.target === e.currentTarget) closeModal();
+    });
+
+    document.querySelectorAll('.view-tab').forEach(tab => tab.addEventListener('click', () => {
+      document.querySelectorAll('.view-tab, .app-view').forEach(element => element.classList.remove('active'));
+      tab.classList.add('active');
+      document.getElementById(tab.dataset.view).classList.add('active');
+      document.body.classList.toggle('lab-active', tab.dataset.view === 'labView');
+      document.body.classList.toggle('prediction-active', tab.dataset.view === 'predictionsView');
+      document.body.classList.toggle('today-active', tab.dataset.view === 'todayView');
+      if (tab.dataset.view === 'labView') renderGoalsLab();
+      if (tab.dataset.view === 'predictionsView') renderPredictions();
+      if (tab.dataset.view === 'todayView') renderToday();
+    }));
+
+    // Init
+    loadFiles();
+  </script>
+</body>
+</html>

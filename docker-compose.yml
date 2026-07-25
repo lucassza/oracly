@@ -1,0 +1,22 @@
+services:
+  scraper:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: sokkerpro-scraper
+    environment:
+      - PLAYWRIGHT_HEADLESS=true
+      - SCRAPER_CONCURRENCY=2
+      - SCRAPER_DELAY_MIN_MS=1000
+      - SCRAPER_DELAY_MAX_MS=3000
+      - SCRAPER_MAX_RETRIES=3
+      - SCRAPER_SAVE_RAW_DATA=false
+      - LOG_LEVEL=info
+    volumes:
+      - ./storage/sessions:/app/storage/sessions
+      - ./storage/output:/app/storage/output
+      - ./storage/screenshots:/app/storage/screenshots
+      - ./storage/debug-html:/app/storage/debug-html
+      - ./storage/logs:/app/storage/logs
+    tmpfs:
+      - /tmp
