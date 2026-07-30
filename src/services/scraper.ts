@@ -15,7 +15,7 @@ import type { NormalizedMatch } from '../types/schemas.js';
 import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
 import { ProgressBar } from '../utils/progress.js';
-import { SqliteMatchStore } from '../storage/sqlite-store.js';
+import { PostgresMatchStore } from '../storage/postgres-store.js';
 
 // ============================================================
 // Scraper Execution Result
@@ -311,12 +311,18 @@ export class ScraperService {
 
     this.logger.info({ filepath, matches: result.matches.length }, 'Results saved');
 
-    const store = new SqliteMatchStore(env.DATABASE_PATH);
+    const store = new PostgresMatchStore({
+      host: env.POSTGRES_HOST,
+      port: env.POSTGRES_PORT,
+      database: env.POSTGRES_DB,
+      user: env.POSTGRES_USER,
+      password: env.POSTGRES_PASSWORD,
+    });
     try {
-      store.saveMatches(result.matches);
-      this.logger.info({ databasePath: env.DATABASE_PATH, matches: result.matches.length }, 'Results persisted to SQLite');
+      await store.saveMatches(result.matches);
+      this.logger.info({ host: env.POSTGRES_HOST, database: env.POSTGRES_DB, matches: result.matches.length }, 'Results persisted to Postgres');
     } finally {
-      store.close();
+      await store.close();
     }
 
     return filepath;

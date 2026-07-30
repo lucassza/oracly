@@ -345,6 +345,8 @@
     .lab-active .controls { visibility: hidden; }
     .prediction-active .controls { visibility: hidden; }
     .today-active .controls { visibility: hidden; }
+    .favorites-active .controls { visibility: hidden; }
+    .pattern-active .controls { visibility: hidden; }
     .app-view { display: none; }
     .app-view.active { display: block; }
     .goals-lab { background: var(--canvas); color: var(--ink); min-height: calc(100vh - 75px); }
@@ -411,17 +413,51 @@
     .prediction-signal.monitor { border-color: rgba(245, 197, 66, .45); color: var(--signal); }
     @media (max-width: 800px) { .prediction-card { grid-template-columns: 62px 1fr 80px; } .prediction-detail, .prediction-signal { display: none; } }
     .today-table { border: 1px solid var(--line); overflow-x: auto; }
-    .today-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 10px; grid-template-columns: 64px minmax(200px, 1fr) repeat(5, 78px); min-width: 780px; padding: 12px 16px; }
+    .today-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 10px; grid-template-columns: 64px minmax(200px, 1fr) 84px repeat(5, 78px) 150px; min-width: 1020px; padding: 12px 16px; }
     .today-row:last-child { border-bottom: 0; }
     .today-row.header { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; }
+    .today-row.is-live { background: rgba(234, 110, 110, .06); border-left: 2px solid var(--loss); }
     .today-time { color: var(--muted); font-size: 13px; font-variant-numeric: tabular-nums; }
     .today-fixture { font-size: 13px; font-weight: 650; }
     .today-fixture small { color: var(--muted); display: block; font-size: 11px; font-weight: 400; margin-top: 3px; }
+    .today-score { font-size: 14px; font-variant-numeric: tabular-nums; font-weight: 700; text-align: center; }
+    .today-score.muted { color: var(--line); font-weight: 400; }
+    .today-score small { color: var(--muted); display: block; font-size: 10px; font-weight: 700; margin-top: 2px; text-transform: uppercase; }
+    .today-score.live { color: var(--loss); }
+    .today-score.live small { color: var(--loss); }
     .today-chip { border: 1px solid var(--line); color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; padding: 6px 4px; text-align: center; }
     .today-chip.strong { background: var(--signal-wash); border-color: var(--signal); color: var(--signal); }
     .today-chip.empty { color: var(--line); }
+    .today-signal-cell { font-size: 11px; text-align: center; }
+    .today-signal { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); display: inline-block; font-weight: 800; padding: 5px 7px; }
+    .today-signal.strong { background: rgba(95, 210, 139, .12); border-color: var(--win); color: var(--win); }
+    .today-signal-empty { color: var(--line); }
     .today-controls { display: flex; flex-wrap: wrap; gap: 8px; margin: 24px 0; }
+    .today-goal-controls { align-items: center; margin-top: -12px; }
+    .today-controls-label { color: var(--muted); font-size: 12px; font-weight: 700; margin-right: 4px; }
     .today-market-strip { grid-template-columns: repeat(6, minmax(0, 1fr)); }
+    .today-refresh { align-items: flex-end; display: flex; flex-direction: column; gap: 6px; }
+    .today-refresh-button { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); cursor: pointer; font-size: 12px; font-weight: 800; letter-spacing: .04em; padding: 10px 16px; text-transform: uppercase; }
+    .today-refresh-button:hover:not(:disabled) { background: var(--signal); color: var(--pitch); }
+    .today-refresh-button:disabled { cursor: wait; opacity: .6; }
+    .today-refresh-meta { color: var(--muted); font-size: 11px; }
+    .today-refresh-error { color: var(--loss); font-size: 11px; max-width: 260px; text-align: right; }
+    .favorite-star { color: var(--signal); margin-right: 5px; }
+    .favorites-search { background: var(--surface); border: 1px solid var(--line); color: var(--ink); font-size: 13px; margin: 20px 0; padding: 10px 14px; width: 100%; }
+    .favorites-search:focus { border-color: var(--signal); outline: none; }
+    .favorites-list { border: 1px solid var(--line); }
+    .favorite-country-block { border-bottom: 1px solid var(--line); }
+    .favorite-country-block:last-child { border-bottom: 0; }
+    .favorite-country-header { align-items: center; display: flex; justify-content: space-between; padding: 12px 16px; }
+    .favorite-country-header label { align-items: center; cursor: pointer; display: flex; font-size: 14px; gap: 8px; }
+    .favorite-expand { background: none; border: 0; color: var(--muted); cursor: pointer; font-size: 12px; }
+    .favorite-expand:hover { color: var(--signal); }
+    .favorite-leagues { background: var(--surface); display: grid; gap: 2px; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); padding: 4px 16px 14px 40px; }
+    .favorite-league-row { align-items: center; color: var(--muted); cursor: pointer; display: flex; font-size: 13px; gap: 8px; padding: 4px 0; }
+    .favorite-league-row:hover { color: var(--ink); }
+    .favorite-top-flight { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); font-size: 9px; font-weight: 800; letter-spacing: .05em; padding: 1px 5px; text-transform: uppercase; }
+    #favoritesMarkTopFlight { margin: 4px 0 0; }
+    #favoritesMarkTopFlight:disabled { cursor: default; opacity: .4; }
     @media (max-width: 900px) { .today-market-strip { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 800px) {
       .header { align-items: flex-start; flex-wrap: wrap; gap: 14px; }
@@ -447,6 +483,8 @@
         <button class="view-tab" data-view="todayView">Hoje</button>
         <button class="view-tab" data-view="labView">Laboratório de gols</button>
         <button class="view-tab" data-view="predictionsView">Previsões</button>
+        <button class="view-tab" data-view="patternView">0x0 aos 30'</button>
+        <button class="view-tab" data-view="favoritesView">Favoritos</button>
       </div>
     <div class="controls">
       <select id="fileSelect">
@@ -507,6 +545,18 @@
     </div>
   </main>
 
+  <main class="app-view goals-lab" id="patternView">
+    <div class="lab-shell" id="patternContent">
+      <div class="lab-loading">Carregando padrão 0x0 aos 30'…</div>
+    </div>
+  </main>
+
+  <main class="app-view goals-lab" id="favoritesView">
+    <div class="lab-shell" id="favoritesContent">
+      <div class="lab-loading">Carregando países e ligas…</div>
+    </div>
+  </main>
+
   <div class="modal-overlay" id="modalOverlay">
     <div class="modal" id="modal">
       <div class="modal-header">
@@ -536,7 +586,24 @@
         upcomingEndpoint: '/api/predictions/over-05-ht',
         historyEndpoint: '/api/history/over-05-ht',
         eyebrow: 'previsão pré-jogo × placar HT',
-        hasFtCompanion: true,
+        hitLabel: 'HT',
+        companions: [
+          { key: 'ftHit', label: 'FT' },
+          { key: 'by75Hit', label: "75'" },
+        ],
+      },
+      over_05_ft: {
+        tabLabel: 'O0.5 FT',
+        badgeLabel: 'O0.5 FT',
+        title: 'Over 0.5<br>final.',
+        upcomingEndpoint: '/api/predictions/over-05-ft',
+        historyEndpoint: '/api/history/over-05-ft',
+        eyebrow: 'previsão pré-jogo × placar final',
+        hitLabel: 'FT',
+        companions: [
+          { key: 'htHit', label: 'HT' },
+          { key: 'by75Hit', label: "75'" },
+        ],
       },
       over_15_ft: {
         tabLabel: 'O1.5 FT',
@@ -545,7 +612,8 @@
         upcomingEndpoint: '/api/predictions/over-15-ft',
         historyEndpoint: '/api/history/over-15-ft',
         eyebrow: 'previsão pré-jogo × placar final',
-        hasFtCompanion: false,
+        hitLabel: '',
+        companions: [],
       },
     };
 
@@ -558,6 +626,113 @@
     };
     const THRESHOLDS = [60, 65, 70, 75, 80];
 
+    const FAVORITES_STORAGE_KEY = 'sokkerpro:favorites';
+    function loadFavorites() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || '{}');
+        return { countries: parsed.countries || [], leagues: parsed.leagues || [] };
+      } catch {
+        return { countries: [], leagues: [] };
+      }
+    }
+    function saveFavorites() {
+      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    }
+    let favorites = loadFavorites();
+    let knownLeagues = [];
+    let favoritesSearchTerm = '';
+    const expandedFavoriteCountries = new Set();
+    const isFavoriteMatch = match => favorites.countries.includes(match.country) || favorites.leagues.includes(match.competition);
+
+    async function renderFavorites() {
+      const content = document.getElementById('favoritesContent');
+      if (!knownLeagues.length) content.innerHTML = '<div class="lab-loading">Carregando países e ligas…</div>';
+      try {
+        // Refetches every time this tab opens (not just once) so leagues/countries
+        // that get scraped for the first time later (e.g. a league starting its
+        // season) show up here without needing a full page reload.
+        const response = await fetch('/api/leagues');
+        if (!response.ok) throw new Error('Banco local indisponível');
+        knownLeagues = await response.json();
+      } catch (error) {
+        if (!knownLeagues.length) {
+          content.innerHTML = `<div class="empty">Não foi possível carregar países e ligas: ${error.message}</div>`;
+          return;
+        }
+      }
+      renderFavoritesUI();
+    }
+
+    function renderFavoritesUI() {
+      const content = document.getElementById('favoritesContent');
+      const term = favoritesSearchTerm.trim().toLowerCase();
+      const byCountry = new Map();
+      knownLeagues.forEach(({ country, competition, isTopFlight }) => {
+        (byCountry.get(country) ?? byCountry.set(country, []).get(country)).push({ competition, isTopFlight });
+      });
+      const groups = [...byCountry.entries()]
+        .map(([country, leagues]) => ({ country, leagues }))
+        .filter(group => !term || group.country.toLowerCase().includes(term) || group.leagues.some(l => l.competition.toLowerCase().includes(term)))
+        .sort((a, b) => a.country.localeCompare(b.country));
+
+      const topFlightAvailable = groups.filter(g => g.leagues.some(l => l.isTopFlight));
+      const topFlightMissing = topFlightAvailable.filter(g => !g.leagues.some(l => l.isTopFlight && favorites.leagues.includes(l.competition))).length;
+
+      const rows = groups.map(group => {
+        const expanded = expandedFavoriteCountries.has(group.country);
+        const countryChecked = favorites.countries.includes(group.country);
+        const sortedLeagues = [...group.leagues].sort((a, b) => (a.isTopFlight === b.isTopFlight ? a.competition.localeCompare(b.competition) : a.isTopFlight ? -1 : 1));
+        const leagueRows = sortedLeagues.map(({ competition, isTopFlight }) => `
+          <label class="favorite-league-row"><input type="checkbox" data-fav-league="${competition}" ${favorites.leagues.includes(competition) ? 'checked' : ''}> ${competition}${isTopFlight ? ' <span class="favorite-top-flight">principal</span>' : ''}</label>
+        `).join('');
+        return `
+          <div class="favorite-country-block">
+            <div class="favorite-country-header">
+              <label><input type="checkbox" data-fav-country="${group.country}" ${countryChecked ? 'checked' : ''}> <strong>${group.country}</strong></label>
+              <button class="favorite-expand" data-toggle-country="${group.country}">${expanded ? '▾' : '▸'} ${group.leagues.length} liga${group.leagues.length === 1 ? '' : 's'}</button>
+            </div>
+            ${expanded ? `<div class="favorite-leagues">${leagueRows}</div>` : ''}
+          </div>`;
+      }).join('');
+
+      content.innerHTML = `
+        <div class="lab-eyebrow">Configuração · salvo neste navegador</div>
+        <div class="lab-title-row"><h1 class="lab-title">Países e ligas<br>favoritas.</h1><p class="lab-source">${favorites.countries.length} país(es) e ${favorites.leagues.length} liga(s) marcadas. Usado pra destacar (★) e filtrar jogos na aba Hoje.</p></div>
+        <button class="today-refresh-button" id="favoritesMarkTopFlight" ${topFlightMissing === 0 ? 'disabled' : ''}>★ Marcar ${topFlightMissing || ''} liga${topFlightMissing === 1 ? '' : 's'} principais conhecidas</button>
+        <input type="text" class="favorites-search" id="favoritesSearch" placeholder="Buscar país ou liga…" value="${favoritesSearchTerm}">
+        <div class="favorites-list">${rows || '<div class="empty">Nenhum país/liga encontrado.</div>'}</div>`;
+
+      const searchInput = document.getElementById('favoritesSearch');
+      searchInput.addEventListener('input', () => { favoritesSearchTerm = searchInput.value; renderFavoritesUI(); searchInput.focus(); searchInput.setSelectionRange(searchInput.value.length, searchInput.value.length); });
+      content.querySelectorAll('[data-fav-country]').forEach(box => box.addEventListener('change', () => {
+        const country = box.dataset.favCountry;
+        favorites.countries = box.checked ? [...favorites.countries, country] : favorites.countries.filter(c => c !== country);
+        saveFavorites();
+        renderFavoritesUI();
+      }));
+      content.querySelectorAll('[data-fav-league]').forEach(box => box.addEventListener('change', () => {
+        const league = box.dataset.favLeague;
+        favorites.leagues = box.checked ? [...favorites.leagues, league] : favorites.leagues.filter(l => l !== league);
+        saveFavorites();
+        renderFavoritesUI();
+      }));
+      content.querySelectorAll('[data-toggle-country]').forEach(button => button.addEventListener('click', () => {
+        const country = button.dataset.toggleCountry;
+        if (expandedFavoriteCountries.has(country)) expandedFavoriteCountries.delete(country);
+        else expandedFavoriteCountries.add(country);
+        renderFavoritesUI();
+      }));
+      const markTopFlightButton = document.getElementById('favoritesMarkTopFlight');
+      if (markTopFlightButton) markTopFlightButton.addEventListener('click', () => {
+        const toAdd = topFlightAvailable
+          .flatMap(g => g.leagues.filter(l => l.isTopFlight).map(l => l.competition))
+          .filter(league => !favorites.leagues.includes(league));
+        favorites.leagues = [...favorites.leagues, ...toAdd];
+        saveFavorites();
+        renderFavoritesUI();
+      });
+    }
+
     const TODAY_MARKETS = [
       { key: 'gols_1t_05_over', label: 'O0.5 1T' },
       { key: 'gols_1t_15_over', label: 'O1.5 1T' },
@@ -566,14 +741,65 @@
       { key: 'btts_sim', label: 'BTTS' },
     ];
     let todayMinProbability = 0;
-    let todayFocusMarket = 'all';
+    let todayFocusMarket = 'gols_1t_05_over';
+    let todayGoalFilter = 'all';
+    let todayFavoritesOnly = false;
     let todayMatches = [];
+
+    const GOAL_FILTERS = [
+      { key: 'all', label: 'Todos' },
+      { key: '0', label: '0 gols' },
+      { key: '0.5', label: '≥ 0.5' },
+      { key: '1.5', label: '≥ 1.5' },
+      { key: '2.5', label: '≥ 2.5' },
+    ];
+    const matchesGoalFilter = match => {
+      if (todayGoalFilter === 'all') return true;
+      if (match.homeScore === undefined || match.homeScore === null) return false;
+      const total = match.homeScore + (match.awayScore ?? 0);
+      return todayGoalFilter === '0' ? total === 0 : total >= Math.ceil(Number(todayGoalFilter));
+    };
     let todayRefreshing = false;
     let todayLastUpdated = null;
     let todayRefreshError = null;
 
     const OPEN_STATUSES = new Set(['1st', '2nd', 'et', 'half_time', 'live']);
     const isOpenStatus = status => OPEN_STATUSES.has(status);
+
+    // Sinais validados para "0x0 aos 30' -> sai gol até 75'", do mais para o menos assertivo.
+    const ZERO_AT_30_LIVE_CHECKS = [
+      { label: "BTTS%times ≥70", test: s => (s.bttsPercentage ?? 0) >= 70, tier: 'strong' },
+      { label: 'Score 4/4', test: s => (s.signalScore ?? 0) >= 4, tier: 'strong' },
+      { label: 'Combo 91%', test: s => s.over25FtProbability >= 60 && s.combinedGoalsAverage >= 3.4 && s.bttsPercentage >= 60, tier: 'strong' },
+      { label: 'Score ≥3', test: s => (s.signalScore ?? 0) >= 3, tier: '' },
+      { label: 'Combo 89%', test: s => s.over25FtProbability >= 60 && s.bttsProbability >= 55 && s.bttsPercentage >= 55, tier: '' },
+    ];
+    const parseLiveMinute = liveMinute => {
+      const match = /^(\d+)/.exec(liveMinute || '');
+      return match ? Number(match[1]) : undefined;
+    };
+    const isZeroAt30Live = match => {
+      // 'et'/extra_time: janela dos 75' já fechou (0x0 até lá já foi red) — fora.
+      if (!isOpenStatus(match.status) || match.status === 'et') return false;
+      if (match.homeScore !== 0 || match.awayScore !== 0) return false;
+      if (match.status === 'half_time') return true;
+      const minute = parseLiveMinute(match.liveMinute);
+      return minute !== undefined && minute >= 30 && minute <= 75;
+    };
+    const zeroAt30Badge = match => {
+      if (!isZeroAt30Live(match)) return '<span class="today-signal-empty">—</span>';
+      const signals = {
+        over25FtProbability: match.predictions['over_25_ft_over']?.probability ?? 0,
+        bttsProbability: match.predictions['btts_sim']?.probability ?? 0,
+        bttsPercentage: match.bttsPercentage,
+        combinedGoalsAverage: match.combinedGoalsAverage,
+        signalScore: match.signalScore,
+      };
+      const hit = ZERO_AT_30_LIVE_CHECKS.find(check => check.test(signals));
+      return hit
+        ? `<span class="today-signal ${hit.tier}">0x0/30' · ${hit.label}</span>`
+        : `<span class="today-signal-empty">0x0/30' · sem sinal</span>`;
+    };
 
     const scoreCell = match => {
       if (match.homeScore === undefined || match.homeScore === null) return '<div class="today-score muted">—</div>';
@@ -625,14 +851,18 @@
       }).join('');
 
       const matchesInThreshold = todayMatches.filter(match => {
-        if (!todayMinProbability) return true;
-        if (todayFocusMarket === 'all') return TODAY_MARKETS.some(market => (match.predictions[market.key]?.probability ?? 0) >= todayMinProbability);
-        return (match.predictions[todayFocusMarket]?.probability ?? 0) >= todayMinProbability;
+        const probabilityOk = !todayMinProbability || (todayFocusMarket === 'all'
+          ? TODAY_MARKETS.some(market => (match.predictions[market.key]?.probability ?? 0) >= todayMinProbability)
+          : (match.predictions[todayFocusMarket]?.probability ?? 0) >= todayMinProbability);
+        return probabilityOk && matchesGoalFilter(match) && (!todayFavoritesOnly || isFavoriteMatch(match));
       });
 
+      const goalFilters = GOAL_FILTERS.map(filter => `<button class="prediction-filter ${filter.key === todayGoalFilter ? 'active' : ''}" data-today-goal-filter="${filter.key}">${filter.label}</button>`).join('');
+      const favoritesToggle = `<button class="prediction-filter ${todayFavoritesOnly ? 'active' : ''}" id="todayFavoritesToggle">★ Só favoritos</button>`;
+
       const openCount = todayMatches.filter(match => isOpenStatus(match.status)).length;
-      const header = `<div class="today-row header"><div>Horário</div><div>Partida</div><div>Placar</div>${TODAY_MARKETS.map(m => `<div>${m.label}</div>`).join('')}</div>`;
-      const rows = matchesInThreshold.map(match => {
+      const header = `<div class="today-row header"><div>Horário</div><div>Partida</div><div>Placar</div>${TODAY_MARKETS.map(m => `<div>${m.label}</div>`).join('')}<div>Sinal 0x0/30'</div></div>`;
+      const rowHtml = match => {
         const time = match.kickoffAt ? formatKickoff(match.kickoffAt) : '—';
         const chips = TODAY_MARKETS.map(market => {
           const prediction = match.predictions[market.key];
@@ -640,8 +870,21 @@
           if (probability === undefined) return '<div class="today-chip empty">—</div>';
           return `<div class="today-chip ${probability >= 80 ? 'strong' : ''}">${probability}%</div>`;
         }).join('');
-        return `<div class="today-row ${isOpenStatus(match.status) ? 'is-live' : ''}"><div class="today-time">${time}</div><div class="today-fixture">${match.homeTeam} × ${match.awayTeam}<small>${competitionLabel(match)}</small></div>${scoreCell(match)}${chips}</div>`;
-      }).join('');
+        const star = isFavoriteMatch(match) ? '<span class="favorite-star">★</span>' : '';
+        return `<div class="today-row ${isOpenStatus(match.status) ? 'is-live' : ''}"><div class="today-time">${time}</div><div class="today-fixture">${star}${match.homeTeam} × ${match.awayTeam}<small>${competitionLabel(match)}</small></div>${scoreCell(match)}${chips}<div class="today-signal-cell">${zeroAt30Badge(match)}</div></div>`;
+      };
+
+      const matchBucket = match => {
+        if (isOpenStatus(match.status)) return 'andamento';
+        if (match.status === 'not_started') return 'proximos';
+        return 'finalizados';
+      };
+      const buckets = { andamento: [], finalizados: [], proximos: [] };
+      matchesInThreshold.forEach(match => buckets[matchBucket(match)].push(match));
+
+      const block = (title, list) => `
+        <div class="section-heading"><h2>${title}</h2><span>${list.length} jogo${list.length === 1 ? '' : 's'}</span></div>
+        <section class="today-table">${header}${list.map(rowHtml).join('') || '<div class="empty">Nenhum jogo nesse bloco.</div>'}</section>`;
 
       const focusLabel = todayFocusMarket === 'all' ? 'qualquer mercado' : TODAY_MARKETS.find(m => m.key === todayFocusMarket).label;
       const updatedLabel = todayLastUpdated ? `Atualizado às ${formatKickoff(todayLastUpdated)}` : 'Ainda não atualizado ao vivo';
@@ -659,12 +902,18 @@
         <p class="lab-source">${matchesInThreshold.length} de ${todayMatches.length} jogos hoje batem o corte em ${focusLabel}. Chip destacado = previsão do modelo ≥ 80%.</p>
         <div class="market-strip today-market-strip">${marketButtons}</div>
         <div class="today-controls">${filters}</div>
-        <section class="today-table">${header}${rows || '<div class="empty">Nenhum jogo encontrado para hoje.</div>'}</section>
+        <div class="today-controls today-goal-controls"><span class="today-controls-label">Gols no jogo:</span>${goalFilters}${favoritesToggle}</div>
+        ${block('Em andamento', buckets.andamento)}
+        ${block('Finalizados', buckets.finalizados)}
+        ${block('Próximos', buckets.proximos)}
         <p class="lab-note">Horário em Brasília. A odd exibida pelo modelo não é uma cotação real de aposta. "Atualizar" busca placar e minuto ao vivo direto da SokkerPRO.</p>`;
       content.querySelectorAll('[data-today-market]').forEach(button => button.addEventListener('click', () => { todayFocusMarket = button.dataset.todayMarket; renderTodayUI(); }));
       content.querySelectorAll('[data-today-threshold]').forEach(button => button.addEventListener('click', () => { todayMinProbability = Number(button.dataset.todayThreshold); renderTodayUI(); }));
+      content.querySelectorAll('[data-today-goal-filter]').forEach(button => button.addEventListener('click', () => { todayGoalFilter = button.dataset.todayGoalFilter; renderTodayUI(); }));
       const refreshButton = document.getElementById('todayRefreshButton');
       if (refreshButton) refreshButton.addEventListener('click', refreshToday);
+      const favoritesToggleButton = document.getElementById('todayFavoritesToggle');
+      if (favoritesToggleButton) favoritesToggleButton.addEventListener('click', () => { todayFavoritesOnly = !todayFavoritesOnly; renderTodayUI(); });
     }
 
     // Load available files
@@ -802,18 +1051,28 @@
         if (predictionMode === 'history') {
           const hits = selected.filter(record => record.hit).length;
           const accuracy = selected.length ? Math.round((hits / selected.length) * 100) : 0;
-          const ftHits = config.hasFtCompanion ? selected.filter(record => record.ftHit).length : 0;
-          const ftAccuracy = selected.length ? Math.round((ftHits / selected.length) * 100) : 0;
-          const outcomeHeader = config.hasFtCompanion ? 'HT / FT' : 'Resultado';
-          const heroCaption = config.hasFtCompanion
-            ? `${hits} acertos HT em ${selected.length} previsões selecionadas. FT: ${ftAccuracy}% (${ftHits} acertos).`
+          const dimensions = [{ key: 'hit', label: config.hitLabel }, ...(config.companions || [])];
+          const hasCompanions = dimensions.length > 1;
+          const dimensionStats = dimensions.map(dimension => {
+            const known = selected.filter(record => record[dimension.key] !== undefined);
+            const greens = known.filter(record => record[dimension.key]).length;
+            return { label: dimension.label, greens, reds: known.length - greens, total: known.length };
+          });
+          const outcomeHeader = hasCompanions ? dimensions.map(d => d.label).join(' / ') : 'Resultado';
+          const heroCaption = hasCompanions
+            ? `${dimensionStats.map(d => `${d.label}: ${d.total ? Math.round((d.greens / d.total) * 100) : 0}% (${d.greens}/${d.total})`).join(' · ')} — ${selected.length} previsões selecionadas.`
             : `${hits} acertos em ${selected.length} previsões selecionadas.`;
-          const heroFacts = config.hasFtCompanion
-            ? `<div class="hero-fact"><div class="hero-fact-value">${hits}</div><div class="hero-fact-label">Green HT</div></div><div class="hero-fact"><div class="hero-fact-value">${ftHits}</div><div class="hero-fact-label">Green FT</div></div><div class="hero-fact"><div class="hero-fact-value">${selected.length - hits}</div><div class="hero-fact-label">Red HT</div></div><div class="hero-fact"><div class="hero-fact-value">${selected.length - ftHits}</div><div class="hero-fact-label">Red FT</div></div>`
+          const heroFacts = hasCompanions
+            ? dimensionStats.map(d => `<div class="hero-fact"><div class="hero-fact-value">${d.greens}</div><div class="hero-fact-label">Green ${d.label}</div></div>`).join('') + dimensionStats.map(d => `<div class="hero-fact"><div class="hero-fact-value">${d.reds}</div><div class="hero-fact-label">Red ${d.label}</div></div>`).join('')
             : `<div class="hero-fact"><div class="hero-fact-value">${records.length}</div><div class="hero-fact-label">Jogos analisados</div></div><div class="hero-fact"><div class="hero-fact-value">${hits}</div><div class="hero-fact-label">Green</div></div><div class="hero-fact"><div class="hero-fact-value">${selected.length - hits}</div><div class="hero-fact-label">Red</div></div><div class="hero-fact"><div class="hero-fact-value">${records.length ? Math.round((selected.length / records.length) * 100) : 0}%</div><div class="hero-fact-label">Cobertura</div></div>`;
+          const outcomeBadge = (label, value) => {
+            const state = value === undefined ? 'unknown' : value ? 'win' : 'loss';
+            const text = value === undefined ? '—' : value ? 'Green' : 'Red';
+            return `<span class="outcome ${state}">${label ? `${label} ${text}` : text}</span>`;
+          };
           const rows = selected.sort((a, b) => b.probability - a.probability).map(record => {
-            const outcomeCell = config.hasFtCompanion
-              ? `<div class="outcome-pair"><span class="outcome ${record.hit ? 'win' : 'loss'}">HT ${record.hit ? 'Green' : 'Red'}</span><span class="outcome ${record.ftHit ? 'win' : 'loss'}">FT ${record.ftHit ? 'Green' : 'Red'}</span></div>`
+            const outcomeCell = hasCompanions
+              ? `<div class="outcome-pair">${dimensions.map(d => outcomeBadge(d.label, record[d.key])).join('')}</div>`
               : `<div class="outcome ${record.hit ? 'win' : 'loss'}">${record.hit ? 'Green' : 'Red'}</div>`;
             return `<div class="result-row"><div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div><div class="result-number">${record.probability}% previsto</div><div class="result-number">HT: ${record.halftimeGoals} · FT: ${record.finalGoals}</div><div class="result-number">1º gol: ${record.firstGoalMinute ? `${record.firstGoalMinute}'` : 'Sem timeline'}</div>${outcomeCell}</div>`;
           }).join('');
@@ -837,6 +1096,85 @@
         content.querySelectorAll('[data-prediction-mode]').forEach(button => button.addEventListener('click', () => { predictionMode = button.dataset.predictionMode; renderPredictions(); }));
       } catch (error) {
         content.innerHTML = `<div class="empty">Não foi possível carregar as previsões: ${error.message}</div>`;
+      }
+    }
+
+    let patternMarket = 'over05Ft';
+    let patternThreshold = 0;
+    let patternMinAverage = 0;
+    let patternMinScore = 0;
+    let patternMinBttsPct = 0;
+    let patternPreset = null;
+
+    const PATTERN_MARKETS = {
+      over05Ht: { label: 'O0.5 HT', key: 'over05HtProbability' },
+      over05Ft: { label: 'O0.5 FT', key: 'over05FtProbability' },
+      over15Ft: { label: 'O1.5 FT', key: 'over15FtProbability' },
+      over25Ft: { label: 'O2.5 FT', key: 'over25FtProbability' },
+      btts: { label: 'BTTS', key: 'bttsProbability' },
+    };
+
+    // Combos descobertos por busca exaustiva com validação temporal (644 jogos).
+    const PATTERN_PRESETS = {
+      combo89: { label: 'Combo 89%', apply: r => r.over25FtProbability >= 60 && r.bttsProbability >= 55 && r.bttsPercentage >= 55 },
+      combo91: { label: 'Combo 91%', apply: r => r.over25FtProbability >= 60 && r.combinedGoalsAverage >= 3.4 && r.bttsPercentage >= 60 },
+      score3: { label: 'Score ≥3', apply: r => r.signalScore >= 3 },
+    };
+
+    async function renderPattern() {
+      const content = document.getElementById('patternContent');
+      content.innerHTML = '<div class="lab-loading">Analisando jogos 0x0 aos 30 minutos no banco local…</div>';
+      try {
+        const response = await fetch('/api/history/zero-at-30');
+        if (!response.ok) throw new Error('Banco local indisponível');
+        const records = await response.json();
+        const market = PATTERN_MARKETS[patternMarket];
+        const preset = patternPreset ? PATTERN_PRESETS[patternPreset] : null;
+        const selected = records
+          .filter(record => patternThreshold === 0 || (record[market.key] != null && record[market.key] >= patternThreshold))
+          .filter(record => patternMinAverage === 0 || (record.combinedGoalsAverage != null && record.combinedGoalsAverage >= patternMinAverage))
+          .filter(record => patternMinScore === 0 || record.signalScore >= patternMinScore)
+          .filter(record => patternMinBttsPct === 0 || (record.bttsPercentage != null && record.bttsPercentage >= patternMinBttsPct))
+          .filter(record => !preset || preset.apply(record));
+        const hits = selected.filter(record => record.hit).length;
+        const accuracy = selected.length ? Math.round((hits / selected.length) * 100) : 0;
+        const markets = Object.entries(PATTERN_MARKETS).map(([key, m]) => `<button class="prediction-filter ${key === patternMarket ? 'active' : ''}" data-pattern-market="${key}">${m.label}</button>`).join('');
+        const filters = [0, 70, 75, 80, 85, 90].map(threshold => `<button class="prediction-filter ${threshold === patternThreshold ? 'active' : ''}" data-pattern-threshold="${threshold}">${threshold === 0 ? 'Todos' : `≥ ${threshold}%`}</button>`).join('');
+        const averages = [0, 3.0, 3.3, 3.5].map(min => `<button class="prediction-filter ${min === patternMinAverage ? 'active' : ''}" data-pattern-average="${min}">${min === 0 ? 'Todas' : `≥ ${min.toFixed(1)}`}</button>`).join('');
+        const scores = [0, 3, 4].map(min => `<button class="prediction-filter ${min === patternMinScore ? 'active' : ''}" data-pattern-score="${min}">${min === 0 ? 'Todos' : `≥ ${min} sinais`}</button>`).join('');
+        const bttsPcts = [0, 55, 60, 70].map(min => `<button class="prediction-filter ${min === patternMinBttsPct ? 'active' : ''}" data-pattern-btts="${min}">${min === 0 ? 'Todos' : `≥ ${min}%`}</button>`).join('');
+        const presets = Object.entries(PATTERN_PRESETS).map(([key, p]) => `<button class="prediction-filter ${key === patternPreset ? 'active' : ''}" data-pattern-preset="${key}">${p.label}</button>`).join('');
+        const heroFact = (value, label) => `<div class="hero-fact"><div class="hero-fact-value">${value}</div><div class="hero-fact-label">${label}</div></div>`;
+        const heroFacts = heroFact(selected.length, "Jogos 0x0 aos 30'")
+          + heroFact(hits, "Green até 75'")
+          + heroFact(selected.length - hits, 'Red (seguiu 0x0)')
+          + heroFact(`${records.length ? Math.round((selected.length / records.length) * 100) : 0}%`, 'Cobertura');
+        const cuts = [
+          preset ? preset.label : null,
+          patternThreshold === 0 ? null : `${market.label} ≥ ${patternThreshold}%`,
+          patternMinAverage === 0 ? null : `média ≥ ${patternMinAverage.toFixed(1)}`,
+          patternMinScore === 0 ? null : `score ≥ ${patternMinScore}`,
+          patternMinBttsPct === 0 ? null : `BTTS%times ≥ ${patternMinBttsPct}`,
+        ].filter(Boolean);
+        const cutLabel = cuts.length ? cuts.join(' · ') : 'sem corte de sinal';
+        const rows = selected.map(record => {
+          const outcome = `<div class="outcome ${record.hit ? 'win' : 'loss'}">${record.hit ? 'Green' : 'Red'}</div>`;
+          const firstGoal = record.firstGoalMinute != null ? `${record.firstGoalMinute}' · ${record.goalBand}` : 'Sem gol';
+          const probability = record[market.key] != null ? `${market.label}: ${record[market.key]}%` : 'Sem previsão';
+          const average = record.combinedGoalsAverage != null ? record.combinedGoalsAverage.toFixed(1) : '—';
+          const bttsTeams = record.bttsPercentage != null ? `${record.bttsPercentage}%` : '—';
+          const day = new Date(record.kickoffAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+          return `<div class="result-row"><div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div><div class="result-number">${day}</div><div class="result-number">HT: ${record.halftimeGoals} · FT: ${record.finalGoals}<br>Média: ${average} · BTTS%: ${bttsTeams}</div><div class="result-number">1º gol: ${firstGoal}<br>${probability} · Score ${record.signalScore}/4</div>${outcome}</div>`;
+        }).join('');
+        content.innerHTML = `<div class="lab-eyebrow">Banco local · jogos 0x0 aos 30 minutos · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">0x0 aos 30'.<br>Saiu gol até 75'?</h1><p class="lab-source">Somente jogos com timeline de gols (ou 0x0 final). Jogos com gol mas sem timeline ficam de fora, pois não dá para confirmar o placar aos 30'. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div><div class="prediction-controls"><span class="prediction-detail">Presets:</span>${presets}</div><div class="prediction-controls"><span class="prediction-detail">Sinal:</span>${markets}</div><div class="prediction-controls"><span class="prediction-detail">Corte:</span>${filters}</div><div class="prediction-controls"><span class="prediction-detail">Média de gols:</span>${averages}</div><div class="prediction-controls"><span class="prediction-detail">Score:</span>${scores}</div><div class="prediction-controls"><span class="prediction-detail">BTTS% dos times:</span>${bttsPcts}</div><section class="lab-hero"><div class="hero-copy"><div class="hero-market">Gol entre 31' e 75' · ${cutLabel}</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${hits} de ${selected.length} jogos que estavam 0x0 aos 30' tiveram gol até os 75'.</p></div><div class="hero-facts">${heroFacts}</div></section><div class="section-heading"><h2>Resultados</h2><span>Mais recentes primeiro</span></div><section class="lab-results"><div class="result-row header"><div>Partida</div><div>Data</div><div>Placar</div><div>1º gol</div><div>Resultado</div></div>${rows || '<div class="empty">Nenhum jogo atende a este corte.</div>'}</section>`;
+        content.querySelectorAll('[data-pattern-market]').forEach(button => button.addEventListener('click', () => { patternMarket = button.dataset.patternMarket; patternPreset = null; renderPattern(); }));
+        content.querySelectorAll('[data-pattern-threshold]').forEach(button => button.addEventListener('click', () => { patternThreshold = Number(button.dataset.patternThreshold); patternPreset = null; renderPattern(); }));
+        content.querySelectorAll('[data-pattern-average]').forEach(button => button.addEventListener('click', () => { patternMinAverage = Number(button.dataset.patternAverage); patternPreset = null; renderPattern(); }));
+        content.querySelectorAll('[data-pattern-score]').forEach(button => button.addEventListener('click', () => { patternMinScore = Number(button.dataset.patternScore); patternPreset = null; renderPattern(); }));
+        content.querySelectorAll('[data-pattern-btts]').forEach(button => button.addEventListener('click', () => { patternMinBttsPct = Number(button.dataset.patternBtts); patternPreset = null; renderPattern(); }));
+        content.querySelectorAll('[data-pattern-preset]').forEach(button => button.addEventListener('click', () => { const key = button.dataset.patternPreset; patternPreset = patternPreset === key ? null : key; patternThreshold = 0; patternMinAverage = 0; patternMinScore = 0; patternMinBttsPct = 0; renderPattern(); }));
+      } catch (error) {
+        content.innerHTML = `<div class="empty">Não foi possível carregar o padrão: ${error.message}</div>`;
       }
     }
 
@@ -1112,9 +1450,13 @@
       document.body.classList.toggle('lab-active', tab.dataset.view === 'labView');
       document.body.classList.toggle('prediction-active', tab.dataset.view === 'predictionsView');
       document.body.classList.toggle('today-active', tab.dataset.view === 'todayView');
+      document.body.classList.toggle('favorites-active', tab.dataset.view === 'favoritesView');
+      document.body.classList.toggle('pattern-active', tab.dataset.view === 'patternView');
       if (tab.dataset.view === 'labView') renderGoalsLab();
       if (tab.dataset.view === 'predictionsView') renderPredictions();
+      if (tab.dataset.view === 'patternView') renderPattern();
       if (tab.dataset.view === 'todayView') renderToday();
+      if (tab.dataset.view === 'favoritesView') renderFavorites();
     }));
 
     // Init

@@ -30,9 +30,14 @@ const envSchema = z.object({
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
   OUTPUT_PATH: z.string().default('storage/output'),
-  DATABASE_PATH: z.string().default('storage/sokkerpro.db'),
   DASHBOARD_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   SCREENSHOT_PATH: z.string().default('storage/screenshots'),
+
+  POSTGRES_HOST: z.string(),
+  POSTGRES_PORT: z.coerce.number().int().min(1).max(65535).default(5432),
+  POSTGRES_DB: z.string(),
+  POSTGRES_USER: z.string(),
+  POSTGRES_PASSWORD: z.string(),
 });
 
 export type Env = z.infer<typeof envSchema>;

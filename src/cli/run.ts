@@ -4,9 +4,20 @@ import { ScraperService } from '../services/scraper.js';
 import { SokkerProApi } from '../api/client.js';
 import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
-import { SqliteMatchStore } from '../storage/sqlite-store.js';
+import { PostgresMatchStore } from '../storage/postgres-store.js';
 import { importOutputDirectory } from '../storage/import-output.js';
 import { normalizeFixtureFromList } from '../api/normalizer.js';
+import type { Env } from '../config/env.js';
+
+function createStore(env: Env): PostgresMatchStore {
+  return new PostgresMatchStore({
+    host: env.POSTGRES_HOST,
+    port: env.POSTGRES_PORT,
+    database: env.POSTGRES_DB,
+    user: env.POSTGRES_USER,
+    password: env.POSTGRES_PASSWORD,
+  });
+}
 
 // ============================================================
 // CLI Entry Point
@@ -229,12 +240,12 @@ async function runInspect(date: string): Promise<void> {
 
 async function runDatabaseImport(): Promise<void> {
   const env = getEnv();
-  const store = new SqliteMatchStore(env.DATABASE_PATH);
+  const store = createStore(env);
   try {
     const importedMatches = await importOutputDirectory(store, env.OUTPUT_PATH);
-    console.log(`Imported ${importedMatches} match snapshots into ${env.DATABASE_PATH}`);
+    console.log(`Imported ${importedMatches} match snapshots into Postgres (${env.POSTGRES_HOST}/${env.POSTGRES_DB})`);
   } finally {
-    store.close();
+    await store.close();
   }
 }
 
@@ -247,9 +258,8 @@ async function runDashboard(): Promise<void> {
   const env = getEnv();
   const PORT = env.DASHBOARD_PORT;
   const OUTPUT_DIR = env.OUTPUT_PATH;
-  const DATABASE_PATH = env.DATABASE_PATH;
   const DASHBOARD_DIR = join(import.meta.dirname, '..', 'dashboard');
-  const store = new SqliteMatchStore(DATABASE_PATH);
+  const store = createStore(env);
 
   const MIME_TYPES: Record<string, string> = {
     '.html': 'text/html',
@@ -263,18 +273,28 @@ async function runDashboard(): Promise<void> {
 
     if (url.pathname === '/api/predictions/over-05-ft') {
       const minimumProbability = Number(url.searchParams.get('minProbability') || '0');
-      const predictions = store
-        .getUpcomingOver05FtPredictions(new Date().toISOString())
+      const predictions = (await store.getUpcomingOver05FtPredictions(new Date().toISOString()))
         .filter((prediction) => prediction.probability >= minimumProbability);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(predictions));
       return;
     }
 
+    if (url.pathname === '/api/history/over-05-ft') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getHistoricalOver05FtResults()));
+      return;
+    }
+
+    if (url.pathname === '/api/history/zero-at-30') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getZeroAt30Results()));
+      return;
+    }
+
     if (url.pathname === '/api/predictions/over-05-ht') {
       const minimumProbability = Number(url.searchParams.get('minProbability') || '0');
-      const predictions = store
-        .getUpcomingOver05HtPredictions(new Date().toISOString())
+      const predictions = (await store.getUpcomingOver05HtPredictions(new Date().toISOString()))
         .filter((prediction) => prediction.probability >= minimumProbability);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(predictions));
@@ -283,14 +303,13 @@ async function runDashboard(): Promise<void> {
 
     if (url.pathname === '/api/history/over-05-ht') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(store.getHistoricalOver05HtResults()));
+      res.end(JSON.stringify(await store.getHistoricalOver05HtResults()));
       return;
     }
 
     if (url.pathname === '/api/predictions/over-15-ft') {
       const minimumProbability = Number(url.searchParams.get('minProbability') || '0');
-      const predictions = store
-        .getUpcomingOver15FtPredictions(new Date().toISOString())
+      const predictions = (await store.getUpcomingOver15FtPredictions(new Date().toISOString()))
         .filter((prediction) => prediction.probability >= minimumProbability);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(predictions));
@@ -299,14 +318,14 @@ async function runDashboard(): Promise<void> {
 
     if (url.pathname === '/api/history/over-15-ft') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(store.getHistoricalOver15FtResults()));
+      res.end(JSON.stringify(await store.getHistoricalOver15FtResults()));
       return;
     }
 
     if (url.pathname === '/api/today') {
       const date = url.searchParams.get('date') || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(store.getTodayMatches(date)));
+      res.end(JSON.stringify(await store.getTodayMatches(date)));
       return;
     }
 
@@ -321,10 +340,10 @@ async function runDashboard(): Promise<void> {
         const matches = (fixturesResponse.data.sortedCategorizedFixtures ?? []).flatMap((category) =>
           (category.fixtures ?? []).map((fixture) => normalizeFixtureFromList(fixture, category, collectedAt, 'America/Sao_Paulo')),
         );
-        store.saveMatches(matches);
+        await store.saveLiveUpdates(matches);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ updatedAt: collectedAt, matches: store.getTodayMatches(date) }));
+        res.end(JSON.stringify({ updatedAt: collectedAt, matches: await store.getTodayMatches(date) }));
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         res.writeHead(502, { 'Content-Type': 'application/json' });
@@ -333,9 +352,15 @@ async function runDashboard(): Promise<void> {
       return;
     }
 
+    if (url.pathname === '/api/leagues') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getKnownLeagues()));
+      return;
+    }
+
     if (url.pathname === '/api/history/snapshots') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
-      res.end(JSON.stringify(store.getAllSnapshots()));
+      res.end(JSON.stringify(await store.getAllSnapshots()));
       return;
     }
 
