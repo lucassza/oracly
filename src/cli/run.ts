@@ -298,6 +298,12 @@ async function runDashboard(): Promise<void> {
       return;
     }
 
+    if (url.pathname === '/api/predictions/over-15-ft-signal') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getUpcomingOver15FtSignals(new Date().toISOString())));
+      return;
+    }
+
     if (url.pathname === '/api/predictions/over-05-ht') {
       const minimumProbability = Number(url.searchParams.get('minProbability') || '0');
       const predictions = (await store.getUpcomingOver05HtPredictions(new Date().toISOString()))
@@ -310,6 +316,21 @@ async function runDashboard(): Promise<void> {
     if (url.pathname === '/api/history/over-05-ht') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(await store.getHistoricalOver05HtResults()));
+      return;
+    }
+
+    if (url.pathname === '/api/predictions/over-15-ht') {
+      const minimumProbability = Number(url.searchParams.get('minProbability') || '0');
+      const predictions = (await store.getUpcomingOver15HtPredictions(new Date().toISOString()))
+        .filter((prediction) => prediction.probability >= minimumProbability);
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(predictions));
+      return;
+    }
+
+    if (url.pathname === '/api/history/over-15-ht') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getHistoricalOver15HtResults()));
       return;
     }
 

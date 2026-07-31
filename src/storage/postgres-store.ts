@@ -18,36 +18,59 @@ export interface UpcomingOver05FtPrediction {
 
 export interface UpcomingOver05HtPrediction extends UpcomingOver05FtPrediction {}
 
-// Curated 1ª divisão por país, usando exatamente os nomes de competição do dado
+// Curated 1ª divisão (A) por país, usando exatamente os nomes de competição do dado
 // coletado. Cobre só quem já apareceu no scrape — grandes ligas europeias (Premier
 // League, La Liga, Bundesliga, Serie A, Ligue 1) ficam de fora em julho por estarem
 // de férias; some novo país/liga aqui quando aparecer no /api/leagues.
 const TOP_FLIGHT_LEAGUES: Array<[string, string]> = [
-  ['Argentina', 'Liga Profesional de Fútbol'], ['Bolivia', 'Liga De Futbol Prof'], ['Brazil', 'Serie A'],
+  ['Argentina', 'Liga Profesional de Fútbol'], ['Austria', 'Admiral Bundesliga'], ['Belarus', 'Vysshaya Liga'],
+  ['Bolivia', 'Liga De Futbol Prof'], ['Brazil', 'Serie A'],
   ['Bulgaria', 'First League'], ['Canada', 'Premier League'], ['Chile', 'Primera Division'], ['China', 'Super League'],
-  ['Colombia', 'Liga BetPlay'], ['Costa Rica', 'Primera Division'], ['Czech Republic', 'Chance Liga'],
-  ['Denmark', 'Superliga'], ['Ecuador', 'Liga Pro'], ['El Salvador', 'Primera Division'], ['Finland', 'Veikkausliiga'],
+  ['Colombia', 'Liga BetPlay'], ['Costa Rica', 'Primera Division'], ['Croatia', '1. HNL'], ['Czech Republic', 'Chance Liga'],
+  ['Denmark', 'Superliga'], ['Ecuador', 'Liga Pro'], ['El Salvador', 'Primera Division'], ['Estonia', 'Meistriliiga'],
+  ['Finland', 'Veikkausliiga'],
   ['Guatemala', 'Liga Nacional'], ['Hungary', 'NB I'], ['Iceland', 'Besta deild'], ['Kazakhstan', 'Premier League'],
   ['Kuwait', 'Division 1'], ['Kyrgyzstan', 'Top Liga'], ['Latvia', 'Virsliga'], ['Lebanon', 'Premier League'],
   ['Lithuania', 'A Lyga'], ['Macau', 'Primeira Division'], ['Macedonia', 'First League'], ['Malawi', 'Super League'],
   ['Mexico', 'Liga MX'], ['Mozambique', 'Mocambola'], ['New Zealand', 'National League'], ['Nicaragua', 'Primera Division'],
   ['Norway', 'Eliteserien'], ['Panama', 'Lpf'], ['Paraguay', 'Division 1'], ['Peru', 'Primera Division'],
   ['Poland', 'Ekstraklasa'], ['Republic of Ireland', 'Premier Division'], ['Romania', 'Superliga'],
-  ['Russia', 'Premier League'], ['Serbia', 'Super Liga'], ['Slovakia', 'Niké Liga'], ['Slovenia', '1. SNL'],
-  ['South Korea', 'K League 1'], ['Sri Lanka', 'Super League'], ['Sweden', 'Allsvenskan'],
-  ['Switzerland', 'Super League'], ['United States', 'Major League Soccer'], ['Uruguay', 'Primera Division'],
-  ['Uzbekistan', 'Super league'], ['Yemen', 'Yemeni League'], ['Zimbabwe', 'Premier Soccer League'],
+  ['Russia', 'Premier League'], ['Scotland', 'Premiership'], ['Serbia', 'Super Liga'], ['Slovakia', 'Niké Liga'],
+  ['Slovenia', '1. SNL'], ['South Korea', 'K League 1'], ['Sri Lanka', 'Super League'], ['Sweden', 'Allsvenskan'],
+  ['Switzerland', 'Super League'], ['Tajikistan', 'Vysshaya Liga'], ['Ukraine', 'Premier League'],
+  ['United States', 'Major League Soccer'], ['Uruguay', 'Primera Division'],
+  ['Uzbekistan', 'Super league'], ['Wales', 'Premier League'], ['Yemen', 'Yemeni League'], ['Zimbabwe', 'Premier Soccer League'],
+];
+
+// Curada 2ª divisão (B) por país — só onde o dado coletado já tem o nome exato da
+// competição, cruzado com a estrutura real de cada pirâmide nacional. Onde o país não
+// tem 2ª divisão ainda raspada, fica de fora (não adivinha nome).
+const SECOND_DIVISION_LEAGUES: Array<[string, string]> = [
+  ['Argentina', 'Primera B Nacional'], ['Austria', '2. Liga'], ['Belarus', 'Pershaya Liga'],
+  ['Brazil', 'Serie B'], ['Bulgaria', 'Second League'], ['Chile', 'Primera B'], ['China', 'League One'],
+  ['Colombia', 'Primera B'], ['Czech Republic', 'Chance Národní Liga'], ['Denmark', 'First Division'],
+  ['Ecuador', 'Liga Pro Serie B'], ['Estonia', 'Esiliiga A'], ['Finland', 'Ykkösliiga'],
+  ['Guatemala', 'Primera Division'], ['Hungary', 'Merkantil Bank Liga'], ['Iceland', 'Inkasso-Deildin'],
+  ['Kazakhstan', 'First Division'], ['Latvia', 'First Liga'], ['Lithuania', '1. Lyga'], ['Mexico', 'Liga de Expansión MX'],
+  ['Norway', '1. Division'], ['Panama', 'Liga Prom'], ['Paraguay', 'Division Intermedia'], ['Peru', 'Segunda Division'],
+  ['Poland', '1. Liga'], ['Republic of Ireland', 'First Division'], ['Russia', 'FNL'], ['Serbia', 'Prva Liga'],
+  ['Slovakia', '2. Liga'], ['South Korea', 'K League 2'], ['Sweden', 'Superettan'], ['Switzerland', 'Challenge League'],
+  ['Ukraine', 'Persha Liga'], ['United States', 'USL Championship'], ['Uruguay', 'Segunda Division'],
+  ['Uzbekistan', 'Pro Liga'],
 ];
 
 export interface KnownLeague {
   country: string;
   competition: string;
   isTopFlight: boolean;
+  // 'A' (1ª divisão) | 'B' (2ª divisão) | undefined (não classificada).
+  division: 'A' | 'B' | undefined;
 }
 
 export const GOAL_MARKETS = [
   { key: 'gols_1t_05_over', label: 'Over 0.5 1T' },
   { key: 'gols_1t_15_over', label: 'Over 1.5 1T' },
+  { key: 'over_05_ft_over', label: 'Over 0.5 FT' },
   { key: 'over_15_ft_over', label: 'Over 1.5 FT' },
   { key: 'over_25_ft_over', label: 'Over 2.5 FT' },
   { key: 'btts_sim', label: 'BTTS' },
@@ -148,6 +171,20 @@ export interface Over15FtResult {
   hitOver05: boolean;
 }
 
+export interface UpcomingOver15FtSignal {
+  providerMatchId: string;
+  kickoffAt: string | undefined;
+  country: string | undefined;
+  competition: string | undefined;
+  homeTeam: string;
+  awayTeam: string;
+  over25FtProbability: number | undefined;
+  bttsProbability: number | undefined;
+  over05Percentage: number | undefined;
+  combinedGoalsAverage: number | undefined;
+  signalScore: number;
+}
+
 export interface PostgresConfig {
   host: string;
   port: number;
@@ -174,6 +211,12 @@ const getOver15FtPrediction = (match: NormalizedMatch): number | undefined =>
 
 const getOver15FtModelOdd = (match: NormalizedMatch): number | undefined =>
   (match.statistics?.additional?.x7Predictions as Record<string, { oj?: number }> | undefined)?.over_15_ft_over?.oj;
+
+const getOver15HtPrediction = (match: NormalizedMatch): number | undefined =>
+  (match.statistics?.additional?.x7Predictions as Record<string, { pred?: number }> | undefined)?.gols_1t_15_over?.pred;
+
+const getOver15HtModelOdd = (match: NormalizedMatch): number | undefined =>
+  (match.statistics?.additional?.x7Predictions as Record<string, { oj?: number }> | undefined)?.gols_1t_15_over?.oj;
 
 const getOver25FtPrediction = (match: NormalizedMatch): number | undefined =>
   (match.statistics?.additional?.x7Predictions as Record<string, { pred?: number }> | undefined)?.over_25_ft_over?.pred;
@@ -360,6 +403,15 @@ export class PostgresMatchStore {
     return results.map((result) => ({ ...result, ftHit: result.finalGoals >= 1 }));
   }
 
+  async getUpcomingOver15HtPredictions(now: string): Promise<UpcomingOver05HtPrediction[]> {
+    return this.buildUpcomingPredictions(now, getOver15HtPrediction, getOver15HtModelOdd);
+  }
+
+  async getHistoricalOver15HtResults(): Promise<HistoricalOver05HtResult[]> {
+    const results = await this.buildHistoricalResults(getOver15HtPrediction, (settled) => (settled.score?.halftimeHome ?? 0) + (settled.score?.halftimeAway ?? 0) >= 2);
+    return results.map((result) => ({ ...result, ftHit: result.finalGoals >= 2 }));
+  }
+
   async getUpcomingOver15FtPredictions(now: string): Promise<UpcomingOver05FtPrediction[]> {
     return this.buildUpcomingPredictions(now, getOver15FtPrediction, getOver15FtModelOdd);
   }
@@ -446,6 +498,31 @@ export class PostgresMatchStore {
     }).sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? ''));
   }
 
+  async getUpcomingOver15FtSignals(now: string): Promise<UpcomingOver15FtSignal[]> {
+    return (await this.getLatestSnapshots())
+      .filter((match) => isMainLeague(match.competition))
+      .filter((match) => match.status === 'not_started' && (match.kickoffAt ?? '') > now)
+      .map((match) => {
+        const signals: Over15FtSignals = {
+          over25FtProbability: getOver25FtPrediction(match),
+          bttsProbability: getBttsPrediction(match),
+          combinedGoalsAverage: match.statistics?.combinedGoalsAverage,
+          over05Percentage: match.statistics?.over05Percentage,
+        };
+        return {
+          providerMatchId: match.providerMatchId ?? '',
+          kickoffAt: match.kickoffAt,
+          country: match.country,
+          competition: match.competition,
+          homeTeam: match.homeTeam.name,
+          awayTeam: match.awayTeam.name,
+          ...signals,
+          signalScore: getOver15FtSignalScore(signals),
+        };
+      })
+      .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? '') || b.signalScore - a.signalScore);
+  }
+
   async getTodayMatches(dateBrasilia: string): Promise<TodayMatch[]> {
     const byFixture = groupByFixture(await this.getAllSnapshots());
 
@@ -473,12 +550,13 @@ export class PostgresMatchStore {
   async getKnownLeagues(): Promise<KnownLeague[]> {
     await this.ready;
     const { rows } = await this.pool.query(
-      `SELECT country, competition, is_top_flight AS "isTopFlight" FROM ${this.t('leagues')} ORDER BY country, competition`,
+      `SELECT country, competition, is_top_flight AS "isTopFlight", division FROM ${this.t('leagues')} ORDER BY country, competition`,
     );
     return rows.map((row) => ({
       country: String(row.country),
       competition: String(row.competition),
       isTopFlight: Boolean(row.isTopFlight),
+      division: row.division === 'A' || row.division === 'B' ? row.division : undefined,
     }));
   }
 
@@ -600,8 +678,10 @@ export class PostgresMatchStore {
         country TEXT NOT NULL,
         competition TEXT NOT NULL,
         is_top_flight BOOLEAN NOT NULL DEFAULT FALSE,
+        division TEXT,
         PRIMARY KEY (country, competition)
       );
+      ALTER TABLE ${this.t('leagues')} ADD COLUMN IF NOT EXISTS division TEXT;
     `);
     await this.backfillLeaguesIfEmpty();
     await this.seedTopFlightLeagues();
@@ -620,22 +700,26 @@ export class PostgresMatchStore {
       const country = match.country ?? 'Desconhecido';
       seen.set(`${country}|${match.competition}`, [country, match.competition]);
     }
-    await this.upsertLeagues([...seen.values()], false);
+    await this.upsertLeagues([...seen.values()], undefined);
   }
 
   private async seedTopFlightLeagues(): Promise<void> {
-    await this.upsertLeagues(TOP_FLIGHT_LEAGUES, true);
+    await this.upsertLeagues(TOP_FLIGHT_LEAGUES, 'A');
+    await this.upsertLeagues(SECOND_DIVISION_LEAGUES, 'B');
   }
 
   // Single batched round trip regardless of how many (country, competition) pairs
   // there are — called during store construction, so this must stay fast even
   // against a remote server.
-  private async upsertLeagues(pairs: Array<[string, string]>, isTopFlight: boolean): Promise<void> {
+  private async upsertLeagues(pairs: Array<[string, string]>, division: 'A' | 'B' | undefined): Promise<void> {
     if (!pairs.length) return;
-    const values = pairs.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2}, ${isTopFlight})`).join(',');
-    const conflictAction = isTopFlight ? 'UPDATE SET is_top_flight = TRUE' : 'NOTHING';
+    const isTopFlight = division === 'A';
+    const values = pairs.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2}, ${isTopFlight}, ${division ? `'${division}'` : 'NULL'})`).join(',');
+    const conflictAction = division
+      ? `UPDATE SET is_top_flight = ${isTopFlight}, division = '${division}'`
+      : 'NOTHING';
     await this.pool.query(
-      `INSERT INTO ${this.t('leagues')} (country, competition, is_top_flight) VALUES ${values}
+      `INSERT INTO ${this.t('leagues')} (country, competition, is_top_flight, division) VALUES ${values}
        ON CONFLICT (country, competition) DO ${conflictAction}`,
       pairs.flat(),
     );
