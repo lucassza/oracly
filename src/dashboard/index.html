@@ -347,6 +347,7 @@
     .today-active .controls { visibility: hidden; }
     .favorites-active .controls { visibility: hidden; }
     .pattern-active .controls { visibility: hidden; }
+    .over15ft-active .controls { visibility: hidden; }
     .app-view { display: none; }
     .app-view.active { display: block; }
     .goals-lab { background: var(--canvas); color: var(--ink); min-height: calc(100vh - 75px); }
@@ -484,6 +485,7 @@
         <button class="view-tab" data-view="labView">Laboratório de gols</button>
         <button class="view-tab" data-view="predictionsView">Previsões</button>
         <button class="view-tab" data-view="patternView">0x0 aos 30'</button>
+        <button class="view-tab" data-view="over15FtView">Over 1.5 FT</button>
         <button class="view-tab" data-view="favoritesView">Favoritos</button>
       </div>
     <div class="controls">
@@ -548,6 +550,12 @@
   <main class="app-view goals-lab" id="patternView">
     <div class="lab-shell" id="patternContent">
       <div class="lab-loading">Carregando padrão 0x0 aos 30'…</div>
+    </div>
+  </main>
+
+  <main class="app-view goals-lab" id="over15FtView">
+    <div class="lab-shell" id="over15FtContent">
+      <div class="lab-loading">Carregando estudo Over 1.5 FT…</div>
     </div>
   </main>
 
@@ -1178,6 +1186,79 @@
       }
     }
 
+    let over15FtMarket = 'over25Ft';
+    let over15FtThreshold = 0;
+    let over15FtMinAverage = 0;
+    let over15FtMinScore = 0;
+    let over15FtPreset = null;
+
+    const OVER_15_FT_MARKETS = {
+      over25Ft: { label: 'O2.5 FT', key: 'over25FtProbability' },
+      bttsProb: { label: 'BTTS', key: 'bttsProbability' },
+      over05Pct: { label: 'O0.5% times', key: 'over05Percentage' },
+    };
+
+    // Combo descoberto por busca exaustiva com split aleatório (1567 jogos, cobertura de
+    // sinal ainda concentrada em poucos dias — validação temporal não é confiável ainda).
+    const OVER_15_FT_PRESETS = {
+      score2: { label: 'Score ≥2', apply: r => r.signalScore >= 2 },
+    };
+
+    async function renderOver15Ft() {
+      const content = document.getElementById('over15FtContent');
+      content.innerHTML = '<div class="lab-loading">Analisando estudo Over 1.5 FT no banco local…</div>';
+      try {
+        const response = await fetch('/api/history/over-15-ft-signal');
+        if (!response.ok) throw new Error('Banco local indisponível');
+        const records = await response.json();
+        const market = OVER_15_FT_MARKETS[over15FtMarket];
+        const preset = over15FtPreset ? OVER_15_FT_PRESETS[over15FtPreset] : null;
+        const selected = records
+          .filter(record => over15FtThreshold === 0 || (record[market.key] != null && record[market.key] >= over15FtThreshold))
+          .filter(record => over15FtMinAverage === 0 || (record.combinedGoalsAverage != null && record.combinedGoalsAverage >= over15FtMinAverage))
+          .filter(record => over15FtMinScore === 0 || record.signalScore >= over15FtMinScore)
+          .filter(record => !preset || preset.apply(record));
+        const hits = selected.filter(record => record.hit).length;
+        const accuracy = selected.length ? Math.round((hits / selected.length) * 100) : 0;
+        const hits05 = selected.filter(record => record.hitOver05).length;
+        const accuracy05 = selected.length ? Math.round((hits05 / selected.length) * 100) : 0;
+        const presets = Object.entries(OVER_15_FT_PRESETS).map(([key, p]) => `<button class="prediction-filter ${key === over15FtPreset ? 'active' : ''}" data-o15-preset="${key}">${p.label}</button>`).join('');
+        const markets = Object.entries(OVER_15_FT_MARKETS).map(([key, m]) => `<button class="prediction-filter ${key === over15FtMarket ? 'active' : ''}" data-o15-market="${key}">${m.label}</button>`).join('');
+        const filters = [0, 60, 70, 80, 90].map(threshold => `<button class="prediction-filter ${threshold === over15FtThreshold ? 'active' : ''}" data-o15-threshold="${threshold}">${threshold === 0 ? 'Todos' : `≥ ${threshold}%`}</button>`).join('');
+        const averages = [0, 3.0, 3.4, 3.8].map(min => `<button class="prediction-filter ${min === over15FtMinAverage ? 'active' : ''}" data-o15-average="${min}">${min === 0 ? 'Todas' : `≥ ${min.toFixed(1)}`}</button>`).join('');
+        const scores = [0, 2, 3, 4].map(min => `<button class="prediction-filter ${min === over15FtMinScore ? 'active' : ''}" data-o15-score="${min}">${min === 0 ? 'Todos' : `≥ ${min} sinais`}</button>`).join('');
+        const heroFact = (value, label) => `<div class="hero-fact"><div class="hero-fact-value">${value}</div><div class="hero-fact-label">${label}</div></div>`;
+        const heroFacts = heroFact(selected.length, 'Jogos analisados')
+          + heroFact(`${accuracy05}%`, 'Over 0.5 FT (mesmo corte)')
+          + heroFact(hits, 'Green (Over 1.5 FT)')
+          + heroFact(selected.length - hits, 'Red (Under 1.5 FT)')
+          + heroFact(`${records.length ? Math.round((selected.length / records.length) * 100) : 0}%`, 'Cobertura');
+        const cuts = [
+          preset ? preset.label : null,
+          over15FtThreshold === 0 ? null : `${market.label} ≥ ${over15FtThreshold}%`,
+          over15FtMinAverage === 0 ? null : `média ≥ ${over15FtMinAverage.toFixed(1)}`,
+          over15FtMinScore === 0 ? null : `score ≥ ${over15FtMinScore}`,
+        ].filter(Boolean);
+        const cutLabel = cuts.length ? cuts.join(' · ') : 'sem corte de sinal';
+        const outcomeBadge = (label, value) => `<span class="outcome ${value ? 'win' : 'loss'}">${label} ${value ? 'Green' : 'Red'}</span>`;
+        const rows = selected.map(record => {
+          const outcome = `<div class="outcome-pair">${outcomeBadge('O0.5', record.hitOver05)}${outcomeBadge('O1.5', record.hit)}</div>`;
+          const probability = record[market.key] != null ? `${market.label}: ${record[market.key]}%` : 'Sem previsão';
+          const average = record.combinedGoalsAverage != null ? record.combinedGoalsAverage.toFixed(1) : '—';
+          const day = new Date(record.kickoffAt).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+          return `<div class="result-row"><div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div><div class="result-number">${day}</div><div class="result-number">FT: ${record.finalGoals}<br>Média: ${average}</div><div class="result-number">${probability}<br>Score ${record.signalScore}/4</div>${outcome}</div>`;
+        }).join('');
+        content.innerHTML = `<div class="lab-eyebrow">Banco local · estudo Over 1.5 FT · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">Over 1.5 FT.<br>Jogo inteiro.</h1><p class="lab-source">Estudo exploratório com split aleatório (não temporal) — cobertura de sinal x7/BTTS% ainda concentrada em poucos dias do banco. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div><div class="prediction-controls"><span class="prediction-detail">Presets:</span>${presets}</div><div class="prediction-controls"><span class="prediction-detail">Sinal:</span>${markets}</div><div class="prediction-controls"><span class="prediction-detail">Corte:</span>${filters}</div><div class="prediction-controls"><span class="prediction-detail">Média de gols:</span>${averages}</div><div class="prediction-controls"><span class="prediction-detail">Score:</span>${scores}</div><section class="lab-hero"><div class="hero-copy"><div class="hero-market">Over 1.5 FT · ${cutLabel}</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${hits} de ${selected.length} jogos bateram Over 1.5 FT (2+ gols).</p></div><div class="hero-facts">${heroFacts}</div></section><div class="section-heading"><h2>Resultados</h2><span>Mais recentes primeiro</span></div><section class="lab-results"><div class="result-row header"><div>Partida</div><div>Data</div><div>Placar</div><div>Sinal</div><div>O0.5 / O1.5</div></div>${rows || '<div class="empty">Nenhum jogo atende a este corte.</div>'}</section>`;
+        content.querySelectorAll('[data-o15-market]').forEach(button => button.addEventListener('click', () => { over15FtMarket = button.dataset.o15Market; over15FtPreset = null; renderOver15Ft(); }));
+        content.querySelectorAll('[data-o15-threshold]').forEach(button => button.addEventListener('click', () => { over15FtThreshold = Number(button.dataset.o15Threshold); over15FtPreset = null; renderOver15Ft(); }));
+        content.querySelectorAll('[data-o15-average]').forEach(button => button.addEventListener('click', () => { over15FtMinAverage = Number(button.dataset.o15Average); over15FtPreset = null; renderOver15Ft(); }));
+        content.querySelectorAll('[data-o15-score]').forEach(button => button.addEventListener('click', () => { over15FtMinScore = Number(button.dataset.o15Score); over15FtPreset = null; renderOver15Ft(); }));
+        content.querySelectorAll('[data-o15-preset]').forEach(button => button.addEventListener('click', () => { const key = button.dataset.o15Preset; over15FtPreset = over15FtPreset === key ? null : key; over15FtThreshold = 0; over15FtMinAverage = 0; over15FtMinScore = 0; renderOver15Ft(); }));
+      } catch (error) {
+        content.innerHTML = `<div class="empty">Não foi possível carregar o estudo: ${error.message}</div>`;
+      }
+    }
+
     // Update stats bar
     function updateStats() {
       const matches = getFilteredMatches();
@@ -1452,9 +1533,11 @@
       document.body.classList.toggle('today-active', tab.dataset.view === 'todayView');
       document.body.classList.toggle('favorites-active', tab.dataset.view === 'favoritesView');
       document.body.classList.toggle('pattern-active', tab.dataset.view === 'patternView');
+      document.body.classList.toggle('over15ft-active', tab.dataset.view === 'over15FtView');
       if (tab.dataset.view === 'labView') renderGoalsLab();
       if (tab.dataset.view === 'predictionsView') renderPredictions();
       if (tab.dataset.view === 'patternView') renderPattern();
+      if (tab.dataset.view === 'over15FtView') renderOver15Ft();
       if (tab.dataset.view === 'todayView') renderToday();
       if (tab.dataset.view === 'favoritesView') renderFavorites();
     }));

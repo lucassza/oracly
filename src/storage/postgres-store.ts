@@ -123,6 +123,31 @@ export interface ZeroAt30Result {
   hit: boolean;
 }
 
+// Estudo "Over 1.5 FT" (jogo inteiro, sem condicionar a placar aos 30'): descoberto por
+// busca exaustiva com split aleatório (1567 jogos — cobertura de sinal x7/BTTS% ainda
+// concentrada em poucos dias do banco, então validação temporal não é confiável ainda).
+// Score 2/4 rendeu 83% de green tanto no treino quanto na validação (base ~74-76%).
+export interface Over15FtResult {
+  providerMatchId: string;
+  kickoffAt: string | undefined;
+  country: string | undefined;
+  competition: string | undefined;
+  homeTeam: string;
+  awayTeam: string;
+  finalGoals: number;
+  over25FtProbability: number | undefined;
+  bttsProbability: number | undefined;
+  over05Percentage: number | undefined;
+  combinedGoalsAverage: number | undefined;
+  // Quantos dos 4 sinais o jogo confirma (0-4): O2.5 FT >= 70, BTTS >= 65,
+  // média de gols >= 3.8, Over 0.5% dos times >= 90.
+  signalScore: number;
+  hit: boolean;
+  // Mesmo score também funciona como régua pro Over 0.5 FT (dose-resposta monotônica
+  // nos dois mercados juntos): score 0 -> 93%, score 4 -> 100%.
+  hitOver05: boolean;
+}
+
 export interface PostgresConfig {
   host: string;
   port: number;
@@ -169,6 +194,20 @@ const ZERO_AT_30_SIGNALS: Array<(signals: ZeroAt30Signals) => boolean> = [
 
 const getSignalScore = (signals: ZeroAt30Signals): number =>
   ZERO_AT_30_SIGNALS.filter((check) => check(signals)).length;
+
+type Over15FtSignals = Pick<Over15FtResult, 'over25FtProbability' | 'bttsProbability' | 'combinedGoalsAverage' | 'over05Percentage'>;
+
+// Cortes descobertos por busca exaustiva com split aleatorio (1567 jogos, ver nota na
+// interface Over15FtResult): score 2/4 rendeu 83% de green tanto em treino quanto validacao.
+const OVER_15_FT_SIGNALS: Array<(signals: Over15FtSignals) => boolean> = [
+  (signals) => (signals.over25FtProbability ?? 0) >= 70,
+  (signals) => (signals.bttsProbability ?? 0) >= 65,
+  (signals) => (signals.combinedGoalsAverage ?? 0) >= 3.8,
+  (signals) => (signals.over05Percentage ?? 0) >= 90,
+];
+
+const getOver15FtSignalScore = (signals: Over15FtSignals): number =>
+  OVER_15_FT_SIGNALS.filter((check) => check(signals)).length;
 
 const getGoalBand = (minute: number | undefined): string => {
   if (minute === undefined) return '—';
@@ -370,6 +409,39 @@ export class PostgresMatchStore {
         ...signals,
         signalScore: getSignalScore(signals),
         hit: firstGoalMinute !== undefined && firstGoalMinute <= 75,
+      }];
+    }).sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? ''));
+  }
+
+  async getOver15FtSignalResults(): Promise<Over15FtResult[]> {
+    const byFixture = groupByFixture(await this.getAllSnapshots());
+
+    return [...byFixture.entries()].flatMap(([providerMatchId, snapshots]) => {
+      const settled = snapshots.filter((match) => match.status === 'finished').sort(byLatestCollection).at(-1);
+      const kickoffAt = settled?.kickoffAt;
+      if (!settled || !kickoffAt) return [];
+      const finalGoals = (settled.score?.home ?? 0) + (settled.score?.away ?? 0);
+      const preKickoff = snapshots.filter((match) => match.collectedAt < kickoffAt).sort(byLatestCollection);
+      const lastPreKickoffValue = (getValue: (match: NormalizedMatch) => number | undefined): number | undefined =>
+        preKickoff.map(getValue).filter((value): value is number => value !== undefined).at(-1);
+      const signals: Over15FtSignals = {
+        over25FtProbability: lastPreKickoffValue(getOver25FtPrediction),
+        bttsProbability: lastPreKickoffValue(getBttsPrediction),
+        combinedGoalsAverage: lastPreKickoffValue((match) => match.statistics?.combinedGoalsAverage),
+        over05Percentage: lastPreKickoffValue((match) => match.statistics?.over05Percentage),
+      };
+      return [{
+        providerMatchId,
+        kickoffAt,
+        country: settled.country,
+        competition: settled.competition,
+        homeTeam: settled.homeTeam.name,
+        awayTeam: settled.awayTeam.name,
+        finalGoals,
+        ...signals,
+        signalScore: getOver15FtSignalScore(signals),
+        hit: finalGoals >= 2,
+        hitOver05: finalGoals >= 1,
       }];
     }).sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? ''));
   }

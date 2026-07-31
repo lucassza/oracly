@@ -292,6 +292,12 @@ async function runDashboard(): Promise<void> {
       return;
     }
 
+    if (url.pathname === '/api/history/over-15-ft-signal') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getOver15FtSignalResults()));
+      return;
+    }
+
     if (url.pathname === '/api/predictions/over-05-ht') {
       const minimumProbability = Number(url.searchParams.get('minProbability') || '0');
       const predictions = (await store.getUpcomingOver05HtPredictions(new Date().toISOString()))
