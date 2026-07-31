@@ -1,6 +1,8 @@
 #!/usr/bin/env node
 
 import { ScraperService } from '../services/scraper.js';
+import { DailyAutomationService } from '../services/daily-automation.js';
+import { RealtimeAutomationService } from '../services/realtime-automation.js';
 import { SokkerProApi } from '../api/client.js';
 import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
@@ -8,6 +10,7 @@ import { PostgresMatchStore } from '../storage/postgres-store.js';
 import { importOutputDirectory } from '../storage/import-output.js';
 import { normalizeFixtureFromList } from '../api/normalizer.js';
 import { backfillHalfTimeStats } from './backfill-ht.js';
+import { getBrasiliaDate } from '../utils/time.js';
 import type { Env } from '../config/env.js';
 import type { IncomingMessage } from 'node:http';
 
@@ -497,20 +500,13 @@ async function runDashboard(): Promise<void> {
     }
 
     if (req.method === 'POST' && url.pathname === '/api/today/refresh') {
-      const date = url.searchParams.get('date') || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+      const date = url.searchParams.get('date') || getBrasiliaDate();
       try {
-        const api = new SokkerProApi();
-        const collectedAt = new Date().toISOString();
-        const fixturesResponse = await api.getFixtures(date);
-        if (!fixturesResponse.success || !fixturesResponse.data) throw new Error('SokkerPRO retornou resposta sem sucesso');
-
-        const matches = (fixturesResponse.data.sortedCategorizedFixtures ?? []).flatMap((category) =>
-          (category.fixtures ?? []).map((fixture) => normalizeFixtureFromList(fixture, category, collectedAt, 'America/Sao_Paulo')),
-        );
-        await store.saveLiveUpdates(matches);
+        const realtime = new RealtimeAutomationService();
+        const result = await realtime.refreshDate(date);
 
         res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify({ updatedAt: collectedAt, matches: await store.getTodayMatches(date) }));
+        res.end(JSON.stringify({ ...result, matches: await store.getTodayMatches(date) }));
       } catch (error) {
         const message = error instanceof Error ? error.message : String(error);
         res.writeHead(502, { 'Content-Type': 'application/json' });
@@ -608,6 +604,27 @@ async function runDashboard(): Promise<void> {
   });
 }
 
+async function runAutomationDaily(date: string): Promise<void> {
+  const service = new DailyAutomationService();
+  await service.runOnce(date);
+}
+
+async function runAutomationDailyDaemon(): Promise<void> {
+  const service = new DailyAutomationService();
+  await service.start();
+}
+
+async function runAutomationRealtime(date: string): Promise<void> {
+  const service = new RealtimeAutomationService();
+  const result = await service.refreshDate(date);
+  console.log(JSON.stringify(result, null, 2));
+}
+
+async function runAutomationRealtimeDaemon(): Promise<void> {
+  const service = new RealtimeAutomationService();
+  await service.start();
+}
+
 async function main(): Promise<void> {
   const { date, command, from, to, days, concurrency } = parseArgs();
 
@@ -638,9 +655,21 @@ async function main(): Promise<void> {
     case 'inspect':
       await runInspect(date);
       break;
+    case 'automation:daily':
+      await runAutomationDaily(date);
+      break;
+    case 'automation:daily:daemon':
+      await runAutomationDailyDaemon();
+      break;
+    case 'automation:realtime':
+      await runAutomationRealtime(date);
+      break;
+    case 'automation:realtime:daemon':
+      await runAutomationRealtimeDaemon();
+      break;
     default:
       console.error(`Unknown command: ${command}`);
-      console.log('Available commands: scrape, daily, dashboard, inspect, database:import, backfill:ht, session:create, session:validate');
+      console.log('Available commands: scrape, daily, dashboard, inspect, database:import, backfill:ht, session:create, session:validate, automation:daily, automation:daily:daemon, automation:realtime, automation:realtime:daemon');
       process.exit(1);
   }
 }

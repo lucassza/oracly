@@ -272,6 +272,12 @@ export interface PostgresConfig {
   schema?: string;
 }
 
+export interface RefreshCandidate {
+  providerMatchId: string;
+  kickoffAt: string | undefined;
+  status: string | undefined;
+}
+
 const getOver05FtPrediction = (match: NormalizedMatch): number | undefined =>
   (match.statistics?.additional?.x7Predictions as Record<string, { pred?: number }> | undefined)?.over_05_ft_over?.pred;
 
@@ -361,6 +367,12 @@ const getGoalBand = (minute: number | undefined): string => {
 // seguro que loop infinito).
 const STILL_PENDING_STATUSES = new Set(['not_started', 'live', 'half_time', '1st', '2nd', 'et', 'extra_time']);
 export const isStillPending = (status: string | undefined): boolean => STILL_PENDING_STATUSES.has(status ?? '');
+
+const FINAL_STATUSES = new Set(['finished', 'after_extra_time', 'penalties', 'cancelled', 'awarded', 'walkover']);
+const OPEN_STATUSES = new Set(['live', '1st', '2nd', 'half_time', 'extra_time', 'suspended']);
+const isOpenStatus = (status: string | undefined): boolean => Boolean(status && OPEN_STATUSES.has(status));
+const isRefreshableStatus = (status: string | undefined): boolean =>
+  !FINAL_STATUSES.has(status ?? '') && status !== 'postponed' && status !== 'abandoned';
 
 // Última ocorrência definida numa lista já ordenada por collectedAt ascendente — mesmo
 // padrão do `lastPreKickoffValue` inline usado nos outros métodos, generalizado aqui porque
@@ -763,6 +775,28 @@ export class PostgresMatchStore {
       .map((snapshots) => [...snapshots].sort(byLatestCollection).at(-1) as NormalizedMatch)
       .filter((match) => toBrasiliaDate(match.kickoffAt) === dateBrasilia)
       .filter((match) => isStillPending(match.status))
+      .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? ''));
+  }
+
+  async getRefreshCandidates(now: string, lookbackHours: number, lookaheadHours: number): Promise<RefreshCandidate[]> {
+    const nowTimestamp = new Date(now).getTime();
+    const minTimestamp = nowTimestamp - lookbackHours * 60 * 60 * 1000;
+    const maxTimestamp = nowTimestamp + lookaheadHours * 60 * 60 * 1000;
+
+    return (await this.getLatestSnapshots())
+      .filter((match) => Boolean(match.providerMatchId))
+      .filter((match) => isRefreshableStatus(match.status))
+      .filter((match) => {
+        if (!match.kickoffAt) return match.status === 'live' || isOpenStatus(match.status);
+        const kickoffTimestamp = new Date(match.kickoffAt).getTime();
+        if (Number.isNaN(kickoffTimestamp)) return false;
+        return kickoffTimestamp >= minTimestamp && kickoffTimestamp <= maxTimestamp;
+      })
+      .map((match) => ({
+        providerMatchId: match.providerMatchId ?? '',
+        kickoffAt: match.kickoffAt,
+        status: match.status,
+      }))
       .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? ''));
   }
 
