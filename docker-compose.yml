@@ -44,3 +44,42 @@ services:
       - ./storage/logs:/app/storage/logs
     tmpfs:
       - /tmp
+    restart: unless-stopped
+    command: ["scrape"]
+
+  automation-daily:
+    image: oracly-scraper:latest
+    profiles: ["automation"]
+    env_file: .env
+    environment: &automation-env
+      PLAYWRIGHT_HEADLESS: "true"
+      DAILY_UPDATE_ENABLED: "true"
+      DAILY_UPDATE_HOUR_BRASILIA: "6"
+      DAILY_UPDATE_MINUTE_BRASILIA: "0"
+      DAILY_UPDATE_DAYS: "1"
+      REALTIME_UPDATE_ENABLED: "true"
+      REALTIME_UPDATE_INTERVAL_SECONDS: "60"
+      REALTIME_LOOKBACK_HOURS: "3"
+      REALTIME_LOOKAHEAD_HOURS: "6"
+      REALTIME_DETAIL_CONCURRENCY: "3"
+      LOG_LEVEL: info
+      OUTPUT_PATH: /app/storage/output
+      SCREENSHOT_PATH: /app/storage/screenshots
+    volumes:
+      - ./storage:/app/storage
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    command: ["automation:daily:daemon"]
+
+  automation-realtime:
+    image: oracly-scraper:latest
+    profiles: ["automation"]
+    env_file: .env
+    environment: *automation-env
+    volumes:
+      - ./storage:/app/storage
+    tmpfs:
+      - /tmp
+    restart: unless-stopped
+    command: ["automation:realtime:daemon"]

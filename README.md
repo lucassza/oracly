@@ -55,6 +55,15 @@ Variáveis principais:
 | `SCRAPER_DELAY_MIN_MS` | Delay mínimo entre requisições | 1000ms |
 | `SCRAPER_DELAY_MAX_MS` | Delay máximo entre requisições | 3000ms |
 | `SCRAPER_MAX_RETRIES` | Número máximo de retentativas | 3 |
+| `DAILY_UPDATE_ENABLED` | Habilita o worker diário contínuo | false |
+| `DAILY_UPDATE_HOUR_BRASILIA` | Hora da carga diária em Brasília | 6 |
+| `DAILY_UPDATE_MINUTE_BRASILIA` | Minuto da carga diária em Brasília | 0 |
+| `DAILY_UPDATE_DAYS` | Quantos dias à frente o worker diário carrega | 1 |
+| `REALTIME_UPDATE_ENABLED` | Habilita o worker de resultados em tempo real | false |
+| `REALTIME_UPDATE_INTERVAL_SECONDS` | Intervalo entre ciclos de refresh | 60 |
+| `REALTIME_LOOKBACK_HOURS` | Janela retroativa monitorada | 3 |
+| `REALTIME_LOOKAHEAD_HOURS` | Janela futura monitorada | 6 |
+| `REALTIME_DETAIL_CONCURRENCY` | Concorrência das consultas de detalhe | 3 |
 | `LOG_LEVEL` | Nível de log | info |
 | `OUTPUT_PATH` | Diretório de saída | storage/output |
 
@@ -70,6 +79,25 @@ npm run scrape
 
 ```bash
 npm run scrape -- --date=2026-07-24
+```
+
+### Rodar a carga diária sob demanda
+
+```bash
+npm run automation:daily -- --date=2026-07-31
+```
+
+### Rodar o refresh em tempo real sob demanda
+
+```bash
+npm run automation:realtime -- --date=2026-07-31
+```
+
+### Iniciar os workers contínuos
+
+```bash
+npm run automation:daily:daemon
+npm run automation:realtime:daemon
 ```
 
 ### Inspecionar a API
@@ -106,6 +134,35 @@ docker compose build
 ```bash
 docker compose run --rm scraper
 docker compose run --rm scraper scrape --date=2026-07-24
+docker compose up -d dashboard automation-daily automation-realtime
+```
+
+### Subir no boot com systemd
+
+O projeto inclui a unidade [deploy/systemd/oracly-docker.service](/home/luk-server/Projetos/Apostas/oracly/deploy/systemd/oracly-docker.service) e o instalador [scripts/install-systemd-service.sh](/home/luk-server/Projetos/Apostas/oracly/scripts/install-systemd-service.sh).
+
+Pré-requisitos no host:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y docker.io docker-compose-plugin
+sudo systemctl enable --now docker
+```
+
+Instalação do serviço:
+
+```bash
+chmod +x scripts/install-systemd-service.sh
+./scripts/install-systemd-service.sh
+```
+
+Comandos úteis:
+
+```bash
+sudo systemctl status oracly-docker.service
+sudo systemctl restart oracly-docker.service
+sudo journalctl -u oracly-docker.service -f
+docker compose ps
 ```
 
 ### Validar

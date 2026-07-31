@@ -1,8 +1,7 @@
-FROM node:22-slim
+FROM node:22-slim AS base
 
 WORKDIR /app
 
-# Install dependencies for Playwright
 RUN apt-get update && apt-get install -y \
     libnss3 \
     libnspr4 \
@@ -25,28 +24,28 @@ RUN apt-get update && apt-get install -y \
     --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy package files
-COPY package.json package-lock.json* ./
+COPY package.json package-lock.json ./
 
-# Install dependencies
+FROM base AS build
+
 RUN npm ci
+RUN npx playwright install chromium
 
-# Install Playwright browsers
-RUN npx playwright install chromium --with-deps
-
-# Copy source
 COPY tsconfig.json ./
 COPY src/ ./src/
-
-# Build
 RUN npm run build
+RUN npm prune --omit=dev
 
-# Create storage directories
-RUN mkdir -p storage/{sessions,output,screenshots,debug-html,logs}
+FROM base AS runtime
 
-# Environment defaults
 ENV NODE_ENV=production
 ENV PLAYWRIGHT_HEADLESS=true
+
+COPY --from=build /app/node_modules ./node_modules
+COPY --from=build /app/dist ./dist
+COPY package.json ./
+
+RUN mkdir -p storage/sessions storage/output storage/screenshots storage/debug-html storage/logs
 
 ENTRYPOINT ["node", "dist/cli/run.js"]
 CMD ["scrape"]
