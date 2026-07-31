@@ -15,7 +15,7 @@ import type { NormalizedMatch } from '../types/schemas.js';
 import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
 import { ProgressBar } from '../utils/progress.js';
-import { PostgresMatchStore } from '../storage/postgres-store.js';
+import { PostgresMatchStore, isStillPending } from '../storage/postgres-store.js';
 
 // ============================================================
 // Scraper Execution Result
@@ -38,6 +38,12 @@ export interface ScrapeResult {
 export interface ScrapeOptions {
   from?: string;  // HH:MM format
   to?: string;    // HH:MM format
+}
+
+export interface RescrapeUnsettledResult {
+  checked: number;
+  updated: number;
+  stillUnsettled: number;
 }
 
 // ============================================================
@@ -242,6 +248,58 @@ export class ScraperService {
       }
 
       return result;
+    }
+  }
+
+  /**
+   * Re-checks matches from a given date whose last known status isn't 'finished' yet
+   * (e.g. the scraper was down when they ended) and persists whatever's now settled.
+   * Targeted — only touches matches still pending, not the whole day.
+   */
+  async rescrapeUnsettled(dateBrasilia: string): Promise<RescrapeUnsettledResult> {
+    const env = getEnv();
+    const store = new PostgresMatchStore({
+      host: env.POSTGRES_HOST,
+      port: env.POSTGRES_PORT,
+      database: env.POSTGRES_DB,
+      user: env.POSTGRES_USER,
+      password: env.POSTGRES_PASSWORD,
+    });
+
+    try {
+      const unsettled = await store.getUnsettledMatches(dateBrasilia);
+      this.logger.info({ dateBrasilia, count: unsettled.length }, 'Rechecking unsettled matches');
+
+      const refreshed: NormalizedMatch[] = [];
+      for (let i = 0; i < unsettled.length; i += env.SCRAPER_CONCURRENCY) {
+        const batch = unsettled.slice(i, i + env.SCRAPER_CONCURRENCY);
+        const batchResults = await Promise.all(batch.map(async (match) => {
+          try {
+            return await this.enrichMatch(match);
+          } catch (error) {
+            const msg = error instanceof Error ? error.message : String(error);
+            this.logger.warn({ fixtureId: match.providerMatchId, error: msg }, 'Failed to recheck match');
+            return null;
+          }
+        }));
+        refreshed.push(...batchResults.filter((m): m is NormalizedMatch => m !== null));
+
+        if (i + env.SCRAPER_CONCURRENCY < unsettled.length) {
+          const delay = Math.floor(
+            Math.random() * (env.SCRAPER_DELAY_MAX_MS - env.SCRAPER_DELAY_MIN_MS) + env.SCRAPER_DELAY_MIN_MS,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
+        }
+      }
+
+      if (refreshed.length) await store.saveMatches(refreshed);
+
+      const updated = refreshed.filter((match) => !isStillPending(match.status)).length;
+      const result = { checked: unsettled.length, updated, stillUnsettled: unsettled.length - updated };
+      this.logger.info(result, 'Unsettled recheck finished');
+      return result;
+    } finally {
+      await store.close();
     }
   }
 

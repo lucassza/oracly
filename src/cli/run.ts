@@ -113,6 +113,52 @@ async function runScrape(date: string, from?: string, to?: string, days = 1): Pr
   );
 }
 
+// Adiciona/subtrai dias de calendário sobre uma string YYYY-MM-DD, sem depender de
+// fuso horário (aritmética pura em UTC — a string já representa um dia civil).
+function shiftDate(dateStr: string, days: number): string {
+  const [year, month, day] = dateStr.split('-').map(Number);
+  const date = new Date(Date.UTC(year, month - 1, day));
+  date.setUTCDate(date.getUTCDate() + days);
+  return date.toISOString().slice(0, 10);
+}
+
+async function runDaily(): Promise<void> {
+  const logger = getLogger();
+  const scraper = new ScraperService();
+  const today = new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
+  const yesterday = shiftDate(today, -1);
+  const tomorrow = shiftDate(today, 1);
+
+  logger.info({ yesterday, today, tomorrow }, 'Daily job started');
+
+  logger.info({ date: yesterday }, 'Step 1/3: rechecking unsettled matches from yesterday');
+  const recheck = await scraper.rescrapeUnsettled(yesterday);
+  logger.info(recheck, 'Step 1/3 done');
+
+  logger.info({ date: today }, 'Step 2/3: scraping today');
+  const todayResult = await scraper.scrape(today);
+  logger.info(
+    { status: todayResult.status, found: todayResult.summary.matchesFound, processed: todayResult.summary.matchesProcessed },
+    'Step 2/3 done',
+  );
+
+  logger.info({ date: tomorrow }, 'Step 3/3: scraping tomorrow');
+  const tomorrowResult = await scraper.scrape(tomorrow);
+  logger.info(
+    { status: tomorrowResult.status, found: tomorrowResult.summary.matchesFound, processed: tomorrowResult.summary.matchesProcessed },
+    'Step 3/3 done',
+  );
+
+  logger.info(
+    {
+      yesterday: { date: yesterday, ...recheck },
+      today: { date: today, status: todayResult.status, found: todayResult.summary.matchesFound, processed: todayResult.summary.matchesProcessed },
+      tomorrow: { date: tomorrow, status: tomorrowResult.status, found: tomorrowResult.summary.matchesFound, processed: tomorrowResult.summary.matchesProcessed },
+    },
+    'Daily job finished',
+  );
+}
+
 async function runSessionValidate(): Promise<void> {
   const logger = getLogger();
   logger.info('Validating SokkerPRO session...');
@@ -450,6 +496,9 @@ async function main(): Promise<void> {
     case 'scrape':
       await runScrape(date, from, to, days);
       break;
+    case 'daily':
+      await runDaily();
+      break;
     case 'dashboard':
       await runDashboard();
       break;
@@ -469,7 +518,7 @@ async function main(): Promise<void> {
       break;
     default:
       console.error(`Unknown command: ${command}`);
-      console.log('Available commands: scrape, dashboard, inspect, database:import, session:create, session:validate');
+      console.log('Available commands: scrape, daily, dashboard, inspect, database:import, session:create, session:validate');
       process.exit(1);
   }
 }

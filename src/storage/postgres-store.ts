@@ -260,6 +260,15 @@ const getGoalBand = (minute: number | undefined): string => {
   return "76+'";
 };
 
+// Lista de INCLUSÃO (não exclusão): só considera "pendente" status sabidamente ainda
+// em andamento. Descobrimos que 'FTP' e 'after_extra_time' são terminais de verdade
+// (já vêm com placar final) mas nunca viram literalmente 'finished' — uma lista de
+// exclusão (tipo "tudo que não é finished") reconferiria esses pra sempre, gastando
+// chamada de API à toa todo dia. Status desconhecido = tratado como resolvido (mais
+// seguro que loop infinito).
+const STILL_PENDING_STATUSES = new Set(['not_started', 'live', 'half_time', '1st', '2nd', 'et', 'extra_time']);
+export const isStillPending = (status: string | undefined): boolean => STILL_PENDING_STATUSES.has(status ?? '');
+
 const groupByFixture = (matches: NormalizedMatch[]): Map<string, NormalizedMatch[]> =>
   matches.reduce((groups, match) => {
     if (!match.providerMatchId) return groups;
@@ -521,6 +530,16 @@ export class PostgresMatchStore {
         };
       })
       .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? '') || b.signalScore - a.signalScore);
+  }
+
+  async getUnsettledMatches(dateBrasilia: string): Promise<NormalizedMatch[]> {
+    const byFixture = groupByFixture(await this.getAllSnapshots());
+
+    return [...byFixture.values()]
+      .map((snapshots) => [...snapshots].sort(byLatestCollection).at(-1) as NormalizedMatch)
+      .filter((match) => toBrasiliaDate(match.kickoffAt) === dateBrasilia)
+      .filter((match) => isStillPending(match.status))
+      .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? ''));
   }
 
   async getTodayMatches(dateBrasilia: string): Promise<TodayMatch[]> {
