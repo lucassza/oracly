@@ -321,7 +321,7 @@ export function enrichMatchWithDetail(
         minute: e.minute as number,
         extraMinute: (e.extra_minute as number) || undefined,
         player: (e.player_name as string) || undefined,
-        team: e.participant_id === homeTeamId ? ('home' as const) : ('away' as const),
+        team: String(e.participant_id) === String(homeTeamId) ? ('home' as const) : ('away' as const),
         type: 'goal',
       }));
 
@@ -338,7 +338,7 @@ export function enrichMatchWithDetail(
         extraMinute: (e.extra_minute as number) || undefined,
         type: typeMap[e.type_id as number] || `type_${e.type_id}`,
         player: (e.player_name as string) || undefined,
-        team: e.participant_id === homeTeamId ? ('home' as const) : ('away' as const),
+        team: String(e.participant_id) === String(homeTeamId) ? ('home' as const) : ('away' as const),
         description: (e.addition as string) || undefined,
       }));
 
