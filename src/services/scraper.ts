@@ -264,6 +264,7 @@ export class ScraperService {
       database: env.POSTGRES_DB,
       user: env.POSTGRES_USER,
       password: env.POSTGRES_PASSWORD,
+      schema: env.POSTGRES_SCHEMA,
     });
 
     try {
@@ -375,6 +376,7 @@ export class ScraperService {
       database: env.POSTGRES_DB,
       user: env.POSTGRES_USER,
       password: env.POSTGRES_PASSWORD,
+      schema: env.POSTGRES_SCHEMA,
     });
     try {
       await store.saveMatches(result.matches);

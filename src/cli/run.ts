@@ -16,6 +16,7 @@ function createStore(env: Env): PostgresMatchStore {
     database: env.POSTGRES_DB,
     user: env.POSTGRES_USER,
     password: env.POSTGRES_PASSWORD,
+    schema: env.POSTGRES_SCHEMA,
   });
 }
 

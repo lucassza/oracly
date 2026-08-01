@@ -38,6 +38,7 @@ const envSchema = z.object({
   POSTGRES_DB: z.string(),
   POSTGRES_USER: z.string(),
   POSTGRES_PASSWORD: z.string(),
+  POSTGRES_SCHEMA: z.string().default('public'),
 });
 
 export type Env = z.infer<typeof envSchema>;

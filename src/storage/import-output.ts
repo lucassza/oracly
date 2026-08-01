@@ -16,6 +16,13 @@ export async function importOutputDirectory(store: PostgresMatchStore, outputPat
   }));
 
   const matches = outputs.flatMap((output) => output.matches ?? []);
-  await store.saveMatches(matches);
+
+  // One INSERT with 20 params/row can hit Postgres's 65535 bind-parameter
+  // limit once the output directory holds several thousand matches.
+  const BATCH_SIZE = 1000;
+  for (let i = 0; i < matches.length; i += BATCH_SIZE) {
+    await store.saveMatches(matches.slice(i, i + BATCH_SIZE));
+  }
+
   return matches.length;
 }
