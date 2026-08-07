@@ -73,6 +73,7 @@ export const GOAL_MARKETS = [
   { key: 'over_05_ft_over', label: 'Over 0.5 FT' },
   { key: 'over_15_ft_over', label: 'Over 1.5 FT' },
   { key: 'over_25_ft_over', label: 'Over 2.5 FT' },
+  { key: 'over_35_ft_under', label: 'Under 3.5 FT' },
   { key: 'btts_sim', label: 'BTTS' },
 ] as const;
 
@@ -110,6 +111,10 @@ export interface HistoricalMarketResult {
   // Green "até 75'": false quando não houve gol; undefined quando houve gol mas
   // o snapshot final não trouxe a timeline (impossível saber o minuto).
   by75Hit: boolean | undefined;
+  bttsPercentage: number | undefined;
+  // Última previsão pré-jogo de um mercado companheiro (ex.: Over 0.5 FT no
+  // resultado de Over 0.5 HT) — usado por combos validados no dashboard.
+  companionProbability: number | undefined;
 }
 
 export interface HistoricalOver05HtResult extends HistoricalMarketResult {
@@ -158,10 +163,14 @@ export interface Over15FtResult {
   homeTeam: string;
   awayTeam: string;
   finalGoals: number;
+  halftimeGoals: number;
+  firstGoalMinute: number | undefined;
   over25FtProbability: number | undefined;
   bttsProbability: number | undefined;
   over05Percentage: number | undefined;
   combinedGoalsAverage: number | undefined;
+  // Alias de over25FtProbability pra reaproveitar o corte ≥70/75/80/85/90% já existente na UI.
+  probability: number;
   // Quantos dos 4 sinais o jogo confirma (0-4): O2.5 FT >= 70, BTTS >= 65,
   // média de gols >= 3.8, Over 0.5% dos times >= 90.
   signalScore: number;
@@ -182,7 +191,25 @@ export interface UpcomingOver15FtSignal {
   bttsProbability: number | undefined;
   over05Percentage: number | undefined;
   combinedGoalsAverage: number | undefined;
+  probability: number;
   signalScore: number;
+}
+
+// Um jogo (passado ou futuro) com as 4 previsões usadas no filtro "O0.5FT>=85 & U3.5FT<=70"
+// validado por backtest. finalGoals só vem preenchido quando o jogo já terminou.
+export interface DailyPick {
+  providerMatchId: string;
+  kickoffAt: string | undefined;
+  country: string | undefined;
+  competition: string | undefined;
+  homeTeam: string;
+  awayTeam: string;
+  status: string | undefined;
+  finalGoals: number | undefined;
+  over05: number | undefined;
+  under35: number | undefined;
+  over15: number | undefined;
+  over25: number | undefined;
 }
 
 export interface PostgresConfig {
@@ -220,6 +247,12 @@ const getOver15HtModelOdd = (match: NormalizedMatch): number | undefined =>
 
 const getOver25FtPrediction = (match: NormalizedMatch): number | undefined =>
   (match.statistics?.additional?.x7Predictions as Record<string, { pred?: number }> | undefined)?.over_25_ft_over?.pred;
+
+const getUnder35FtPrediction = (match: NormalizedMatch): number | undefined =>
+  (match.statistics?.additional?.x7Predictions as Record<string, { pred?: number }> | undefined)?.over_35_ft_under?.pred;
+
+const getUnder35FtModelOdd = (match: NormalizedMatch): number | undefined =>
+  (match.statistics?.additional?.x7Predictions as Record<string, { oj?: number }> | undefined)?.over_35_ft_under?.oj;
 
 const getBttsPrediction = (match: NormalizedMatch): number | undefined =>
   (match.statistics?.additional?.x7Predictions as Record<string, { pred?: number }> | undefined)?.btts_sim?.pred;
@@ -403,12 +436,25 @@ export class PostgresMatchStore {
     return results.map((result) => ({ ...result, htHit: result.halftimeGoals >= 1 }));
   }
 
+  async getUpcomingUnder35FtPredictions(now: string): Promise<UpcomingOver05FtPrediction[]> {
+    return this.buildUpcomingPredictions(now, getUnder35FtPrediction, getUnder35FtModelOdd);
+  }
+
+  async getHistoricalUnder35FtResults(): Promise<HistoricalOver05FtResult[]> {
+    const results = await this.buildHistoricalResults(getUnder35FtPrediction, (settled) => (settled.score?.home ?? 0) + (settled.score?.away ?? 0) <= 3);
+    return results.map((result) => ({ ...result, htHit: result.halftimeGoals <= 3 }));
+  }
+
   async getUpcomingOver05HtPredictions(now: string): Promise<UpcomingOver05HtPrediction[]> {
     return this.buildUpcomingPredictions(now, getOver05HtPrediction, getOver05HtModelOdd);
   }
 
   async getHistoricalOver05HtResults(): Promise<HistoricalOver05HtResult[]> {
-    const results = await this.buildHistoricalResults(getOver05HtPrediction, (settled) => (settled.score?.halftimeHome ?? 0) + (settled.score?.halftimeAway ?? 0) >= 1);
+    const results = await this.buildHistoricalResults(
+      getOver05HtPrediction,
+      (settled) => (settled.score?.halftimeHome ?? 0) + (settled.score?.halftimeAway ?? 0) >= 1,
+      getOver05FtPrediction,
+    );
     return results.map((result) => ({ ...result, ftHit: result.finalGoals >= 1 }));
   }
 
@@ -482,6 +528,9 @@ export class PostgresMatchStore {
       const kickoffAt = settled?.kickoffAt;
       if (!settled || !kickoffAt) return [];
       const finalGoals = (settled.score?.home ?? 0) + (settled.score?.away ?? 0);
+      const halftimeGoals = (settled.score?.halftimeHome ?? 0) + (settled.score?.halftimeAway ?? 0);
+      const goalMinutes = settled.statistics?.goals?.map((goal) => goal.minute) ?? [];
+      const firstGoalMinute = goalMinutes.length ? Math.min(...goalMinutes) : undefined;
       const preKickoff = snapshots.filter((match) => match.collectedAt < kickoffAt).sort(byLatestCollection);
       const lastPreKickoffValue = (getValue: (match: NormalizedMatch) => number | undefined): number | undefined =>
         preKickoff.map(getValue).filter((value): value is number => value !== undefined).at(-1);
@@ -499,7 +548,10 @@ export class PostgresMatchStore {
         homeTeam: settled.homeTeam.name,
         awayTeam: settled.awayTeam.name,
         finalGoals,
+        halftimeGoals,
+        firstGoalMinute,
         ...signals,
+        probability: signals.over25FtProbability ?? 0,
         signalScore: getOver15FtSignalScore(signals),
         hit: finalGoals >= 2,
         hitOver05: finalGoals >= 1,
@@ -526,10 +578,42 @@ export class PostgresMatchStore {
           homeTeam: match.homeTeam.name,
           awayTeam: match.awayTeam.name,
           ...signals,
+          probability: signals.over25FtProbability ?? 0,
           signalScore: getOver15FtSignalScore(signals),
         };
       })
       .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? '') || b.signalScore - a.signalScore);
+  }
+
+  // Cobre passado (jogos finalizados, pra analisar acerto histórico) e futuro (jogos de
+  // hoje/próximos dias já importados) num único dataset — o front agrupa por dia.
+  async getDailyPicks(): Promise<DailyPick[]> {
+    const byFixture = groupByFixture(await this.getAllSnapshots());
+
+    return [...byFixture.entries()].flatMap(([providerMatchId, snapshots]) => {
+      const sorted = [...snapshots].sort(byLatestCollection);
+      const latest = sorted.at(-1);
+      if (!latest || !latest.kickoffAt) return [];
+      const kickoffAt = latest.kickoffAt;
+      const isFinished = latest.status === 'finished';
+      const preKickoff = snapshots.filter((match) => match.collectedAt < kickoffAt).sort(byLatestCollection);
+      const lastPreKickoffValue = (getValue: (match: NormalizedMatch) => number | undefined): number | undefined =>
+        preKickoff.map(getValue).filter((value): value is number => value !== undefined).at(-1);
+      return [{
+        providerMatchId,
+        kickoffAt,
+        country: latest.country,
+        competition: latest.competition,
+        homeTeam: latest.homeTeam.name,
+        awayTeam: latest.awayTeam.name,
+        status: latest.status,
+        finalGoals: isFinished ? (latest.score?.home ?? 0) + (latest.score?.away ?? 0) : undefined,
+        over05: lastPreKickoffValue(getOver05FtPrediction),
+        under35: lastPreKickoffValue(getUnder35FtPrediction),
+        over15: lastPreKickoffValue(getOver15FtPrediction),
+        over25: lastPreKickoffValue(getOver25FtPrediction),
+      }];
+    }).sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? ''));
   }
 
   async getUnsettledMatches(dateBrasilia: string): Promise<NormalizedMatch[]> {
@@ -586,6 +670,7 @@ export class PostgresMatchStore {
   private async buildHistoricalResults(
     getPrediction: (match: NormalizedMatch) => number | undefined,
     hitCheck: (settled: NormalizedMatch) => boolean,
+    getCompanionPrediction?: (match: NormalizedMatch) => number | undefined,
   ): Promise<HistoricalMarketResult[]> {
     const byFixture = groupByFixture(await this.getAllSnapshots());
 
@@ -605,6 +690,9 @@ export class PostgresMatchStore {
       const firstGoalMinute = goalMinutes.length ? Math.min(...goalMinutes) : undefined;
       const by75Hit = firstGoalMinute !== undefined ? firstGoalMinute <= 75
         : finalGoals === 0 ? false : undefined;
+      const preKickoff = snapshots.filter((match) => match.collectedAt < kickoffAt).sort(byLatestCollection);
+      const lastPreKickoffValue = (getValue: (match: NormalizedMatch) => number | undefined): number | undefined =>
+        preKickoff.map(getValue).filter((value): value is number => value !== undefined).at(-1);
       return [{
         providerMatchId,
         kickoffAt,
@@ -618,6 +706,8 @@ export class PostgresMatchStore {
         firstGoalMinute,
         hit: hitCheck(settled),
         by75Hit,
+        bttsPercentage: lastPreKickoffValue((match) => match.statistics?.bttsPercentage),
+        companionProbability: getCompanionPrediction ? lastPreKickoffValue(getCompanionPrediction) : undefined,
       }];
     });
   }

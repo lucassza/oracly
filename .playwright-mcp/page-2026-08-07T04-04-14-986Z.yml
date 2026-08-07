@@ -1,0 +1,98 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - heading "SokkerPRO" [level=1] [ref=f1e4]
+      - generic [ref=f1e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f1e6]:
+      - button "Hoje" [ref=f1e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [ref=f1e8] [cursor=pointer]
+      - button "Lista diária" [ref=f1e9] [cursor=pointer]
+      - button "Favoritos" [ref=f1e10] [cursor=pointer]
+  - main [ref=f1e14]:
+    - generic [ref=f1e15]:
+      - generic [ref=f1e1737]: Lista diária · filtro validado O0.5FT≥85% + U3.5FT≤70% · somente ligas principais
+      - heading "Entradas de hoje." [level=1] [ref=f1e1739]: Entradas dehoje.
+      - paragraph [ref=f1e1740]: 231 jogos batem o filtro hoje. Mostrando 10 (top 10 por Over0.5FT, desempate por Under3.5FT).
+      - generic [ref=f1e1741]:
+        - button "Top 10" [ref=f1e1742] [cursor=pointer]
+        - button "Só próximos" [ref=f1e1743] [cursor=pointer]
+        - button "★ Só favoritos" [ref=f1e1744] [cursor=pointer]
+      - generic [ref=f1e1745]:
+        - generic [ref=f1e1746]:
+          - generic [ref=f1e1747]: Horário
+          - generic [ref=f1e1748]: Partida
+          - generic [ref=f1e1749]: O0.5 FT
+          - generic [ref=f1e1750]: U3.5 FT
+          - generic [ref=f1e1751]: O1.5 FT
+          - generic [ref=f1e1752]: O2.5 FT
+        - generic [ref=f1e1753]:
+          - generic [ref=f1e1754]: 15:45
+          - generic [ref=f1e1755]: ★ Dudley Town × Droitwich SpaEngland · FA Cup
+          - generic [ref=f1e1756]: 98%
+          - generic [ref=f1e1757]: 35%
+          - generic [ref=f1e1758]: 84%
+          - generic [ref=f1e1759]: 69%
+        - generic [ref=f1e1760]:
+          - generic [ref=f1e1761]: 16:00
+          - generic [ref=f1e1762]: ★ Ascot United × Clevedon TownEngland · FA Cup
+          - generic [ref=f1e1763]: 98%
+          - generic [ref=f1e1764]: 35%
+          - generic [ref=f1e1765]: 84%
+          - generic [ref=f1e1766]: 69%
+        - generic [ref=f1e1767]:
+          - generic [ref=f1e1768]: 10:00
+          - generic [ref=f1e1769]: Vietnam × CambodiaAsia · ASEAN Championship
+          - generic [ref=f1e1770]: 98%
+          - generic [ref=f1e1771]: 52%
+          - generic [ref=f1e1772]: 88%
+          - generic [ref=f1e1773]: 69%
+        - generic [ref=f1e1774]:
+          - generic [ref=f1e1775]: 13:00
+          - generic [ref=f1e1776]: ★ Flora × TammekaEstonia · Meistriliiga
+          - generic [ref=f1e1777]: 98%
+          - generic [ref=f1e1778]: 52%
+          - generic [ref=f1e1779]: 89%
+          - generic [ref=f1e1780]: 69%
+        - generic [ref=f1e1781]:
+          - generic [ref=f1e1782]: 15:45
+          - generic [ref=f1e1783]: ★ Wokingham Town × Corsham TownEngland · FA Cup
+          - generic [ref=f1e1784]: 98%
+          - generic [ref=f1e1785]: 52%
+          - generic [ref=f1e1786]: 84%
+          - generic [ref=f1e1787]: 69%
+        - generic [ref=f1e1788]:
+          - generic [ref=f1e1789]: 15:45
+          - generic [ref=f1e1790]: ★ Cribbs × Fairford Town FCEngland · FA Cup
+          - generic [ref=f1e1791]: 98%
+          - generic [ref=f1e1792]: 52%
+          - generic [ref=f1e1793]: 84%
+          - generic [ref=f1e1794]: 69%
+        - generic [ref=f1e1795]:
+          - generic [ref=f1e1796]: 15:45
+          - generic [ref=f1e1797]: ★ Faversham Strike Force × Snodland TownEngland · FA Cup
+          - generic [ref=f1e1798]: 98%
+          - generic [ref=f1e1799]: 52%
+          - generic [ref=f1e1800]: 84%
+          - generic [ref=f1e1801]: 69%
+        - generic [ref=f1e1802]:
+          - generic [ref=f1e1803]: 15:45
+          - generic [ref=f1e1804]: ★ Hilltop × Grays AthleticEngland · FA Cup
+          - generic [ref=f1e1805]: 98%
+          - generic [ref=f1e1806]: 52%
+          - generic [ref=f1e1807]: 84%
+          - generic [ref=f1e1808]: 68%
+        - generic [ref=f1e1809]:
+          - generic [ref=f1e1810]: 15:45
+          - generic [ref=f1e1811]: ★ Lye Town × Stone Old AlleyniansEngland · FA Cup
+          - generic [ref=f1e1812]: 98%
+          - generic [ref=f1e1813]: 52%
+          - generic [ref=f1e1814]: 84%
+          - generic [ref=f1e1815]: 69%
+        - generic [ref=f1e1816]:
+          - generic [ref=f1e1817]: 15:30
+          - generic [ref=f1e1818]: ★ Thornbury Town × BrislingtonEngland · FA Cup
+          - generic [ref=f1e1819]: 98%
+          - generic [ref=f1e1820]: 53%
+          - generic [ref=f1e1821]: 84%
+          - generic [ref=f1e1822]: 68%
+      - paragraph [ref=f1e1823]: Horário em Brasília. Filtro validado historicamente em ~93-94% de acerto no Over0.5FT (~77% Over1.5FT, ~58% Over2.5FT na mesma seleção).

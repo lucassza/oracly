@@ -1,0 +1,53 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - heading "SokkerPRO" [level=1] [ref=f1e4]
+      - generic [ref=f1e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f1e6]:
+      - button "Hoje" [ref=f1e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [ref=f1e8] [cursor=pointer]
+      - button "Favoritos" [ref=f1e9] [cursor=pointer]
+  - main [ref=f1e13]:
+    - generic [ref=f1e14]:
+      - generic [ref=f1e260]: Banco local · modelo X7 · somente ligas principais
+      - generic [ref=f1e261]:
+        - heading "Próximos jogos Over 1.5 final." [level=1] [ref=f1e262]: Próximos jogosOver 1.5final.
+        - paragraph [ref=f1e263]: Sinais ordenados por horário. A odd exibida pelo modelo não é uma cotação real de aposta. Amador, juvenil, feminino e regional/reserva ficam de fora.
+      - generic [ref=f1e264]:
+        - generic [ref=f1e265]: 🎯 Melhor filtro pra entrar (maior acerto histórico, mín. 20 jogos)
+        - generic [ref=f1e266]:
+          - generic [ref=f1e267]:
+            - generic [ref=f1e268]: O0.5 FT
+            - generic [ref=f1e269]: ≥ 90%
+            - generic [ref=f1e270]: 92%
+            - generic [ref=f1e271]: 741 jogos
+          - generic [ref=f1e272]:
+            - generic [ref=f1e273]: O1.5 FT
+            - generic [ref=f1e274]: ≥ 70%
+            - generic [ref=f1e275]: 89%
+            - generic [ref=f1e276]: 62 jogos
+          - generic [ref=f1e277]:
+            - generic [ref=f1e278]: O0.5 HT
+            - generic [ref=f1e279]: ≥ 80%
+            - generic [ref=f1e280]: 80%
+            - generic [ref=f1e281]: 55 jogos
+      - generic [ref=f1e282]:
+        - button "O0.5 HT" [ref=f1e283] [cursor=pointer]
+        - button "O1.5 HT" [ref=f1e284] [cursor=pointer]
+        - button "O0.5 FT" [ref=f1e285] [cursor=pointer]
+        - button "O1.5 FT" [ref=f1e286] [cursor=pointer]
+      - generic [ref=f1e287]:
+        - button "Próximos jogos" [ref=f1e288] [cursor=pointer]
+        - button "Histórico" [ref=f1e289] [cursor=pointer]
+        - button "↻ Atualizar" [ref=f1e290] [cursor=pointer]
+      - generic [ref=f1e291]:
+        - button "≥ 70%" [ref=f1e292] [cursor=pointer]
+        - button "≥ 75%" [ref=f1e293] [cursor=pointer]
+        - button "≥ 80%" [ref=f1e294] [cursor=pointer]
+        - button "≥ 85%" [ref=f1e295] [cursor=pointer]
+        - button "≥ 90%" [ref=f1e296] [cursor=pointer]
+      - generic [ref=f1e297]:
+        - heading "0 oportunidades encontradas" [level=2] [ref=f1e298]
+        - generic [ref=f1e299]: "Corte atual: 80%"
+      - generic [ref=f1e300]: Nenhum próximo jogo atende a este corte.
+      - paragraph [ref=f1e302]: “Sinal forte” indica probabilidade do modelo ≥90%. Confirme escalações, mercado e cotação real antes de qualquer decisão.

@@ -426,7 +426,12 @@
     .today-score.live small { color: var(--loss); }
     .today-chip { border: 1px solid var(--line); color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; padding: 6px 4px; text-align: center; }
     .today-chip.strong { background: var(--signal-wash); border-color: var(--signal); color: var(--signal); }
+    .today-chip.miss { border-color: var(--loss); color: var(--loss); }
     .today-chip.empty { color: var(--line); }
+    .daily-fav-toggle { background: transparent; border: none; color: var(--line); cursor: pointer; font-size: 14px; margin-right: 6px; padding: 0; }
+    .daily-fav-toggle.active { color: var(--signal); }
+    .daily-date-label { align-items: center; color: var(--muted); display: flex; font-size: 12px; font-weight: 700; gap: 8px; }
+    .daily-date-label select { background: var(--surface); border: 1px solid var(--line); color: var(--ink); font-size: 12px; font-weight: 700; padding: 8px 10px; }
     .today-signal-cell { font-size: 11px; text-align: center; }
     .today-signal { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); display: inline-block; font-weight: 800; padding: 5px 7px; }
     .today-signal.strong { background: rgba(95, 210, 139, .12); border-color: var(--win); color: var(--win); }
@@ -481,6 +486,7 @@
       <div class="view-tabs" aria-label="Visões do dashboard">
         <button class="view-tab active" data-view="todayView">Hoje</button>
         <button class="view-tab" data-view="predictionsView">Over 0.5 / 1.5</button>
+        <button class="view-tab" data-view="dailyView">Lista diária</button>
         <button class="view-tab" data-view="favoritesView">Favoritos</button>
       </div>
   </div>
@@ -497,6 +503,12 @@
     </div>
   </main>
 
+  <main class="app-view goals-lab" id="dailyView">
+    <div class="lab-shell" id="dailyContent">
+      <div class="lab-loading">Carregando lista diária…</div>
+    </div>
+  </main>
+
   <main class="app-view goals-lab" id="favoritesView">
     <div class="lab-shell" id="favoritesContent">
       <div class="lab-loading">Carregando países e ligas…</div>
@@ -507,6 +519,7 @@
     let predictionThreshold = 80;
     let predictionMode = 'upcoming';
     let activePredictionMarket = 'over_05_ht';
+    let activePredictionCombo = null;
     let bestFiltersCache = null;
 
     const PREDICTION_MARKETS = {
@@ -521,6 +534,10 @@
         companions: [
           { key: 'ftHit', label: 'FT' },
           { key: 'by75Hit', label: "75'" },
+        ],
+        // Validado: FT≥90 + BTTS≥60 sobe o acerto de HT de ~72% pra ~77% (n~360) sem perder o FT (~95%).
+        combos: [
+          { key: 'ft90_btts60', label: 'Combo FT90+BTTS60', threshold: 70, test: r => (r.companionProbability ?? 0) >= 90 && (r.bttsPercentage ?? 0) >= 60 },
         ],
       },
       over_15_ht: {
@@ -552,8 +569,25 @@
         tabLabel: 'O1.5 FT',
         badgeLabel: 'O1.5 FT',
         title: 'Over 1.5<br>final.',
-        upcomingEndpoint: '/api/predictions/over-15-ft',
-        historyEndpoint: '/api/history/over-15-ft',
+        upcomingEndpoint: '/api/predictions/over-15-ft-signal',
+        historyEndpoint: '/api/history/over-15-ft-signal',
+        eyebrow: 'previsão pré-jogo × placar final · 4 sinais',
+        hitLabel: 'O1.5',
+        companions: [
+          { key: 'hitOver05', label: 'O0.5' },
+        ],
+        // Nossa melhor estratégia: busca exaustiva (2286 jogos) achou score≥2/4 = 83.5%
+        // (base sem filtro ~73%). Sinais: O2.5FT≥70, BTTS≥65, média gols≥3.8, O0.5%times≥90.
+        combos: [
+          { key: 'score2', label: 'Score ≥2/4 (melhor estratégia)', threshold: 0, test: r => (r.signalScore ?? 0) >= 2 },
+        ],
+      },
+      under_35_ft: {
+        tabLabel: 'U3.5 FT',
+        badgeLabel: 'U3.5 FT',
+        title: 'Under 3.5<br>final.',
+        upcomingEndpoint: '/api/predictions/under-35-ft',
+        historyEndpoint: '/api/history/under-35-ft',
         eyebrow: 'previsão pré-jogo × placar final',
         hitLabel: '',
         companions: [],
@@ -857,6 +891,102 @@
       ? (match.country ? `${match.country} · ${match.competition}` : match.competition)
       : 'Competição não informada';
 
+    let dailyPicks = [];
+    let dailyMode = 'top10'; // 'top10' | 'favorites' | 'all'
+    let dailyDate = null;
+    const toBrasiliaDateStr = kickoffAt => {
+      const timestamp = new Date(kickoffAt).getTime();
+      return new Date(timestamp - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
+    };
+    const formatPickerDate = dateStr => new Date(dateStr + 'T12:00:00Z').toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit', timeZone: 'America/Sao_Paulo' });
+
+    async function renderDaily() {
+      const content = document.getElementById('dailyContent');
+      content.innerHTML = '<div class="lab-loading">Carregando lista diária…</div>';
+      try {
+        const response = await fetch('/api/daily-picks');
+        if (!response.ok) throw new Error('Banco local indisponível');
+        dailyPicks = await response.json();
+        renderDailyUI();
+      } catch (error) {
+        content.innerHTML = `<div class="empty">Não foi possível carregar a lista diária: ${error.message}</div>`;
+      }
+    }
+
+    // Filtro validado por backtest (876 jogos, 14 dias): O0.5FT>=85 + U3.5FT<=70
+    // rende ~93-94% de acerto no Over0.5FT mantendo alto volume (~44 jogos/dia).
+    function renderDailyUI() {
+      const content = document.getElementById('dailyContent');
+      const withPrediction = dailyPicks.filter(pick => pick.over05 !== undefined && pick.under35 !== undefined && pick.kickoffAt);
+      const availableDates = [...new Set(withPrediction.map(pick => toBrasiliaDateStr(pick.kickoffAt)))].sort((a, b) => b.localeCompare(a));
+      const todayStr = toBrasiliaDateStr(new Date().toISOString());
+      if (!dailyDate || !availableDates.includes(dailyDate)) dailyDate = availableDates.includes(todayStr) ? todayStr : (availableDates[0] ?? todayStr);
+
+      const dayPicks = withPrediction.filter(pick => toBrasiliaDateStr(pick.kickoffAt) === dailyDate);
+      const candidates = dayPicks
+        .filter(pick => pick.over05 >= 85 && pick.under35 <= 70)
+        .sort((a, b) => (b.over05 - a.over05) || (a.under35 - b.under35));
+
+      const selected = dailyMode === 'top10' ? candidates.slice(0, 10)
+        : dailyMode === 'favorites' ? candidates.filter(isFavoriteMatch)
+        : candidates;
+
+      const dateOptions = availableDates.map(date => `<option value="${date}" ${date === dailyDate ? 'selected' : ''}>${formatPickerDate(date)}${date === todayStr ? ' (hoje)' : ''}</option>`).join('');
+      const modeButtons = [
+        { key: 'top10', label: 'Top 10' },
+        { key: 'favorites', label: 'Ligas favoritas' },
+        { key: 'all', label: 'Todos' },
+      ].map(mode => `<button class="prediction-filter ${dailyMode === mode.key ? 'active' : ''}" data-daily-mode="${mode.key}">${mode.label}</button>`).join('');
+
+      const header = `<div class="today-row header"><div>Horário</div><div>Partida</div><div>O0.5 FT</div><div>U3.5 FT</div><div>O1.5 FT</div><div>O2.5 FT</div></div>`;
+      const rowHtml = pick => {
+        const time = pick.kickoffAt ? formatKickoff(pick.kickoffAt) : '—';
+        const fav = isFavoriteMatch(pick);
+        const finished = pick.finalGoals !== undefined;
+        const outcomeChip = (probability, hit, threshold) => finished
+          ? `<div class="today-chip ${hit ? 'strong' : 'miss'}">${hit ? '✓' : '✕'} ${probability ?? '—'}${probability !== undefined ? '%' : ''}</div>`
+          : (probability === undefined ? '<div class="today-chip empty">—</div>' : `<div class="today-chip ${probability >= threshold ? 'strong' : ''}">${probability}%</div>`);
+        return `<div class="today-row">
+          <div>${time}</div>
+          <div>
+            <button class="daily-fav-toggle ${fav ? 'active' : ''}" data-daily-toggle-fav="${pick.competition ?? ''}" title="${fav ? 'Remover liga dos favoritos' : 'Marcar liga como favorita'}">${fav ? '★' : '☆'}</button>
+            ${pick.homeTeam} × ${pick.awayTeam}<small>${competitionLabel(pick)}</small>
+          </div>
+          ${outcomeChip(pick.over05, pick.finalGoals >= 1, 85)}
+          ${outcomeChip(pick.under35, pick.finalGoals <= 3, 70)}
+          ${outcomeChip(pick.over15, pick.finalGoals >= 2, 80)}
+          ${outcomeChip(pick.over25, pick.finalGoals >= 3, 70)}
+        </div>`;
+      };
+
+      const hits = selected.filter(pick => pick.finalGoals !== undefined && pick.finalGoals >= 1).length;
+      const settledCount = selected.filter(pick => pick.finalGoals !== undefined).length;
+      const resultSummary = settledCount ? `<p class="lab-source">Resultado do dia: ${hits}/${settledCount} green no Over0.5FT (${Math.round(100 * hits / settledCount)}%).</p>` : '';
+
+      content.innerHTML = `
+        <div class="lab-eyebrow">Lista diária · filtro validado O0.5FT≥85% + U3.5FT≤70% · somente ligas principais</div>
+        <div class="lab-title-row">
+          <h1 class="lab-title">Entradas por<br>dia.</h1>
+        </div>
+        <div class="today-controls"><label class="daily-date-label">Dia: <select id="dailyDateSelect">${dateOptions}</select></label></div>
+        <p class="lab-source">${candidates.length} jogos batem o filtro nesse dia. Mostrando ${selected.length}${dailyMode === 'top10' ? ' (top 10 por Over0.5FT, desempate por Under3.5FT)' : ''}.</p>
+        <div class="today-controls">${modeButtons}</div>
+        ${resultSummary}
+        <section class="today-table">${header}${selected.map(rowHtml).join('') || '<div class="empty">Nenhum jogo bate o filtro nesse dia/modo.</div>'}</section>
+        <p class="lab-note">Horário em Brasília. ✓/✕ aparece quando o jogo já terminou. Clique na estrela pra marcar/desmarcar a liga como favorita. Filtro validado historicamente em ~93-94% de acerto no Over0.5FT (~77% Over1.5FT, ~58% Over2.5FT na mesma seleção).</p>`;
+
+      const dateSelect = document.getElementById('dailyDateSelect');
+      if (dateSelect) dateSelect.addEventListener('change', () => { dailyDate = dateSelect.value; renderDailyUI(); });
+      content.querySelectorAll('[data-daily-mode]').forEach(button => button.addEventListener('click', () => { dailyMode = button.dataset.dailyMode; renderDailyUI(); }));
+      content.querySelectorAll('[data-daily-toggle-fav]').forEach(button => button.addEventListener('click', () => {
+        const league = button.dataset.dailyToggleFav;
+        if (!league) return;
+        favorites.leagues = favorites.leagues.includes(league) ? favorites.leagues.filter(l => l !== league) : [...favorites.leagues, league];
+        saveFavorites();
+        renderDailyUI();
+      }));
+    }
+
     // Varre os 4 mercados × a escada de corte, pega o melhor par (corte, mercado) por
     // acerto histórico exigindo volume mínimo (n>=20) pra não recomendar corte raro.
     async function computeBestFilters() {
@@ -896,12 +1026,18 @@
         const [response, bestFilters] = await Promise.all([fetch(endpoint), bestFiltersCache]);
         if (!response.ok) throw new Error('Banco local indisponível');
         const records = await response.json();
+        const activeCombo = predictionMode === 'history' && config.combos
+          ? config.combos.find(combo => combo.key === activePredictionCombo)
+          : undefined;
         const selected = predictionMode === 'upcoming'
           ? records
-          : records.filter(record => record.probability >= predictionThreshold);
+          : records.filter(record => record.probability >= predictionThreshold && (!activeCombo || activeCombo.test(record)));
         const bestFilterBanner = bestFilters.length ? `<section class="best-filter-banner"><div class="best-filter-title">🎯 Melhor filtro pra entrar (maior acerto histórico, mín. 20 jogos)</div><div class="best-filter-list">${bestFilters.map((b, i) => `<div class="best-filter-item ${i === 0 ? 'top' : ''}"><span class="best-filter-market">${b.label}</span><span class="best-filter-cut">≥ ${b.threshold}%</span><span class="best-filter-rate">${b.accuracy}%</span><span class="best-filter-n">${b.n} jogos</span></div>`).join('')}</div></section>` : '';
         const markets = Object.entries(PREDICTION_MARKETS).map(([key, market]) => `<button class="prediction-filter ${key === activePredictionMarket ? 'active' : ''}" data-prediction-market="${key}">${market.tabLabel}</button>`).join('');
         const filters = [70, 75, 80, 85, 90].map(threshold => `<button class="prediction-filter ${threshold === predictionThreshold ? 'active' : ''}" data-prediction-threshold="${threshold}">≥ ${threshold}%</button>`).join('');
+        const comboButtons = predictionMode === 'history' && config.combos
+          ? config.combos.map(combo => `<button class="prediction-filter combo ${combo.key === activePredictionCombo ? 'active' : ''}" data-prediction-combo="${combo.key}">✓ ${combo.label}</button>`).join('')
+          : '';
         const modes = `<button class="prediction-filter ${predictionMode === 'upcoming' ? 'active' : ''}" data-prediction-mode="upcoming">Próximos jogos</button><button class="prediction-filter ${predictionMode === 'history' ? 'active' : ''}" data-prediction-mode="history">Histórico</button>`;
         const refreshButton = `<button class="today-refresh-button" id="predictionsRefreshButton">↻ Atualizar</button>`;
 
@@ -933,7 +1069,7 @@
               : `<div class="outcome ${record.hit ? 'win' : 'loss'}">${record.hit ? 'Green' : 'Red'}</div>`;
             return `<div class="result-row"><div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div><div class="result-number">${record.probability}% previsto</div><div class="result-number">HT: ${record.halftimeGoals} · FT: ${record.finalGoals}</div><div class="result-number">1º gol: ${record.firstGoalMinute ? `${record.firstGoalMinute}'` : 'Sem timeline'}</div>${outcomeCell}</div>`;
           }).join('');
-          content.innerHTML = `<div class="lab-eyebrow">Banco local · ${config.eyebrow} · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">${config.title}</h1><p class="lab-source">Histórico consolidado com a última previsão registrada antes do início da partida. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div>${bestFilterBanner}<div class="prediction-controls">${markets}</div><div class="prediction-controls">${modes}${refreshButton}</div><div class="prediction-controls">${filters}</div><section class="lab-hero"><div class="hero-copy"><div class="hero-market">Corte ≥ ${predictionThreshold}%</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${heroCaption}</p></div><div class="hero-facts">${heroFacts}</div></section><div class="section-heading"><h2>Resultados históricos</h2><span>Ordenados pela previsão X7</span></div><section class="lab-results"><div class="result-row header"><div>Partida</div><div>Previsão</div><div>Placar</div><div>Ritmo</div><div>${outcomeHeader}</div></div>${rows || '<div class="empty">Nenhum jogo atende a este corte.</div>'}</section>`;
+          content.innerHTML = `<div class="lab-eyebrow">Banco local · ${config.eyebrow} · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">${config.title}</h1><p class="lab-source">Histórico consolidado com a última previsão registrada antes do início da partida. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div>${bestFilterBanner}<div class="prediction-controls">${markets}</div><div class="prediction-controls">${modes}${refreshButton}</div><div class="prediction-controls">${filters}${comboButtons}</div><section class="lab-hero"><div class="hero-copy"><div class="hero-market">${activeCombo ? activeCombo.label : `Corte ≥ ${predictionThreshold}%`}</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${heroCaption}</p></div><div class="hero-facts">${heroFacts}</div></section><div class="section-heading"><h2>Resultados históricos</h2><span>Ordenados pela previsão X7</span></div><section class="lab-results"><div class="result-row header"><div>Partida</div><div>Previsão</div><div>Placar</div><div>Ritmo</div><div>${outcomeHeader}</div></div>${rows || '<div class="empty">Nenhum jogo atende a este corte.</div>'}</section>`;
         } else {
           const groups = selected.reduce((grouped, prediction) => {
           const key = prediction.kickoffAt?.slice(0, 10) || 'sem-data';
@@ -948,9 +1084,16 @@
           }).join('')}</section>`).join('');
           content.innerHTML = `<div class="lab-eyebrow">Banco local · modelo X7 · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">Próximos jogos<br>${config.title}</h1><p class="lab-source">Sinais ordenados por horário. A odd exibida pelo modelo não é uma cotação real de aposta. Amador, juvenil, feminino e regional/reserva ficam de fora.</p></div>${bestFilterBanner}<div class="prediction-controls">${markets}</div><div class="prediction-controls">${modes}${refreshButton}</div><div class="prediction-controls">${filters}</div><div class="section-heading"><h2>${selected.length} oportunidades encontradas</h2><span>Corte atual: ${predictionThreshold}%</span></div><div class="prediction-runway">${runway || '<div class="empty">Nenhum próximo jogo atende a este corte.</div>'}</div><p class="lab-note">“Sinal forte” indica probabilidade do modelo ≥90%. Confirme escalações, mercado e cotação real antes de qualquer decisão.</p>`;
         }
-        content.querySelectorAll('[data-prediction-market]').forEach(button => button.addEventListener('click', () => { activePredictionMarket = button.dataset.predictionMarket; renderPredictions(); }));
-        content.querySelectorAll('[data-prediction-threshold]').forEach(button => button.addEventListener('click', () => { predictionThreshold = Number(button.dataset.predictionThreshold); renderPredictions(); }));
-        content.querySelectorAll('[data-prediction-mode]').forEach(button => button.addEventListener('click', () => { predictionMode = button.dataset.predictionMode; renderPredictions(); }));
+        content.querySelectorAll('[data-prediction-market]').forEach(button => button.addEventListener('click', () => { activePredictionMarket = button.dataset.predictionMarket; activePredictionCombo = null; renderPredictions(); }));
+        content.querySelectorAll('[data-prediction-threshold]').forEach(button => button.addEventListener('click', () => { predictionThreshold = Number(button.dataset.predictionThreshold); activePredictionCombo = null; renderPredictions(); }));
+        content.querySelectorAll('[data-prediction-mode]').forEach(button => button.addEventListener('click', () => { predictionMode = button.dataset.predictionMode; activePredictionCombo = null; renderPredictions(); }));
+        content.querySelectorAll('[data-prediction-combo]').forEach(button => button.addEventListener('click', () => {
+          const combo = config.combos.find(c => c.key === button.dataset.predictionCombo);
+          const turningOn = activePredictionCombo !== combo.key;
+          activePredictionCombo = turningOn ? combo.key : null;
+          if (turningOn) predictionThreshold = combo.threshold;
+          renderPredictions();
+        }));
         const predictionsRefreshButton = document.getElementById('predictionsRefreshButton');
         if (predictionsRefreshButton) predictionsRefreshButton.addEventListener('click', () => { bestFiltersCache = null; renderPredictions(); });
       } catch (error) {
@@ -967,6 +1110,7 @@
       document.body.classList.toggle('favorites-active', tab.dataset.view === 'favoritesView');
       if (tab.dataset.view === 'predictionsView') renderPredictions();
       if (tab.dataset.view === 'todayView') renderToday();
+      if (tab.dataset.view === 'dailyView') renderDaily();
       if (tab.dataset.view === 'favoritesView') renderFavorites();
     }));
 

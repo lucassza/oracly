@@ -1,0 +1,157 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - heading "SokkerPRO" [level=1] [ref=f1e4]
+      - generic [ref=f1e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f1e6]:
+      - button "Hoje" [ref=f1e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [ref=f1e8] [cursor=pointer]
+      - button "Favoritos" [ref=f1e9] [cursor=pointer]
+  - main [ref=f1e13]:
+    - generic [ref=f1e14]:
+      - generic [ref=f1e303]: Banco local · previsão pré-jogo × placar final · 4 sinais · somente ligas principais
+      - generic [ref=f1e304]:
+        - heading "Over 1.5 final." [level=1] [ref=f1e305]: Over 1.5final.
+        - paragraph [ref=f1e306]: Histórico consolidado com a última previsão registrada antes do início da partida. Amador, juvenil, feminino e regional/reserva ficam de fora.
+      - generic [ref=f1e307]:
+        - generic [ref=f1e308]: 🎯 Melhor filtro pra entrar (maior acerto histórico, mín. 20 jogos)
+        - generic [ref=f1e309]:
+          - generic [ref=f1e310]:
+            - generic [ref=f1e311]: O0.5 FT
+            - generic [ref=f1e312]: ≥ 90%
+            - generic [ref=f1e313]: 92%
+            - generic [ref=f1e314]: 741 jogos
+          - generic [ref=f1e315]:
+            - generic [ref=f1e316]: O1.5 FT
+            - generic [ref=f1e317]: ≥ 70%
+            - generic [ref=f1e318]: 89%
+            - generic [ref=f1e319]: 62 jogos
+          - generic [ref=f1e320]:
+            - generic [ref=f1e321]: O0.5 HT
+            - generic [ref=f1e322]: ≥ 80%
+            - generic [ref=f1e323]: 80%
+            - generic [ref=f1e324]: 55 jogos
+      - generic [ref=f1e325]:
+        - button "O0.5 HT" [ref=f1e326] [cursor=pointer]
+        - button "O1.5 HT" [ref=f1e327] [cursor=pointer]
+        - button "O0.5 FT" [ref=f1e328] [cursor=pointer]
+        - button "O1.5 FT" [ref=f1e329] [cursor=pointer]
+      - generic [ref=f1e330]:
+        - button "Próximos jogos" [ref=f1e331] [cursor=pointer]
+        - button "Histórico" [ref=f1e332] [cursor=pointer]
+        - button "↻ Atualizar" [ref=f1e333] [cursor=pointer]
+      - generic [ref=f1e334]:
+        - button "≥ 70%" [ref=f1e335] [cursor=pointer]
+        - button "≥ 75%" [ref=f1e336] [cursor=pointer]
+        - button "≥ 80%" [ref=f1e337] [cursor=pointer]
+        - button "≥ 85%" [ref=f1e338] [cursor=pointer]
+        - button "≥ 90%" [ref=f1e339] [cursor=pointer]
+        - button "✓ Score ≥2/4 (melhor estratégia)" [ref=f1e340] [cursor=pointer]
+      - generic [ref=f1e341]:
+        - generic [ref=f1e342]:
+          - generic [ref=f1e343]: Corte ≥ 80%
+          - generic [ref=f1e344]: 88%
+          - paragraph [ref=f1e345]: "O1.5: 88% (7/8) · O0.5: 100% (8/8) — 8 previsões selecionadas."
+        - generic [ref=f1e346]:
+          - generic [ref=f1e347]:
+            - generic [ref=f1e348]: "7"
+            - generic [ref=f1e349]: Green O1.5
+          - generic [ref=f1e350]:
+            - generic [ref=f1e351]: "8"
+            - generic [ref=f1e352]: Green O0.5
+          - generic [ref=f1e353]:
+            - generic [ref=f1e354]: "1"
+            - generic [ref=f1e355]: Red O1.5
+          - generic [ref=f1e356]:
+            - generic [ref=f1e357]: "0"
+            - generic [ref=f1e358]: Red O0.5
+      - generic [ref=f1e359]:
+        - heading "Resultados históricos" [level=2] [ref=f1e360]
+        - generic [ref=f1e361]: Ordenados pela previsão X7
+      - generic [ref=f1e362]:
+        - generic [ref=f1e363]:
+          - generic [ref=f1e364]: Partida
+          - generic [ref=f1e365]: Previsão
+          - generic [ref=f1e366]: Placar
+          - generic [ref=f1e367]: Ritmo
+          - generic [ref=f1e368]: O1.5 / O0.5
+        - generic [ref=f1e369]:
+          - generic [ref=f1e370]:
+            - text: Reipas × MYPA
+            - generic [ref=f1e371]: Finland · Kakkonen
+          - generic [ref=f1e372]: 81% previsto
+          - generic [ref=f1e373]: "HT: 1 · FT: 6"
+          - generic [ref=f1e374]: "1º gol: 42'"
+          - generic [ref=f1e375]:
+            - generic [ref=f1e376]: O1.5 Green
+            - generic [ref=f1e377]: O0.5 Green
+        - generic [ref=f1e378]:
+          - generic [ref=f1e379]:
+            - text: FC Kohvile × Rumori Calcio
+            - generic [ref=f1e380]: Estonia · Estonian Cup
+          - generic [ref=f1e381]: 81% previsto
+          - generic [ref=f1e382]: "HT: 1 · FT: 2"
+          - generic [ref=f1e383]: "1º gol: 11'"
+          - generic [ref=f1e384]:
+            - generic [ref=f1e385]: O1.5 Green
+            - generic [ref=f1e386]: O0.5 Green
+        - generic [ref=f1e387]:
+          - generic [ref=f1e388]:
+            - text: EstHam United × Kose
+            - generic [ref=f1e389]: Estonia · Estonian Cup
+          - generic [ref=f1e390]: 81% previsto
+          - generic [ref=f1e391]: "HT: 5 · FT: 6"
+          - generic [ref=f1e392]: "1º gol: 4'"
+          - generic [ref=f1e393]:
+            - generic [ref=f1e394]: O1.5 Green
+            - generic [ref=f1e395]: O0.5 Green
+        - generic [ref=f1e396]:
+          - generic [ref=f1e397]:
+            - text: Shakhter Karagandy × Arys
+            - generic [ref=f1e398]: Kazakhstan · First Division
+          - generic [ref=f1e399]: 81% previsto
+          - generic [ref=f1e400]: "HT: 2 · FT: 5"
+          - generic [ref=f1e401]: "1º gol: 9'"
+          - generic [ref=f1e402]:
+            - generic [ref=f1e403]: O1.5 Green
+            - generic [ref=f1e404]: O0.5 Green
+        - generic [ref=f1e405]:
+          - generic [ref=f1e406]:
+            - text: Aktobe Jas × Sport Academy Kairat
+            - generic [ref=f1e407]: Kazakhstan · First Division
+          - generic [ref=f1e408]: 81% previsto
+          - generic [ref=f1e409]: "HT: 3 · FT: 4"
+          - generic [ref=f1e410]: "1º gol: 10'"
+          - generic [ref=f1e411]:
+            - generic [ref=f1e412]: O1.5 Green
+            - generic [ref=f1e413]: O0.5 Green
+        - generic [ref=f1e414]:
+          - generic [ref=f1e415]:
+            - text: Huima / Urho × SJK Akatemia II
+            - generic [ref=f1e416]: Finland · Kakkonen
+          - generic [ref=f1e417]: 80% previsto
+          - generic [ref=f1e418]: "HT: 3 · FT: 4"
+          - generic [ref=f1e419]: "1º gol: 13'"
+          - generic [ref=f1e420]:
+            - generic [ref=f1e421]: O1.5 Green
+            - generic [ref=f1e422]: O0.5 Green
+        - generic [ref=f1e423]:
+          - generic [ref=f1e424]:
+            - text: Cooma Tigers × Tuggeranong United
+            - generic [ref=f1e425]: Australia · Capital Territory
+          - generic [ref=f1e426]: 80% previsto
+          - generic [ref=f1e427]: "HT: 2 · FT: 5"
+          - generic [ref=f1e428]: "1º gol: 26'"
+          - generic [ref=f1e429]:
+            - generic [ref=f1e430]: O1.5 Green
+            - generic [ref=f1e431]: O0.5 Green
+        - generic [ref=f1e432]:
+          - generic [ref=f1e433]:
+            - text: PPJ × Union Plaani
+            - generic [ref=f1e434]: Finland · Kakkonen
+          - generic [ref=f1e435]: 80% previsto
+          - generic [ref=f1e436]: "HT: 0 · FT: 1"
+          - generic [ref=f1e437]: "1º gol: 67'"
+          - generic [ref=f1e438]:
+            - generic [ref=f1e439]: O1.5 Red
+            - generic [ref=f1e440]: O0.5 Green

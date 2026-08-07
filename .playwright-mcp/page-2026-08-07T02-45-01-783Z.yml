@@ -1,0 +1,53 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "SokkerPRO" [level=1] [ref=e4]
+      - generic [ref=e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=e6]:
+      - button "Hoje" [ref=e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [ref=e8] [cursor=pointer]
+      - button "Favoritos" [ref=e9] [cursor=pointer]
+  - main [ref=e1506]:
+    - generic [ref=e1507]:
+      - generic [ref=e1753]: Banco local · modelo X7 · somente ligas principais
+      - generic [ref=e1754]:
+        - heading "Próximos jogos Over 1.5 final." [level=1] [ref=e1755]: Próximos jogosOver 1.5final.
+        - paragraph [ref=e1756]: Sinais ordenados por horário. A odd exibida pelo modelo não é uma cotação real de aposta. Amador, juvenil, feminino e regional/reserva ficam de fora.
+      - generic [ref=e1757]:
+        - generic [ref=e1758]: 🎯 Melhor filtro pra entrar (maior acerto histórico, mín. 20 jogos)
+        - generic [ref=e1759]:
+          - generic [ref=e1760]:
+            - generic [ref=e1761]: O0.5 FT
+            - generic [ref=e1762]: ≥ 90%
+            - generic [ref=e1763]: 92%
+            - generic [ref=e1764]: 741 jogos
+          - generic [ref=e1765]:
+            - generic [ref=e1766]: O1.5 FT
+            - generic [ref=e1767]: ≥ 70%
+            - generic [ref=e1768]: 89%
+            - generic [ref=e1769]: 62 jogos
+          - generic [ref=e1770]:
+            - generic [ref=e1771]: O0.5 HT
+            - generic [ref=e1772]: ≥ 80%
+            - generic [ref=e1773]: 80%
+            - generic [ref=e1774]: 55 jogos
+      - generic [ref=e1775]:
+        - button "O0.5 HT" [ref=e1776] [cursor=pointer]
+        - button "O1.5 HT" [ref=e1777] [cursor=pointer]
+        - button "O0.5 FT" [ref=e1778] [cursor=pointer]
+        - button "O1.5 FT" [ref=e1779] [cursor=pointer]
+      - generic [ref=e1780]:
+        - button "Próximos jogos" [ref=e1781] [cursor=pointer]
+        - button "Histórico" [ref=e1782] [cursor=pointer]
+        - button "↻ Atualizar" [ref=e1783] [cursor=pointer]
+      - generic [ref=e1784]:
+        - button "≥ 70%" [ref=e1785] [cursor=pointer]
+        - button "≥ 75%" [ref=e1786] [cursor=pointer]
+        - button "≥ 80%" [ref=e1787] [cursor=pointer]
+        - button "≥ 85%" [ref=e1788] [cursor=pointer]
+        - button "≥ 90%" [ref=e1789] [cursor=pointer]
+      - generic [ref=e1790]:
+        - heading "0 oportunidades encontradas" [level=2] [ref=e1791]
+        - generic [ref=e1792]: "Corte atual: 80%"
+      - generic [ref=e1793]: Nenhum próximo jogo atende a este corte.
+      - paragraph [ref=e1795]: “Sinal forte” indica probabilidade do modelo ≥90%. Confirme escalações, mercado e cotação real antes de qualquer decisão.

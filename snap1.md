@@ -1,0 +1,11 @@
+- generic [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "SokkerPRO" [level=1] [ref=e4]
+      - generic [ref=e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=e6]:
+      - button "Hoje" [ref=e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [active] [ref=e8] [cursor=pointer]
+      - button "Favoritos" [ref=e9] [cursor=pointer]
+  - main [ref=e1506]:
+    - generic [ref=e1507]: Consultando sinais no banco local…

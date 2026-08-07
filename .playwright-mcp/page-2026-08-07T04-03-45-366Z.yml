@@ -1,0 +1,12 @@
+- generic [active] [ref=f1e1]:
+  - generic [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - heading "SokkerPRO" [level=1] [ref=f1e4]
+      - generic [ref=f1e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f1e6]:
+      - button "Hoje" [ref=f1e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [ref=f1e8] [cursor=pointer]
+      - button "Lista diária" [ref=f1e9] [cursor=pointer]
+      - button "Favoritos" [ref=f1e10] [cursor=pointer]
+  - main [ref=f1e11]:
+    - generic [ref=f1e12]: Carregando jogos de hoje…

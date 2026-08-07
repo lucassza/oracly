@@ -1,0 +1,136 @@
+- generic [active] [ref=f2e1]:
+  - generic [ref=f2e2]:
+    - generic [ref=f2e3]:
+      - heading "SokkerPRO" [level=1] [ref=f2e4]
+      - generic [ref=f2e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=f2e6]:
+      - button "Hoje" [ref=f2e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [ref=f2e8] [cursor=pointer]
+      - button "Lista diária" [ref=f2e9] [cursor=pointer]
+      - button "Favoritos" [ref=f2e10] [cursor=pointer]
+  - main [ref=f2e14]:
+    - generic [ref=f2e15]:
+      - generic [ref=f2e218]: Lista diária · filtro validado O0.5FT≥85% + U3.5FT≤70% · somente ligas principais
+      - heading "Entradas por dia." [level=1] [ref=f2e220]: Entradas pordia.
+      - generic [ref=f2e222]:
+        - text: "Dia:"
+        - combobox "Dia:" [ref=f2e223]:
+          - option "sex., 07/08 (hoje)"
+          - option "qui., 06/08"
+          - option "qua., 05/08"
+          - option "ter., 04/08"
+          - option "seg., 03/08"
+          - option "sáb., 01/08"
+          - option "sex., 31/07"
+          - option "qui., 30/07" [selected]
+          - option "qua., 29/07"
+          - option "ter., 28/07"
+          - option "seg., 27/07"
+          - option "dom., 26/07"
+          - option "sáb., 25/07"
+          - option "sex., 24/07"
+      - paragraph [ref=f2e224]: 79 jogos batem o filtro nesse dia. Mostrando 10 (top 10 por Over0.5FT, desempate por Under3.5FT).
+      - generic [ref=f2e225]:
+        - button "Top 10" [ref=f2e226] [cursor=pointer]
+        - button "Ligas favoritas" [ref=f2e227] [cursor=pointer]
+        - button "Todos" [ref=f2e228] [cursor=pointer]
+      - paragraph [ref=f2e229]: "Resultado do dia: 9/9 green no Over0.5FT (100%)."
+      - generic [ref=f2e230]:
+        - generic [ref=f2e231]:
+          - generic [ref=f2e232]: Horário
+          - generic [ref=f2e233]: Partida
+          - generic [ref=f2e234]: O0.5 FT
+          - generic [ref=f2e235]: U3.5 FT
+          - generic [ref=f2e236]: O1.5 FT
+          - generic [ref=f2e237]: O2.5 FT
+        - generic [ref=f2e238]:
+          - generic [ref=f2e239]: 11:00
+          - generic [ref=f2e240]:
+            - button "★" [ref=f2e241] [cursor=pointer]
+            - text: Costa del Este × UMECIT IIPanama · Liga Prom
+          - generic [ref=f2e242]: ✓ 97%
+          - generic [ref=f2e243]: ✓ 52%
+          - generic [ref=f2e244]: ✓ 84%
+          - generic [ref=f2e245]: ✓ 68%
+        - generic [ref=f2e246]:
+          - generic [ref=f2e247]: 06:30
+          - generic [ref=f2e248]:
+            - button "★" [ref=f2e249] [cursor=pointer]
+            - text: Sydney Olympic × Brisbane RoarAustralia · Australian Cup
+          - generic [ref=f2e250]: ✓ 97%
+          - generic [ref=f2e251]: ✓ 60%
+          - generic [ref=f2e252]: ✓ 84%
+          - generic [ref=f2e253]: ✓ 60%
+        - generic [ref=f2e254]:
+          - generic [ref=f2e255]: 15:00
+          - generic [ref=f2e256]:
+            - button "★" [ref=f2e257] [cursor=pointer]
+            - text: Sportivo Luqueño Res. × Sportivo Trinidense Res.Paraguay · Division Profesional Reserva
+          - generic [ref=f2e258]: ✓ 96%
+          - generic [ref=f2e259]: ✕ 52%
+          - generic [ref=f2e260]: ✓ 84%
+          - generic [ref=f2e261]: ✓ 69%
+        - generic [ref=f2e262]:
+          - generic [ref=f2e263]: 16:00
+          - generic [ref=f2e264]:
+            - button "★" [ref=f2e265] [cursor=pointer]
+            - text: Sporting Braga × Železničar PančevoEurope · Europa Conference League
+          - generic [ref=f2e266]: ✓ 96%
+          - generic [ref=f2e267]: ✕ 53%
+          - generic [ref=f2e268]: ✓ 84%
+          - generic [ref=f2e269]: ✓ 67%
+        - generic [ref=f2e270]:
+          - generic [ref=f2e271]: 06:30
+          - generic [ref=f2e272]:
+            - button "★" [ref=f2e273] [cursor=pointer]
+            - text: South Melbourne × Adelaide UnitedAustralia · Australian Cup
+          - generic [ref=f2e274]: ✓ 96%
+          - generic [ref=f2e275]: ✓ 53%
+          - generic [ref=f2e276]: ✓ 84%
+          - generic [ref=f2e277]: ✓ 60%
+        - generic [ref=f2e278]:
+          - generic [ref=f2e279]: 15:15
+          - generic [ref=f2e280]:
+            - button "★" [ref=f2e281] [cursor=pointer]
+            - text: Sion × BATEEurope · Europa Conference League
+          - generic [ref=f2e282]: ✓ 96%
+          - generic [ref=f2e283]: ✕ 54%
+          - generic [ref=f2e284]: ✓ 88%
+          - generic [ref=f2e285]: ✓ 69%
+        - generic [ref=f2e286]:
+          - generic [ref=f2e287]: 15:00
+          - generic [ref=f2e288]:
+            - button "★" [ref=f2e289] [cursor=pointer]
+            - text: Ajax × VojvodinaEurope · Europa Conference League
+          - generic [ref=f2e290]: ✓ 96%
+          - generic [ref=f2e291]: ✕ 58%
+          - generic [ref=f2e292]: ✓ 77%
+          - generic [ref=f2e293]: ✓ 62%
+        - generic [ref=f2e294]:
+          - generic [ref=f2e295]: 15:45
+          - generic [ref=f2e296]:
+            - button "★" [ref=f2e297] [cursor=pointer]
+            - text: Koper × NSÍEurope · Europa Conference League
+          - generic [ref=f2e298]: 96%
+          - generic [ref=f2e299]: 60%
+          - generic [ref=f2e300]: 80%
+          - generic [ref=f2e301]: 60%
+        - generic [ref=f2e302]:
+          - generic [ref=f2e303]: 15:30
+          - generic [ref=f2e304]:
+            - button "★" [ref=f2e305] [cursor=pointer]
+            - text: Austria Wien × LiepājaEurope · Europa Conference League
+          - generic [ref=f2e306]: ✓ 96%
+          - generic [ref=f2e307]: ✕ 60%
+          - generic [ref=f2e308]: ✓ 81%
+          - generic [ref=f2e309]: ✓ 60%
+        - generic [ref=f2e310]:
+          - generic [ref=f2e311]: 14:00
+          - generic [ref=f2e312]:
+            - button "★" [ref=f2e313] [cursor=pointer]
+            - text: "Karlskrona × NosabySweden · Division 2: Sodra Gotaland"
+          - generic [ref=f2e314]: ✓ 96%
+          - generic [ref=f2e315]: ✕ 60%
+          - generic [ref=f2e316]: ✓ 88%
+          - generic [ref=f2e317]: ✓ 69%
+      - paragraph [ref=f2e318]: Horário em Brasília. ✓/✕ aparece quando o jogo já terminou. Clique na estrela pra marcar/desmarcar a liga como favorita. Filtro validado historicamente em ~93-94% de acerto no Over0.5FT (~77% Over1.5FT, ~58% Over2.5FT na mesma seleção).

@@ -1,0 +1,517 @@
+- generic [active] [ref=e1]:
+  - generic [ref=e2]:
+    - generic [ref=e3]:
+      - heading "SokkerPRO" [level=1] [ref=e4]
+      - generic [ref=e5]: Dashboard de Jogos
+    - generic "Visões do dashboard" [ref=e6]:
+      - button "Hoje" [ref=e7] [cursor=pointer]
+      - button "Over 0.5 / 1.5" [ref=e8] [cursor=pointer]
+      - button "Favoritos" [ref=e9] [cursor=pointer]
+  - main [ref=e1506]:
+    - generic [ref=e1507]:
+      - generic [ref=e1935]: Banco local · previsão pré-jogo × placar final · 4 sinais · somente ligas principais
+      - generic [ref=e1936]:
+        - heading "Over 1.5 final." [level=1] [ref=e1937]: Over 1.5final.
+        - paragraph [ref=e1938]: Histórico consolidado com a última previsão registrada antes do início da partida. Amador, juvenil, feminino e regional/reserva ficam de fora.
+      - generic [ref=e1939]:
+        - generic [ref=e1940]: 🎯 Melhor filtro pra entrar (maior acerto histórico, mín. 20 jogos)
+        - generic [ref=e1941]:
+          - generic [ref=e1942]:
+            - generic [ref=e1943]: O0.5 FT
+            - generic [ref=e1944]: ≥ 90%
+            - generic [ref=e1945]: 92%
+            - generic [ref=e1946]: 741 jogos
+          - generic [ref=e1947]:
+            - generic [ref=e1948]: O1.5 FT
+            - generic [ref=e1949]: ≥ 70%
+            - generic [ref=e1950]: 89%
+            - generic [ref=e1951]: 62 jogos
+          - generic [ref=e1952]:
+            - generic [ref=e1953]: O0.5 HT
+            - generic [ref=e1954]: ≥ 80%
+            - generic [ref=e1955]: 80%
+            - generic [ref=e1956]: 55 jogos
+      - generic [ref=e1957]:
+        - button "O0.5 HT" [ref=e1958] [cursor=pointer]
+        - button "O1.5 HT" [ref=e1959] [cursor=pointer]
+        - button "O0.5 FT" [ref=e1960] [cursor=pointer]
+        - button "O1.5 FT" [ref=e1961] [cursor=pointer]
+      - generic [ref=e1962]:
+        - button "Próximos jogos" [ref=e1963] [cursor=pointer]
+        - button "Histórico" [ref=e1964] [cursor=pointer]
+        - button "↻ Atualizar" [ref=e1965] [cursor=pointer]
+      - generic [ref=e1966]:
+        - button "≥ 70%" [ref=e1967] [cursor=pointer]
+        - button "≥ 75%" [ref=e1968] [cursor=pointer]
+        - button "≥ 80%" [ref=e1969] [cursor=pointer]
+        - button "≥ 85%" [ref=e1970] [cursor=pointer]
+        - button "≥ 90%" [ref=e1971] [cursor=pointer]
+        - button "✓ Score ≥2/4 (melhor estratégia)" [ref=e1972] [cursor=pointer]
+      - generic [ref=e1973]:
+        - generic [ref=e1974]:
+          - generic [ref=e1975]: Corte ≥ 70%
+          - generic [ref=e1976]: 91%
+          - paragraph [ref=e1977]: "O1.5: 91% (40/44) · O0.5: 98% (43/44) — 44 previsões selecionadas."
+        - generic [ref=e1978]:
+          - generic [ref=e1979]:
+            - generic [ref=e1980]: "40"
+            - generic [ref=e1981]: Green O1.5
+          - generic [ref=e1982]:
+            - generic [ref=e1983]: "43"
+            - generic [ref=e1984]: Green O0.5
+          - generic [ref=e1985]:
+            - generic [ref=e1986]: "4"
+            - generic [ref=e1987]: Red O1.5
+          - generic [ref=e1988]:
+            - generic [ref=e1989]: "1"
+            - generic [ref=e1990]: Red O0.5
+      - generic [ref=e1991]:
+        - heading "Resultados históricos" [level=2] [ref=e1992]
+        - generic [ref=e1993]: Ordenados pela previsão X7
+      - generic [ref=e1994]:
+        - generic [ref=e1995]:
+          - generic [ref=e1996]: Partida
+          - generic [ref=e1997]: Previsão
+          - generic [ref=e1998]: Placar
+          - generic [ref=e1999]: Ritmo
+          - generic [ref=e2000]: O1.5 / O0.5
+        - generic [ref=e2001]:
+          - generic [ref=e2002]:
+            - text: Reipas × MYPA
+            - generic [ref=e2003]: Finland · Kakkonen
+          - generic [ref=e2004]: 81% previsto
+          - generic [ref=e2005]: "HT: 1 · FT: 6"
+          - generic [ref=e2006]: "1º gol: 42'"
+          - generic [ref=e2007]:
+            - generic [ref=e2008]: O1.5 Green
+            - generic [ref=e2009]: O0.5 Green
+        - generic [ref=e2010]:
+          - generic [ref=e2011]:
+            - text: Shakhter Karagandy × Arys
+            - generic [ref=e2012]: Kazakhstan · First Division
+          - generic [ref=e2013]: 81% previsto
+          - generic [ref=e2014]: "HT: 2 · FT: 5"
+          - generic [ref=e2015]: "1º gol: 9'"
+          - generic [ref=e2016]:
+            - generic [ref=e2017]: O1.5 Green
+            - generic [ref=e2018]: O0.5 Green
+        - generic [ref=e2019]:
+          - generic [ref=e2020]:
+            - text: Aktobe Jas × Sport Academy Kairat
+            - generic [ref=e2021]: Kazakhstan · First Division
+          - generic [ref=e2022]: 81% previsto
+          - generic [ref=e2023]: "HT: 3 · FT: 4"
+          - generic [ref=e2024]: "1º gol: 10'"
+          - generic [ref=e2025]:
+            - generic [ref=e2026]: O1.5 Green
+            - generic [ref=e2027]: O0.5 Green
+        - generic [ref=e2028]:
+          - generic [ref=e2029]:
+            - text: Huima / Urho × SJK Akatemia II
+            - generic [ref=e2030]: Finland · Kakkonen
+          - generic [ref=e2031]: 80% previsto
+          - generic [ref=e2032]: "HT: 3 · FT: 4"
+          - generic [ref=e2033]: "1º gol: 13'"
+          - generic [ref=e2034]:
+            - generic [ref=e2035]: O1.5 Green
+            - generic [ref=e2036]: O0.5 Green
+        - generic [ref=e2037]:
+          - generic [ref=e2038]:
+            - text: Cooma Tigers × Tuggeranong United
+            - generic [ref=e2039]: Australia · Capital Territory
+          - generic [ref=e2040]: 80% previsto
+          - generic [ref=e2041]: "HT: 2 · FT: 5"
+          - generic [ref=e2042]: "1º gol: 26'"
+          - generic [ref=e2043]:
+            - generic [ref=e2044]: O1.5 Green
+            - generic [ref=e2045]: O0.5 Green
+        - generic [ref=e2046]:
+          - generic [ref=e2047]:
+            - text: Redcliffe PCYC × Univ. Queensland
+            - generic [ref=e2048]: Australia · Queensland Premier League 3 Metro
+          - generic [ref=e2049]: 79% previsto
+          - generic [ref=e2050]: "HT: 5 · FT: 7"
+          - generic [ref=e2051]: "1º gol: 45'"
+          - generic [ref=e2052]:
+            - generic [ref=e2053]: O1.5 Green
+            - generic [ref=e2054]: O0.5 Green
+        - generic [ref=e2055]:
+          - generic [ref=e2056]:
+            - text: JBK × VPS II
+            - generic [ref=e2057]: Finland · Kakkonen
+          - generic [ref=e2058]: 78% previsto
+          - generic [ref=e2059]: "HT: 1 · FT: 2"
+          - generic [ref=e2060]: "1º gol: 6'"
+          - generic [ref=e2061]:
+            - generic [ref=e2062]: O1.5 Green
+            - generic [ref=e2063]: O0.5 Green
+        - generic [ref=e2064]:
+          - generic [ref=e2065]:
+            - text: Atlantis × HPS
+            - generic [ref=e2066]: Finland · Kakkonen
+          - generic [ref=e2067]: 78% previsto
+          - generic [ref=e2068]: "HT: 4 · FT: 8"
+          - generic [ref=e2069]: "1º gol: 8'"
+          - generic [ref=e2070]:
+            - generic [ref=e2071]: O1.5 Green
+            - generic [ref=e2072]: O0.5 Green
+        - generic [ref=e2073]:
+          - generic [ref=e2074]:
+            - text: Honka × GrIFK
+            - generic [ref=e2075]: Finland · Kakkonen
+          - generic [ref=e2076]: 78% previsto
+          - generic [ref=e2077]: "HT: 2 · FT: 3"
+          - generic [ref=e2078]: "1º gol: 38'"
+          - generic [ref=e2079]:
+            - generic [ref=e2080]: O1.5 Green
+            - generic [ref=e2081]: O0.5 Green
+        - generic [ref=e2082]:
+          - generic [ref=e2083]:
+            - text: North Brisbane × Moggill
+            - generic [ref=e2084]: Australia · Queensland Premier League 3 Metro
+          - generic [ref=e2085]: 78% previsto
+          - generic [ref=e2086]: "HT: 0 · FT: 2"
+          - generic [ref=e2087]: "1º gol: Sem timeline"
+          - generic [ref=e2088]:
+            - generic [ref=e2089]: O1.5 Green
+            - generic [ref=e2090]: O0.5 Green
+        - generic [ref=e2091]:
+          - generic [ref=e2092]:
+            - text: SWQ Thunder × Caloundra
+            - generic [ref=e2093]: Australia · Queensland Premier League 2
+          - generic [ref=e2094]: 78% previsto
+          - generic [ref=e2095]: "HT: 1 · FT: 2"
+          - generic [ref=e2096]: "1º gol: 37'"
+          - generic [ref=e2097]:
+            - generic [ref=e2098]: O1.5 Green
+            - generic [ref=e2099]: O0.5 Green
+        - generic [ref=e2100]:
+          - generic [ref=e2101]:
+            - text: GrIFK × EBK
+            - generic [ref=e2102]: Finland · Kakkonen
+          - generic [ref=e2103]: 77% previsto
+          - generic [ref=e2104]: "HT: 0 · FT: 3"
+          - generic [ref=e2105]: "1º gol: 54'"
+          - generic [ref=e2106]:
+            - generic [ref=e2107]: O1.5 Green
+            - generic [ref=e2108]: O0.5 Green
+        - generic [ref=e2109]:
+          - generic [ref=e2110]:
+            - text: ÅIFK × HJS Akatemia
+            - generic [ref=e2111]: Finland · Kakkonen
+          - generic [ref=e2112]: 77% previsto
+          - generic [ref=e2113]: "HT: 0 · FT: 1"
+          - generic [ref=e2114]: "1º gol: 71'"
+          - generic [ref=e2115]:
+            - generic [ref=e2116]: O1.5 Red
+            - generic [ref=e2117]: O0.5 Green
+        - generic [ref=e2118]:
+          - generic [ref=e2119]:
+            - text: Brisbane Knights × Mitchelton
+            - generic [ref=e2120]: Australia · Queensland Premier League 2
+          - generic [ref=e2121]: 77% previsto
+          - generic [ref=e2122]: "HT: 3 · FT: 5"
+          - generic [ref=e2123]: "1º gol: 14'"
+          - generic [ref=e2124]:
+            - generic [ref=e2125]: O1.5 Green
+            - generic [ref=e2126]: O0.5 Green
+        - generic [ref=e2127]:
+          - generic [ref=e2128]:
+            - text: Kiffen × HIFK
+            - generic [ref=e2129]: Finland · Kakkonen
+          - generic [ref=e2130]: 77% previsto
+          - generic [ref=e2131]: "HT: 1 · FT: 2"
+          - generic [ref=e2132]: "1º gol: 24'"
+          - generic [ref=e2133]:
+            - generic [ref=e2134]: O1.5 Green
+            - generic [ref=e2135]: O0.5 Green
+        - generic [ref=e2136]:
+          - generic [ref=e2137]:
+            - text: Strømsgodset × Lyn
+            - generic [ref=e2138]: Norway · 1. Division
+          - generic [ref=e2139]: 77% previsto
+          - generic [ref=e2140]: "HT: 0 · FT: 2"
+          - generic [ref=e2141]: "1º gol: 63'"
+          - generic [ref=e2142]:
+            - generic [ref=e2143]: O1.5 Green
+            - generic [ref=e2144]: O0.5 Green
+        - generic [ref=e2145]:
+          - generic [ref=e2146]:
+            - text: Benfica de Macau × Hang Sai SC
+            - generic [ref=e2147]: Macau · Primeira Division
+          - generic [ref=e2148]: 77% previsto
+          - generic [ref=e2149]: "HT: 3 · FT: 9"
+          - generic [ref=e2150]: "1º gol: 5'"
+          - generic [ref=e2151]:
+            - generic [ref=e2152]: O1.5 Green
+            - generic [ref=e2153]: O0.5 Green
+        - generic [ref=e2154]:
+          - generic [ref=e2155]:
+            - text: MuSa × EPS
+            - generic [ref=e2156]: Finland · Kakkonen
+          - generic [ref=e2157]: 77% previsto
+          - generic [ref=e2158]: "HT: 1 · FT: 2"
+          - generic [ref=e2159]: "1º gol: 6'"
+          - generic [ref=e2160]:
+            - generic [ref=e2161]: O1.5 Green
+            - generic [ref=e2162]: O0.5 Green
+        - generic [ref=e2163]:
+          - generic [ref=e2164]:
+            - text: Virginia United × Brisbane Knights
+            - generic [ref=e2165]: Australia · Queensland Premier League 2
+          - generic [ref=e2166]: 77% previsto
+          - generic [ref=e2167]: "HT: 0 · FT: 3"
+          - generic [ref=e2168]: "1º gol: 77'"
+          - generic [ref=e2169]:
+            - generic [ref=e2170]: O1.5 Green
+            - generic [ref=e2171]: O0.5 Green
+        - generic [ref=e2172]:
+          - generic [ref=e2173]:
+            - text: Grange Thistle × Moreton City II
+            - generic [ref=e2174]: Australia · Queensland Premier League 2
+          - generic [ref=e2175]: 77% previsto
+          - generic [ref=e2176]: "HT: 1 · FT: 4"
+          - generic [ref=e2177]: "1º gol: 36'"
+          - generic [ref=e2178]:
+            - generic [ref=e2179]: O1.5 Green
+            - generic [ref=e2180]: O0.5 Green
+        - generic [ref=e2181]:
+          - generic [ref=e2182]:
+            - text: Taringa Rovers × Pine Hills
+            - generic [ref=e2183]: Australia · Queensland Premier League 2
+          - generic [ref=e2184]: 77% previsto
+          - generic [ref=e2185]: "HT: 1 · FT: 1"
+          - generic [ref=e2186]: "1º gol: 21'"
+          - generic [ref=e2187]:
+            - generic [ref=e2188]: O1.5 Red
+            - generic [ref=e2189]: O0.5 Green
+        - generic [ref=e2190]:
+          - generic [ref=e2191]:
+            - text: Tammeka × Zealot Sporting
+            - generic [ref=e2192]: Estonia · Estonian Cup
+          - generic [ref=e2193]: 77% previsto
+          - generic [ref=e2194]: "HT: 9 · FT: 19"
+          - generic [ref=e2195]: "1º gol: 10'"
+          - generic [ref=e2196]:
+            - generic [ref=e2197]: O1.5 Green
+            - generic [ref=e2198]: O0.5 Green
+        - generic [ref=e2199]:
+          - generic [ref=e2200]:
+            - text: P-Iirot × Ilves II
+            - generic [ref=e2201]: Finland · Kakkonen
+          - generic [ref=e2202]: 77% previsto
+          - generic [ref=e2203]: "HT: 2 · FT: 3"
+          - generic [ref=e2204]: "1º gol: 7'"
+          - generic [ref=e2205]:
+            - generic [ref=e2206]: O1.5 Green
+            - generic [ref=e2207]: O0.5 Green
+        - generic [ref=e2208]:
+          - generic [ref=e2209]:
+            - text: HJS Akatemia × EBK
+            - generic [ref=e2210]: Finland · Kakkonen
+          - generic [ref=e2211]: 77% previsto
+          - generic [ref=e2212]: "HT: 3 · FT: 8"
+          - generic [ref=e2213]: "1º gol: 21'"
+          - generic [ref=e2214]:
+            - generic [ref=e2215]: O1.5 Green
+            - generic [ref=e2216]: O0.5 Green
+        - generic [ref=e2217]:
+          - generic [ref=e2218]:
+            - text: Tulevik × Phoenix
+            - generic [ref=e2219]: Estonia · Esiliiga B
+          - generic [ref=e2220]: 76% previsto
+          - generic [ref=e2221]: "HT: 0 · FT: 0"
+          - generic [ref=e2222]: "1º gol: Sem timeline"
+          - generic [ref=e2223]:
+            - generic [ref=e2224]: O1.5 Red
+            - generic [ref=e2225]: O0.5 Red
+        - generic [ref=e2226]:
+          - generic [ref=e2227]:
+            - text: Bodø / Glimt × Lillestrøm
+            - generic [ref=e2228]: Norway · Eliteserien
+          - generic [ref=e2229]: 75% previsto
+          - generic [ref=e2230]: "HT: 2 · FT: 4"
+          - generic [ref=e2231]: "1º gol: 25'"
+          - generic [ref=e2232]:
+            - generic [ref=e2233]: O1.5 Green
+            - generic [ref=e2234]: O0.5 Green
+        - generic [ref=e2235]:
+          - generic [ref=e2236]:
+            - text: Hluboká nad Vltavou × Spartak Sobeslav
+            - generic [ref=e2237]: Czech Republic · Czech Cup
+          - generic [ref=e2238]: 74% previsto
+          - generic [ref=e2239]: "HT: 1 · FT: 5"
+          - generic [ref=e2240]: "1º gol: 33'"
+          - generic [ref=e2241]:
+            - generic [ref=e2242]: O1.5 Green
+            - generic [ref=e2243]: O0.5 Green
+        - generic [ref=e2244]:
+          - generic [ref=e2245]:
+            - text: Inter Miami II × Chattanooga
+            - generic [ref=e2246]: United States · MLS Next Pro
+          - generic [ref=e2247]: 73% previsto
+          - generic [ref=e2248]: "HT: 1 · FT: 1"
+          - generic [ref=e2249]: "1º gol: 32'"
+          - generic [ref=e2250]:
+            - generic [ref=e2251]: O1.5 Red
+            - generic [ref=e2252]: O0.5 Green
+        - generic [ref=e2253]:
+          - generic [ref=e2254]:
+            - text: Brühl × Young Boys II
+            - generic [ref=e2255]: Switzerland · 1.Liga Promotion
+          - generic [ref=e2256]: 73% previsto
+          - generic [ref=e2257]: "HT: 2 · FT: 6"
+          - generic [ref=e2258]: "1º gol: 34'"
+          - generic [ref=e2259]:
+            - generic [ref=e2260]: O1.5 Green
+            - generic [ref=e2261]: O0.5 Green
+        - generic [ref=e2262]:
+          - generic [ref=e2263]:
+            - text: Melbourne Knights × Western United II
+            - generic [ref=e2264]: Australia · Victoria Premier League 2
+          - generic [ref=e2265]: 73% previsto
+          - generic [ref=e2266]: "HT: 4 · FT: 6"
+          - generic [ref=e2267]: "1º gol: 30'"
+          - generic [ref=e2268]:
+            - generic [ref=e2269]: O1.5 Green
+            - generic [ref=e2270]: O0.5 Green
+        - generic [ref=e2271]:
+          - generic [ref=e2272]:
+            - text: Columbus Crew × Cincinnati
+            - generic [ref=e2273]: United States · Major League Soccer
+          - generic [ref=e2274]: 73% previsto
+          - generic [ref=e2275]: "HT: 3 · FT: 3"
+          - generic [ref=e2276]: "1º gol: 9'"
+          - generic [ref=e2277]:
+            - generic [ref=e2278]: O1.5 Green
+            - generic [ref=e2279]: O0.5 Green
+        - generic [ref=e2280]:
+          - generic [ref=e2281]:
+            - text: Guabirá × Real Oruro
+            - generic [ref=e2282]: Bolivia · Liga De Futbol Prof
+          - generic [ref=e2283]: 73% previsto
+          - generic [ref=e2284]: "HT: 4 · FT: 5"
+          - generic [ref=e2285]: "1º gol: 2'"
+          - generic [ref=e2286]:
+            - generic [ref=e2287]: O1.5 Green
+            - generic [ref=e2288]: O0.5 Green
+        - generic [ref=e2289]:
+          - generic [ref=e2290]:
+            - text: Inter Miami II × Toronto II
+            - generic [ref=e2291]: United States · MLS Next Pro
+          - generic [ref=e2292]: 73% previsto
+          - generic [ref=e2293]: "HT: 2 · FT: 3"
+          - generic [ref=e2294]: "1º gol: 18'"
+          - generic [ref=e2295]:
+            - generic [ref=e2296]: O1.5 Green
+            - generic [ref=e2297]: O0.5 Green
+        - generic [ref=e2298]:
+          - generic [ref=e2299]:
+            - text: Kormákur / Hvöt × Selfoss
+            - generic [ref=e2300]: Iceland · 2. Deild
+          - generic [ref=e2301]: 73% previsto
+          - generic [ref=e2302]: "HT: 3 · FT: 7"
+          - generic [ref=e2303]: "1º gol: 12'"
+          - generic [ref=e2304]:
+            - generic [ref=e2305]: O1.5 Green
+            - generic [ref=e2306]: O0.5 Green
+        - generic [ref=e2307]:
+          - generic [ref=e2308]:
+            - text: Magni × KFG
+            - generic [ref=e2309]: Iceland · 2. Deild
+          - generic [ref=e2310]: 73% previsto
+          - generic [ref=e2311]: "HT: 0 · FT: 2"
+          - generic [ref=e2312]: "1º gol: 79'"
+          - generic [ref=e2313]:
+            - generic [ref=e2314]: O1.5 Green
+            - generic [ref=e2315]: O0.5 Green
+        - generic [ref=e2316]:
+          - generic [ref=e2317]:
+            - text: Mitchelton × Souths United
+            - generic [ref=e2318]: Australia · Queensland Premier League 2
+          - generic [ref=e2319]: 73% previsto
+          - generic [ref=e2320]: "HT: 1 · FT: 3"
+          - generic [ref=e2321]: "1º gol: 18'"
+          - generic [ref=e2322]:
+            - generic [ref=e2323]: O1.5 Green
+            - generic [ref=e2324]: O0.5 Green
+        - generic [ref=e2325]:
+          - generic [ref=e2326]:
+            - text: Zimbru Chisinau II × Spartanii Selemet
+            - generic [ref=e2327]: Moldova · Division A
+          - generic [ref=e2328]: 71% previsto
+          - generic [ref=e2329]: "HT: 1 · FT: 4"
+          - generic [ref=e2330]: "1º gol: 45'"
+          - generic [ref=e2331]:
+            - generic [ref=e2332]: O1.5 Green
+            - generic [ref=e2333]: O0.5 Green
+        - generic [ref=e2334]:
+          - generic [ref=e2335]:
+            - text: Ventura County × San Jose Earthquakes II
+            - generic [ref=e2336]: United States · MLS Next Pro
+          - generic [ref=e2337]: 71% previsto
+          - generic [ref=e2338]: "HT: 0 · FT: 3"
+          - generic [ref=e2339]: "1º gol: 46'"
+          - generic [ref=e2340]:
+            - generic [ref=e2341]: O1.5 Green
+            - generic [ref=e2342]: O0.5 Green
+        - generic [ref=e2343]:
+          - generic [ref=e2344]:
+            - text: KFA × Thróttur Vogar
+            - generic [ref=e2345]: Iceland · 2. Deild
+          - generic [ref=e2346]: 71% previsto
+          - generic [ref=e2347]: "HT: 3 · FT: 6"
+          - generic [ref=e2348]: "1º gol: 21'"
+          - generic [ref=e2349]:
+            - generic [ref=e2350]: O1.5 Green
+            - generic [ref=e2351]: O0.5 Green
+        - generic [ref=e2352]:
+          - generic [ref=e2353]:
+            - text: Canberra Olympic × Queanbeyan City
+            - generic [ref=e2354]: Australia · Capital Territory
+          - generic [ref=e2355]: 71% previsto
+          - generic [ref=e2356]: "HT: 2 · FT: 4"
+          - generic [ref=e2357]: "1º gol: 8'"
+          - generic [ref=e2358]:
+            - generic [ref=e2359]: O1.5 Green
+            - generic [ref=e2360]: O0.5 Green
+        - generic [ref=e2361]:
+          - generic [ref=e2362]:
+            - text: South Hobart II × Taroona
+            - generic [ref=e2363]: Australia · Tasmania Southern Championship
+          - generic [ref=e2364]: 70% previsto
+          - generic [ref=e2365]: "HT: 1 · FT: 2"
+          - generic [ref=e2366]: "1º gol: Sem timeline"
+          - generic [ref=e2367]:
+            - generic [ref=e2368]: O1.5 Green
+            - generic [ref=e2369]: O0.5 Green
+        - generic [ref=e2370]:
+          - generic [ref=e2371]:
+            - text: Laos × Thailand
+            - generic [ref=e2372]: Asia · ASEAN Championship
+          - generic [ref=e2373]: 70% previsto
+          - generic [ref=e2374]: "HT: 2 · FT: 5"
+          - generic [ref=e2375]: "1º gol: 11'"
+          - generic [ref=e2376]:
+            - generic [ref=e2377]: O1.5 Green
+            - generic [ref=e2378]: O0.5 Green
+        - generic [ref=e2379]:
+          - generic [ref=e2380]:
+            - text: Levanger × Ullensaker / Kisa
+            - generic [ref=e2381]: "Norway · 2. Division: Group 2"
+          - generic [ref=e2382]: 70% previsto
+          - generic [ref=e2383]: "HT: 1 · FT: 3"
+          - generic [ref=e2384]: "1º gol: 82'"
+          - generic [ref=e2385]:
+            - generic [ref=e2386]: O1.5 Green
+            - generic [ref=e2387]: O0.5 Green
+        - generic [ref=e2388]:
+          - generic [ref=e2389]:
+            - text: Fjölnir × Haukar
+            - generic [ref=e2390]: Iceland · 2. Deild
+          - generic [ref=e2391]: 70% previsto
+          - generic [ref=e2392]: "HT: 2 · FT: 3"
+          - generic [ref=e2393]: "1º gol: 31'"
+          - generic [ref=e2394]:
+            - generic [ref=e2395]: O1.5 Green
+            - generic [ref=e2396]: O0.5 Green
