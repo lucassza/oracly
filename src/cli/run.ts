@@ -420,6 +420,26 @@ async function runDashboard(): Promise<void> {
       return;
     }
 
+    if (req.method === 'POST' && url.pathname === '/api/daily-picks/refresh') {
+      const date = url.searchParams.get('date');
+      if (!date) {
+        res.writeHead(400, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'Parâmetro date obrigatório (YYYY-MM-DD)' }));
+        return;
+      }
+      try {
+        const scraper = new ScraperService();
+        const result = await scraper.rescrapeUnsettled(date);
+        res.writeHead(200, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ ...result, picks: await store.getDailyPicks() }));
+      } catch (error) {
+        const message = error instanceof Error ? error.message : String(error);
+        res.writeHead(502, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: message }));
+      }
+      return;
+    }
+
     if (url.pathname === '/api/today') {
       const date = url.searchParams.get('date') || new Date().toLocaleDateString('en-CA', { timeZone: 'America/Sao_Paulo' });
       res.writeHead(200, { 'Content-Type': 'application/json' });

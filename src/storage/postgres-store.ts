@@ -206,6 +206,8 @@ export interface DailyPick {
   awayTeam: string;
   status: string | undefined;
   finalGoals: number | undefined;
+  homeScore: number | undefined;
+  awayScore: number | undefined;
   over05: number | undefined;
   under35: number | undefined;
   over15: number | undefined;
@@ -608,6 +610,8 @@ export class PostgresMatchStore {
         awayTeam: latest.awayTeam.name,
         status: latest.status,
         finalGoals: isFinished ? (latest.score?.home ?? 0) + (latest.score?.away ?? 0) : undefined,
+        homeScore: isFinished ? latest.score?.home : undefined,
+        awayScore: isFinished ? latest.score?.away : undefined,
         over05: lastPreKickoffValue(getOver05FtPrediction),
         under35: lastPreKickoffValue(getUnder35FtPrediction),
         over15: lastPreKickoffValue(getOver15FtPrediction),

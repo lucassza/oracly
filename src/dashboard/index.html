@@ -432,6 +432,8 @@
     .daily-fav-toggle.active { color: var(--signal); }
     .daily-date-label { align-items: center; color: var(--muted); display: flex; font-size: 12px; font-weight: 700; gap: 8px; }
     .daily-date-label select { background: var(--surface); border: 1px solid var(--line); color: var(--ink); font-size: 12px; font-weight: 700; padding: 8px 10px; }
+    .daily-pager { align-items: center; display: flex; gap: 14px; justify-content: center; margin: 14px 0; }
+    .daily-pager-label { color: var(--muted); font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; }
     .today-signal-cell { font-size: 11px; text-align: center; }
     .today-signal { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); display: inline-block; font-weight: 800; padding: 5px 7px; }
     .today-signal.strong { background: rgba(95, 210, 139, .12); border-color: var(--win); color: var(--win); }
@@ -484,14 +486,14 @@
         <div class="subtitle">Dashboard de Jogos</div>
       </div>
       <div class="view-tabs" aria-label="Visões do dashboard">
-        <button class="view-tab active" data-view="todayView">Hoje</button>
+        <button class="view-tab active" data-view="dailyView">Lista diária</button>
+        <button class="view-tab" data-view="todayView">Hoje</button>
         <button class="view-tab" data-view="predictionsView">Over 0.5 / 1.5</button>
-        <button class="view-tab" data-view="dailyView">Lista diária</button>
         <button class="view-tab" data-view="favoritesView">Favoritos</button>
       </div>
   </div>
 
-  <main class="app-view goals-lab active" id="todayView">
+  <main class="app-view goals-lab" id="todayView">
     <div class="lab-shell" id="todayContent">
       <div class="lab-loading">Carregando jogos de hoje…</div>
     </div>
@@ -503,7 +505,7 @@
     </div>
   </main>
 
-  <main class="app-view goals-lab" id="dailyView">
+  <main class="app-view goals-lab active" id="dailyView">
     <div class="lab-shell" id="dailyContent">
       <div class="lab-loading">Carregando lista diária…</div>
     </div>
@@ -892,8 +894,12 @@
       : 'Competição não informada';
 
     let dailyPicks = [];
-    let dailyMode = 'top10'; // 'top10' | 'favorites' | 'all'
+    let dailyMode = 'top10'; // 'top10' | 'top10fav' | 'favorites' | 'all'
     let dailyDate = null;
+    let dailyPage = 0;
+    let dailyRefreshing = false;
+    let dailyRefreshError = null;
+    const DAILY_PAGE_SIZE = 20;
     const toBrasiliaDateStr = kickoffAt => {
       const timestamp = new Date(kickoffAt).getTime();
       return new Date(timestamp - 3 * 60 * 60 * 1000).toISOString().slice(0, 10);
@@ -913,6 +919,27 @@
       }
     }
 
+    // Busca placar/status atualizados na SokkerPRO pro dia selecionado (rápido, ~1
+    // chamada) e recarrega os picks. Dias antigos que ficaram "not_started" porque o
+    // scraper não rodou na hora certa se corrigem sozinhos ao clicar aqui.
+    async function refreshDaily() {
+      dailyRefreshing = true;
+      dailyRefreshError = null;
+      renderDailyUI();
+      try {
+        const response = await fetch(`/api/today/refresh?date=${dailyDate}`, { method: 'POST' });
+        const payload = await response.json();
+        if (!response.ok) throw new Error(payload.error || 'Falha ao atualizar');
+        const picksResponse = await fetch('/api/daily-picks');
+        if (!picksResponse.ok) throw new Error('Banco local indisponível');
+        dailyPicks = await picksResponse.json();
+      } catch (error) {
+        dailyRefreshError = error.message;
+      }
+      dailyRefreshing = false;
+      renderDailyUI();
+    }
+
     // Filtro validado por backtest (876 jogos, 14 dias): O0.5FT>=85 + U3.5FT<=70
     // rende ~93-94% de acerto no Over0.5FT mantendo alto volume (~44 jogos/dia).
     function renderDailyUI() {
@@ -927,22 +954,32 @@
         .filter(pick => pick.over05 >= 85 && pick.under35 <= 70)
         .sort((a, b) => (b.over05 - a.over05) || (a.under35 - b.under35));
 
-      const selected = dailyMode === 'top10' ? candidates.slice(0, 10)
-        : dailyMode === 'favorites' ? candidates.filter(isFavoriteMatch)
-        : candidates;
+      const favoriteCandidates = candidates.filter(isFavoriteMatch);
+      const selected = (dailyMode === 'top10' ? candidates.slice(0, 10)
+        : dailyMode === 'top10fav' ? favoriteCandidates.slice(0, 10)
+        : dailyMode === 'favorites' ? favoriteCandidates
+        : candidates
+      ).slice().sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? ''));
 
       const dateOptions = availableDates.map(date => `<option value="${date}" ${date === dailyDate ? 'selected' : ''}>${formatPickerDate(date)}${date === todayStr ? ' (hoje)' : ''}</option>`).join('');
       const modeButtons = [
         { key: 'top10', label: 'Top 10' },
+        { key: 'top10fav', label: 'Top 10 favoritas' },
         { key: 'favorites', label: 'Ligas favoritas' },
         { key: 'all', label: 'Todos' },
       ].map(mode => `<button class="prediction-filter ${dailyMode === mode.key ? 'active' : ''}" data-daily-mode="${mode.key}">${mode.label}</button>`).join('');
 
-      const header = `<div class="today-row header"><div>Horário</div><div>Partida</div><div>O0.5 FT</div><div>U3.5 FT</div><div>O1.5 FT</div><div>O2.5 FT</div></div>`;
+      const totalPages = Math.max(1, Math.ceil(selected.length / DAILY_PAGE_SIZE));
+      if (dailyPage >= totalPages) dailyPage = totalPages - 1;
+      if (dailyPage < 0) dailyPage = 0;
+      const pageItems = selected.slice(dailyPage * DAILY_PAGE_SIZE, (dailyPage + 1) * DAILY_PAGE_SIZE);
+
+      const header = `<div class="today-row header"><div>Horário</div><div>Partida</div><div>Placar</div><div>O0.5 FT</div><div>U3.5 FT</div><div>O1.5 FT</div><div>O2.5 FT</div></div>`;
       const rowHtml = pick => {
         const time = pick.kickoffAt ? formatKickoff(pick.kickoffAt) : '—';
         const fav = isFavoriteMatch(pick);
         const finished = pick.finalGoals !== undefined;
+        const scoreCell = finished ? `<div class="today-score">${pick.homeScore}–${pick.awayScore}</div>` : '<div class="today-score muted">—</div>';
         const outcomeChip = (probability, hit, threshold) => finished
           ? `<div class="today-chip ${hit ? 'strong' : 'miss'}">${hit ? '✓' : '✕'} ${probability ?? '—'}${probability !== undefined ? '%' : ''}</div>`
           : (probability === undefined ? '<div class="today-chip empty">—</div>' : `<div class="today-chip ${probability >= threshold ? 'strong' : ''}">${probability}%</div>`);
@@ -952,6 +989,7 @@
             <button class="daily-fav-toggle ${fav ? 'active' : ''}" data-daily-toggle-fav="${pick.competition ?? ''}" title="${fav ? 'Remover liga dos favoritos' : 'Marcar liga como favorita'}">${fav ? '★' : '☆'}</button>
             ${pick.homeTeam} × ${pick.awayTeam}<small>${competitionLabel(pick)}</small>
           </div>
+          ${scoreCell}
           ${outcomeChip(pick.over05, pick.finalGoals >= 1, 85)}
           ${outcomeChip(pick.under35, pick.finalGoals <= 3, 70)}
           ${outcomeChip(pick.over15, pick.finalGoals >= 2, 80)}
@@ -963,21 +1001,37 @@
       const settledCount = selected.filter(pick => pick.finalGoals !== undefined).length;
       const resultSummary = settledCount ? `<p class="lab-source">Resultado do dia: ${hits}/${settledCount} green no Over0.5FT (${Math.round(100 * hits / settledCount)}%).</p>` : '';
 
+      const pager = `<div class="daily-pager">
+        <button class="prediction-filter" id="dailyPagePrev" ${dailyPage === 0 ? 'disabled' : ''}>‹ Anterior</button>
+        <span class="daily-pager-label">Página ${dailyPage + 1} de ${totalPages}</span>
+        <button class="prediction-filter" id="dailyPageNext" ${dailyPage >= totalPages - 1 ? 'disabled' : ''}>Próxima ›</button>
+      </div>`;
+
       content.innerHTML = `
         <div class="lab-eyebrow">Lista diária · filtro validado O0.5FT≥85% + U3.5FT≤70% · somente ligas principais</div>
         <div class="lab-title-row">
           <h1 class="lab-title">Entradas por<br>dia.</h1>
         </div>
-        <div class="today-controls"><label class="daily-date-label">Dia: <select id="dailyDateSelect">${dateOptions}</select></label></div>
-        <p class="lab-source">${candidates.length} jogos batem o filtro nesse dia. Mostrando ${selected.length}${dailyMode === 'top10' ? ' (top 10 por Over0.5FT, desempate por Under3.5FT)' : ''}.</p>
+        <div class="today-controls">
+          <label class="daily-date-label">Dia: <select id="dailyDateSelect">${dateOptions}</select></label>
+          <button class="today-refresh-button" id="dailyRefreshButton" ${dailyRefreshing ? 'disabled' : ''}>${dailyRefreshing ? 'Atualizando…' : '↻ Atualizar placares'}</button>
+          ${dailyRefreshError ? `<span class="today-refresh-error">${dailyRefreshError}</span>` : ''}
+        </div>
+        <p class="lab-source">${candidates.length} jogos batem o filtro nesse dia (${favoriteCandidates.length} em ligas favoritas). Mostrando ${selected.length}${dailyMode === 'top10' || dailyMode === 'top10fav' ? ' (top 10 por Over0.5FT, desempate por Under3.5FT)' : ''}.</p>
         <div class="today-controls">${modeButtons}</div>
         ${resultSummary}
-        <section class="today-table">${header}${selected.map(rowHtml).join('') || '<div class="empty">Nenhum jogo bate o filtro nesse dia/modo.</div>'}</section>
-        <p class="lab-note">Horário em Brasília. ✓/✕ aparece quando o jogo já terminou. Clique na estrela pra marcar/desmarcar a liga como favorita. Filtro validado historicamente em ~93-94% de acerto no Over0.5FT (~77% Over1.5FT, ~58% Over2.5FT na mesma seleção).</p>`;
+        ${pager}
+        <section class="today-table">${header}${pageItems.map(rowHtml).join('') || '<div class="empty">Nenhum jogo bate o filtro nesse dia/modo.</div>'}</section>
+        ${pager}
+        <p class="lab-note">Horário em Brasília. ✓/✕ e placar aparecem quando o jogo já terminou. Clique na estrela pra marcar/desmarcar a liga como favorita. Filtro validado historicamente em ~93-94% de acerto no Over0.5FT (~77% Over1.5FT, ~58% Over2.5FT na mesma seleção).</p>`;
 
       const dateSelect = document.getElementById('dailyDateSelect');
-      if (dateSelect) dateSelect.addEventListener('change', () => { dailyDate = dateSelect.value; renderDailyUI(); });
-      content.querySelectorAll('[data-daily-mode]').forEach(button => button.addEventListener('click', () => { dailyMode = button.dataset.dailyMode; renderDailyUI(); }));
+      if (dateSelect) dateSelect.addEventListener('change', () => { dailyDate = dateSelect.value; dailyPage = 0; renderDailyUI(); });
+      const refreshButton = document.getElementById('dailyRefreshButton');
+      if (refreshButton) refreshButton.addEventListener('click', refreshDaily);
+      content.querySelectorAll('[data-daily-mode]').forEach(button => button.addEventListener('click', () => { dailyMode = button.dataset.dailyMode; dailyPage = 0; renderDailyUI(); }));
+      content.querySelectorAll('#dailyPagePrev').forEach(button => button.addEventListener('click', () => { dailyPage -= 1; renderDailyUI(); }));
+      content.querySelectorAll('#dailyPageNext').forEach(button => button.addEventListener('click', () => { dailyPage += 1; renderDailyUI(); }));
       content.querySelectorAll('[data-daily-toggle-fav]').forEach(button => button.addEventListener('click', () => {
         const league = button.dataset.dailyToggleFav;
         if (!league) return;
@@ -1115,7 +1169,7 @@
     }));
 
     // Init
-    renderToday();
+    renderDaily();
   </script>
 </body>
 </html>
