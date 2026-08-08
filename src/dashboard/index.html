@@ -471,12 +471,27 @@
     .ht-exclude-badge { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 5px 8px; text-transform: uppercase; white-space: nowrap; }
     .ht-agreement { border: 1px solid var(--line); color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 700; padding: 5px 8px; white-space: nowrap; }
     .ht-agreement.full { border-color: var(--win); color: var(--win); }
-    .ht-result-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: 108px minmax(200px, 1.5fr) minmax(150px, 1fr) 130px 110px 90px 90px 90px; min-width: 1080px; padding: 13px 18px; }
+    .ht-rate { border: 1px solid var(--line); display: inline-block; font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 800; padding: 5px 8px; white-space: nowrap; }
+    .ht-rate-high { background: rgba(95, 210, 139, .12); border-color: var(--win); color: var(--win); }
+    .ht-rate-mid { background: var(--signal-wash); border-color: var(--signal); color: var(--signal); }
+    .ht-rate-low { background: rgba(234, 110, 110, .1); border-color: var(--loss); color: var(--loss); }
+    .ht-rate-unknown { color: var(--muted); }
+    .best-filter-rate.ht-rate-text-high { color: var(--win); }
+    .best-filter-rate.ht-rate-text-mid { color: var(--signal); }
+    .best-filter-rate.ht-rate-text-low { color: var(--loss); }
+    .best-filter-rate.ht-rate-text-unknown { color: var(--muted); }
+    .ht-result-row { align-items: center; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; display: grid; gap: 12px; grid-template-columns: 108px minmax(200px, 1.5fr) minmax(150px, 1fr) 130px 110px 90px 90px 90px 90px; min-width: 1170px; padding: 13px 18px; }
     .ht-result-row:last-child { border-bottom: 0; }
-    .ht-result-row.header { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
-    .ht-card { align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); display: grid; gap: 14px; grid-template-columns: 70px minmax(180px, 1fr) 150px 130px 110px; padding: 17px; }
+    .ht-result-row.header { border-left-color: transparent; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .ht-result-row.ht-tier-high { border-left-color: var(--win); }
+    .ht-result-row.ht-tier-mid { border-left-color: var(--signal); }
+    .ht-result-row.ht-tier-low { border-left-color: var(--loss); }
+    .ht-card { align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); border-left: 3px solid transparent; display: grid; gap: 14px; grid-template-columns: 70px minmax(180px, 1fr) 150px 130px 110px 90px; padding: 17px; }
     .ht-card:last-child { border-bottom: 0; }
-    @media (max-width: 800px) { .ht-card { grid-template-columns: 56px 1fr; } .ht-card .ht-exclude-badge, .ht-card .ht-agreement { grid-column: 2; } }
+    .ht-card.ht-tier-high { border-left-color: var(--win); }
+    .ht-card.ht-tier-mid { border-left-color: var(--signal); }
+    .ht-card.ht-tier-low { border-left-color: var(--loss); }
+    @media (max-width: 800px) { .ht-card { grid-template-columns: 56px 1fr; } .ht-card .ht-exclude-badge, .ht-card .ht-agreement, .ht-card .ht-rate { grid-column: 2; } }
     @media (max-width: 900px) { .today-market-strip { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 800px) {
       .header { align-items: flex-start; flex-wrap: wrap; gap: 14px; }
@@ -1260,7 +1275,7 @@
     let htFavoritesOnly = true; // pré-selecionado: só países/ligas marcados na aba Favoritos
     let htAgreementFilter = 'all'; // 'all' ou "agreement/sourcesAvailable" exato (ex.: "3/3", "1/2")
     let htConfidenceLocked = false; // true a partir do primeiro clique manual num corte
-    let htBestConfidenceCache = null; // Promise<{threshold,accuracy,n}|null> — refeita ao trocar toggle de favoritas ou fontes
+    let htHistoryStatsCache = null; // Promise<{best,agreementAccuracy}> — refeita ao trocar confiança, favoritas ou fontes
 
     const HT_CONFIDENCE_THRESHOLDS = [0, 72, 76, 80];
     // Combinações reais de agreement/sourcesAvailable que o modelo produz: Poisson conta
@@ -1284,19 +1299,39 @@
       return `<button class="daily-fav-toggle ${fav ? 'active' : ''}" data-ht-toggle-fav="${favoriteLeagueKey(record.country, record.competition)}" title="${fav ? 'Remover liga dos favoritos' : 'Marcar liga como favorita'}">${fav ? '★' : '☆'}</button>`;
     };
 
+    // ≥90% = verde, 75-89% = amarelo, <75% = vermelho. Mesma linguagem de cor já usada no
+    // resto do dashboard (--win/--signal/--loss).
+    const htRateTier = rate => (rate === null || rate === undefined) ? 'unknown' : rate >= 90 ? 'high' : rate >= 75 ? 'mid' : 'low';
+    const htRateBadge = (agreementAccuracy, record) => {
+      const rate = agreementAccuracy[htAgreementKey(record)];
+      return `<span class="ht-rate ht-rate-${htRateTier(rate)}">${rate === null || rate === undefined ? '—' : `${rate}%`}</span>`;
+    };
+    const htRowTierClass = (agreementAccuracy, record) => `ht-tier-${htRateTier(agreementAccuracy[htAgreementKey(record)])}`;
+
     // Varre os mesmos cortes dos botões contra o histórico real e pega o de maior acerto
-    // (mín. 20 jogos, mesmo critério do "melhor filtro" da aba Over 0.5/1.5). Sempre lê o
-    // histórico (não o endpoint do modo atual), pra funcionar igual em Próximos e Histórico.
-    async function computeBestHtConfidence() {
+    // (mín. 20 jogos, mesmo critério do "melhor filtro" da aba Over 0.5/1.5) + o acerto de
+    // cada combinação de fontes (pra badge de cada jogo e pros cards de "acerto por
+    // fontes"). Sempre lê o histórico (não o endpoint do modo atual), pra funcionar igual
+    // em Próximos e Histórico.
+    async function computeHtHistoryStats() {
       try {
         const response = await fetch('/api/history/ht-exclusion');
-        if (!response.ok) return null;
+        if (!response.ok) return { best: null, agreementAccuracy: {} };
         const records = await response.json();
-        const pool = (htFavoritesOnly ? records.filter(isFavoriteMatch) : records)
-          .filter(record => htAgreementFilter === 'all' || htAgreementKey(record) === htAgreementFilter);
+        const favoritesFiltered = htFavoritesOnly ? records.filter(isFavoriteMatch) : records;
+
+        // Sem aplicar o filtro de fontes aqui — senão colapsa pra uma única combinação.
+        const confidenceFiltered = favoritesFiltered.filter(record => htConfidence(record) >= htMinConfidence);
+        const agreementAccuracy = {};
+        for (const key of HT_AGREEMENT_FILTERS.filter(k => k !== 'all')) {
+          const bucket = confidenceFiltered.filter(record => htAgreementKey(record) === key);
+          agreementAccuracy[key] = bucket.length ? Math.round((100 * bucket.filter(r => r.hit).length) / bucket.length) : null;
+        }
+
+        const agreementFiltered = favoritesFiltered.filter(record => htAgreementFilter === 'all' || htAgreementKey(record) === htAgreementFilter);
         let best = null;
         for (const threshold of HT_CONFIDENCE_THRESHOLDS) {
-          const atThreshold = pool.filter(record => htConfidence(record) >= threshold);
+          const atThreshold = agreementFiltered.filter(record => htConfidence(record) >= threshold);
           if (atThreshold.length < HT_BEST_CONFIDENCE_MIN_N) continue;
           const hits = atThreshold.filter(record => record.hit).length;
           const accuracy = Math.round((hits / atThreshold.length) * 100);
@@ -1304,9 +1339,9 @@
             best = { threshold, accuracy, n: atThreshold.length };
           }
         }
-        return best;
+        return { best, agreementAccuracy };
       } catch {
-        return null;
+        return { best: null, agreementAccuracy: {} };
       }
     }
 
@@ -1315,9 +1350,10 @@
       content.innerHTML = '<div class="lab-loading">Consultando modelo de 1º tempo…</div>';
       try {
         const endpoint = htMode === 'upcoming' ? '/api/predictions/ht-exclusion' : '/api/history/ht-exclusion';
-        if (!htBestConfidenceCache) htBestConfidenceCache = computeBestHtConfidence();
-        const [response, bestConfidence] = await Promise.all([fetch(endpoint), htBestConfidenceCache]);
+        if (!htHistoryStatsCache) htHistoryStatsCache = computeHtHistoryStats();
+        const [response, historyStats] = await Promise.all([fetch(endpoint), htHistoryStatsCache]);
         if (!response.ok) throw new Error('Banco local indisponível');
+        const { best: bestConfidence, agreementAccuracy } = historyStats;
         if (bestConfidence && !htConfidenceLocked) htMinConfidence = bestConfidence.threshold;
         const records = await response.json();
         const favoritesFiltered = htFavoritesOnly ? records.filter(isFavoriteMatch) : records;
@@ -1361,7 +1397,7 @@
               <div class="best-filter-list">${agreementBreakdown.map(b => `
                 <div class="best-filter-item ${b.key === htAgreementFilter ? 'top' : ''}">
                   <span class="best-filter-market">${b.key} fontes</span>
-                  <span class="best-filter-rate">${b.rate === null ? '—' : `${b.rate}%`}</span>
+                  <span class="best-filter-rate ht-rate-text-${htRateTier(b.rate)}">${b.rate === null ? '—' : `${b.rate}%`}</span>
                   <span class="best-filter-n">${b.n} jogos</span>
                 </div>`).join('')}</div>
             </section>`;
@@ -1375,14 +1411,15 @@
             <div class="hero-fact"><div class="hero-fact-value">${clean.length ? `${rate(clean)}%` : '—'}</div><div class="hero-fact-label">Trilha limpa (n=${clean.length})</div></div>
             <div class="hero-fact"><div class="hero-fact-value">${dirty.length ? `${rate(dirty)}%` : '—'}</div><div class="hero-fact-label">Trilha backfill (n=${dirty.length})</div></div>`;
 
-          const header = `<div class="ht-result-row header"><div>Data/Horário</div><div>Partida</div><div>Casa / Empate / Fora</div><div>Exclui</div><div>Fontes</div><div>Placar HT</div><div>Placar Final</div><div>Resultado</div></div>`;
+          const header = `<div class="ht-result-row header"><div>Data/Horário</div><div>Partida</div><div>Casa / Empate / Fora</div><div>Exclui</div><div>Fontes</div><div>Acerto fontes</div><div>Placar HT</div><div>Placar Final</div><div>Resultado</div></div>`;
           const rows = [...selected].sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? '')).map(record => `
-            <div class="ht-result-row">
+            <div class="ht-result-row ${htRowTierClass(agreementAccuracy, record)}">
               <div class="result-number">${formatKickoffShort(record.kickoffAt)}</div>
               <div class="fixture">${htFavToggle(record)}${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
               ${htProbsCell(record)}
               <div>${htExcludeBadge(record)}</div>
               <div>${htAgreementBadge(record)}</div>
+              <div>${htRateBadge(agreementAccuracy, record)}</div>
               <div class="result-number">${record.halftimeHome}–${record.halftimeAway}</div>
               <div class="result-number">${record.homeScore ?? '—'}–${record.awayScore ?? '—'}</div>
               <div class="outcome ${record.hit ? 'win' : 'loss'}">${record.hit ? 'Green' : 'Red'}</div>
@@ -1406,12 +1443,13 @@
           }, {});
           const runway = Object.values(groups).map(group => `
             <section><div class="prediction-date">${formatDate(group[0].kickoffAt)}</div>
-            ${group.map(record => `<article class="ht-card">
+            ${group.map(record => `<article class="ht-card ${htRowTierClass(agreementAccuracy, record)}">
               <div class="prediction-time">${formatKickoff(record.kickoffAt)}</div>
               <div class="prediction-fixture">${htFavToggle(record)}${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
               ${htProbsCell(record)}
               ${htExcludeBadge(record)}
               ${htAgreementBadge(record)}
+              ${htRateBadge(agreementAccuracy, record)}
             </article>`).join('')}</section>`).join('');
 
           content.innerHTML = `${intro}
@@ -1425,18 +1463,18 @@
         }
 
         content.querySelectorAll('[data-ht-mode]').forEach(button => button.addEventListener('click', () => { htMode = button.dataset.htMode; renderHtExclusion(); }));
-        content.querySelectorAll('[data-ht-confidence]').forEach(button => button.addEventListener('click', () => { htMinConfidence = Number(button.dataset.htConfidence); htConfidenceLocked = true; renderHtExclusion(); }));
-        content.querySelectorAll('[data-ht-agreement]').forEach(button => button.addEventListener('click', () => { htAgreementFilter = button.dataset.htAgreement; htBestConfidenceCache = null; renderHtExclusion(); }));
+        content.querySelectorAll('[data-ht-confidence]').forEach(button => button.addEventListener('click', () => { htMinConfidence = Number(button.dataset.htConfidence); htConfidenceLocked = true; htHistoryStatsCache = null; renderHtExclusion(); }));
+        content.querySelectorAll('[data-ht-agreement]').forEach(button => button.addEventListener('click', () => { htAgreementFilter = button.dataset.htAgreement; htHistoryStatsCache = null; renderHtExclusion(); }));
         content.querySelectorAll('[data-ht-toggle-fav]').forEach(button => button.addEventListener('click', () => {
           const key = button.dataset.htToggleFav;
           if (!key) return;
           favorites.leagues = favorites.leagues.includes(key) ? favorites.leagues.filter(l => l !== key) : [...favorites.leagues, key];
           saveFavorites();
-          htBestConfidenceCache = null;
+          htHistoryStatsCache = null;
           renderHtExclusion();
         }));
         const htFavoritesToggleButton = document.getElementById('htFavoritesToggle');
-        if (htFavoritesToggleButton) htFavoritesToggleButton.addEventListener('click', () => { htFavoritesOnly = !htFavoritesOnly; htBestConfidenceCache = null; renderHtExclusion(); });
+        if (htFavoritesToggleButton) htFavoritesToggleButton.addEventListener('click', () => { htFavoritesOnly = !htFavoritesOnly; htHistoryStatsCache = null; renderHtExclusion(); });
       } catch (error) {
         content.innerHTML = `<div class="empty">Não foi possível carregar o modelo de 1º tempo: ${error.message}</div>`;
       }
