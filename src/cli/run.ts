@@ -8,7 +8,6 @@ import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
 import { PostgresMatchStore } from '../storage/postgres-store.js';
 import { importOutputDirectory } from '../storage/import-output.js';
-import { normalizeFixtureFromList } from '../api/normalizer.js';
 import { backfillHalfTimeStats } from './backfill-ht.js';
 import { getBrasiliaDate } from '../utils/time.js';
 import type { Env } from '../config/env.js';

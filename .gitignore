@@ -6,3 +6,9 @@ storage/output/*.json
 storage/screenshots/*.png
 storage/debug-html/*.html
 *.log
+
+# Laravel V2 (vendor/env locais — o app tem seu próprio .gitignore)
+frontend-laravel/vendor/
+frontend-laravel/node_modules/
+frontend-laravel/.env
+frontend-laravel/database/*.sqlite
