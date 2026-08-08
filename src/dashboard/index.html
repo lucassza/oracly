@@ -480,13 +480,13 @@
     .best-filter-rate.ht-rate-text-mid { color: var(--signal); }
     .best-filter-rate.ht-rate-text-low { color: var(--loss); }
     .best-filter-rate.ht-rate-text-unknown { color: var(--muted); }
-    .ht-result-row { align-items: center; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; display: grid; gap: 12px; grid-template-columns: 108px minmax(200px, 1.5fr) minmax(150px, 1fr) 130px 110px 90px 90px 90px 90px; min-width: 1170px; padding: 13px 18px; }
+    .ht-result-row { align-items: center; border-bottom: 1px solid var(--line); border-left: 3px solid transparent; display: grid; gap: 12px; grid-template-columns: 108px minmax(200px, 1.5fr) minmax(150px, 1fr) 130px 110px 90px 100px 90px 90px 90px; min-width: 1270px; padding: 13px 18px; }
     .ht-result-row:last-child { border-bottom: 0; }
     .ht-result-row.header { border-left-color: transparent; color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
     .ht-result-row.ht-tier-high { border-left-color: var(--win); }
     .ht-result-row.ht-tier-mid { border-left-color: var(--signal); }
     .ht-result-row.ht-tier-low { border-left-color: var(--loss); }
-    .ht-card { align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); border-left: 3px solid transparent; display: grid; gap: 14px; grid-template-columns: 70px minmax(180px, 1fr) 150px 130px 110px 90px; padding: 17px; }
+    .ht-card { align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); border-left: 3px solid transparent; display: grid; gap: 14px; grid-template-columns: 70px minmax(180px, 1fr) 150px 130px 110px 90px 100px; padding: 17px; }
     .ht-card:last-child { border-bottom: 0; }
     .ht-card.ht-tier-high { border-left-color: var(--win); }
     .ht-card.ht-tier-mid { border-left-color: var(--signal); }
@@ -1308,6 +1308,25 @@
     };
     const htRowTierClass = (agreementAccuracy, record) => `ht-tier-${htRateTier(agreementAccuracy[htAgreementKey(record)])}`;
 
+    // Entradas são via lay (aposta contra o resultado excluído): se ele não sai (prob=acerto%)
+    // você ganha o stake do apostador; se sai, paga (odd-1)×stake. Odd máxima de equilíbrio
+    // (lucro esperado = 0), já descontando a comissão da exchange sobre o lucro:
+    //   odd = 1 + (1 - comissão) × p/(1-p)
+    // Acima dela o lay vira -EV. acerto=100% dá odd infinita (sem teto real).
+    const HT_EXCHANGE_COMMISSION = 0.05; // padrão Betfair
+    const htMaxLayOdd = rate => {
+      if (rate === null || rate === undefined) return null;
+      const p = rate / 100;
+      if (p >= 1) return Infinity;
+      return 1 + (1 - HT_EXCHANGE_COMMISSION) * (p / (1 - p));
+    };
+    const htLayOddBadge = (agreementAccuracy, record) => {
+      const rate = agreementAccuracy[htAgreementKey(record)];
+      const odd = htMaxLayOdd(rate);
+      const label = odd === null ? '—' : odd === Infinity ? '∞' : `≤ ${odd.toFixed(2)}`;
+      return `<span class="ht-rate ht-rate-${htRateTier(rate)}" title="Odd máxima de lay pra lucro esperado positivo nesse jogo, já com ${HT_EXCHANGE_COMMISSION * 100}% de comissão da exchange">${label}</span>`;
+    };
+
     // Varre os mesmos cortes dos botões contra o histórico real e pega o de maior acerto
     // (mín. 20 jogos, mesmo critério do "melhor filtro" da aba Over 0.5/1.5) + o acerto de
     // cada combinação de fontes (pra badge de cada jogo e pros cards de "acerto por
@@ -1411,7 +1430,7 @@
             <div class="hero-fact"><div class="hero-fact-value">${clean.length ? `${rate(clean)}%` : '—'}</div><div class="hero-fact-label">Trilha limpa (n=${clean.length})</div></div>
             <div class="hero-fact"><div class="hero-fact-value">${dirty.length ? `${rate(dirty)}%` : '—'}</div><div class="hero-fact-label">Trilha backfill (n=${dirty.length})</div></div>`;
 
-          const header = `<div class="ht-result-row header"><div>Data/Horário</div><div>Partida</div><div>Casa / Empate / Fora</div><div>Exclui</div><div>Fontes</div><div>Acerto fontes</div><div>Placar HT</div><div>Placar Final</div><div>Resultado</div></div>`;
+          const header = `<div class="ht-result-row header"><div>Data/Horário</div><div>Partida</div><div>Casa / Empate / Fora</div><div>Exclui</div><div>Fontes</div><div>Acerto fontes</div><div>Odd máx. lay</div><div>Placar HT</div><div>Placar Final</div><div>Resultado</div></div>`;
           const rows = [...selected].sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? '')).map(record => `
             <div class="ht-result-row ${htRowTierClass(agreementAccuracy, record)}">
               <div class="result-number">${formatKickoffShort(record.kickoffAt)}</div>
@@ -1420,6 +1439,7 @@
               <div>${htExcludeBadge(record)}</div>
               <div>${htAgreementBadge(record)}</div>
               <div>${htRateBadge(agreementAccuracy, record)}</div>
+              <div>${htLayOddBadge(agreementAccuracy, record)}</div>
               <div class="result-number">${record.halftimeHome}–${record.halftimeAway}</div>
               <div class="result-number">${record.homeScore ?? '—'}–${record.awayScore ?? '—'}</div>
               <div class="outcome ${record.hit ? 'win' : 'loss'}">${record.hit ? 'Green' : 'Red'}</div>
@@ -1434,7 +1454,7 @@
             <section class="lab-hero"><div class="hero-copy"><div class="hero-market">${htMinConfidence ? `Confiança ≥ ${htMinConfidence}%` : 'Cobertura total'}</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${hits} acertos em ${selected.length} jogos com placar HT conhecido.</p></div><div class="hero-facts">${heroFacts}</div></section>
             <div class="section-heading"><h2>Resultados históricos</h2><span>Mais recentes primeiro</span></div>
             <section class="lab-results">${header}${rows || '<div class="empty">Nenhum jogo com placar HT nesse corte.</div>'}</section>
-            <p class="lab-note">"Trilha backfill" usa médias de 1º tempo buscadas bem depois do jogo (comando backfill-ht) — pode não refletir a forma do time como era antes da partida. "Trilha limpa" vem do scrape normal, coletado antes do kickoff. Placar HT via scoresLocalTeamHT/scoresVisitorTeamHT da SokkerPRO.</p>`;
+            <p class="lab-note">"Trilha backfill" usa médias de 1º tempo buscadas bem depois do jogo (comando backfill-ht) — pode não refletir a forma do time como era antes da partida. "Trilha limpa" vem do scrape normal, coletado antes do kickoff. Placar HT via scoresLocalTeamHT/scoresVisitorTeamHT da SokkerPRO. "Odd máx. lay" é a odd de lay mais alta que ainda dá lucro esperado positivo pra esse jogo (comissão de ${HT_EXCHANGE_COMMISSION * 100}% já descontada) — acima dela, deixe de entrar.</p>`;
         } else {
           const groups = selected.reduce((grouped, record) => {
             const key = record.kickoffAt?.slice(0, 10) || 'sem-data';
@@ -1450,6 +1470,7 @@
               ${htExcludeBadge(record)}
               ${htAgreementBadge(record)}
               ${htRateBadge(agreementAccuracy, record)}
+              ${htLayOddBadge(agreementAccuracy, record)}
             </article>`).join('')}</section>`).join('');
 
           content.innerHTML = `${intro}
@@ -1459,7 +1480,7 @@
             ${bestConfidenceNote}
             <div class="section-heading"><h2>${selected.length} jogos com sinal</h2><span>Corte atual: ${htMinConfidence ? `confiança ≥ ${htMinConfidence}%` : 'todos'}</span></div>
             <div class="prediction-runway">${runway || '<div class="empty">Nenhum próximo jogo com médias de 1º tempo suficientes.</div>'}</div>
-            <p class="lab-note">Horário em Brasília. "Fontes" mostra quantas fontes (Poisson + odds 1T + odds FT, quando disponíveis) concordam com a exclusão. Amador, juvenil, feminino e regional/reserva ficam de fora.</p>`;
+            <p class="lab-note">Horário em Brasília. "Fontes" mostra quantas fontes (Poisson + odds 1T + odds FT, quando disponíveis) concordam com a exclusão. "Odd máx. lay" é a odd de lay mais alta que ainda dá lucro esperado positivo pra esse jogo (comissão de ${HT_EXCHANGE_COMMISSION * 100}% já descontada) — acima dela, deixe de entrar. Amador, juvenil, feminino e regional/reserva ficam de fora.</p>`;
         }
 
         content.querySelectorAll('[data-ht-mode]').forEach(button => button.addEventListener('click', () => { htMode = button.dataset.htMode; renderHtExclusion(); }));
