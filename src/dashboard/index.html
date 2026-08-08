@@ -962,6 +962,9 @@
       ).slice().sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? ''));
 
       const dateOptions = availableDates.map(date => `<option value="${date}" ${date === dailyDate ? 'selected' : ''}>${formatPickerDate(date)}${date === todayStr ? ' (hoje)' : ''}</option>`).join('');
+      const dateIndex = availableDates.indexOf(dailyDate);
+      const olderDate = availableDates[dateIndex + 1];
+      const newerDate = availableDates[dateIndex - 1];
       const modeButtons = [
         { key: 'top10', label: 'Top 10' },
         { key: 'top10fav', label: 'Top 10 favoritas' },
@@ -1013,7 +1016,9 @@
           <h1 class="lab-title">Entradas por<br>dia.</h1>
         </div>
         <div class="today-controls">
+          <button class="prediction-filter" id="dailyDatePrev" ${olderDate ? '' : 'disabled'}>‹ Dia anterior</button>
           <label class="daily-date-label">Dia: <select id="dailyDateSelect">${dateOptions}</select></label>
+          <button class="prediction-filter" id="dailyDateNext" ${newerDate ? '' : 'disabled'}>Dia seguinte ›</button>
           <button class="today-refresh-button" id="dailyRefreshButton" ${dailyRefreshing ? 'disabled' : ''}>${dailyRefreshing ? 'Atualizando…' : '↻ Atualizar placares'}</button>
           ${dailyRefreshError ? `<span class="today-refresh-error">${dailyRefreshError}</span>` : ''}
         </div>
@@ -1027,6 +1032,10 @@
 
       const dateSelect = document.getElementById('dailyDateSelect');
       if (dateSelect) dateSelect.addEventListener('change', () => { dailyDate = dateSelect.value; dailyPage = 0; renderDailyUI(); });
+      const datePrevButton = document.getElementById('dailyDatePrev');
+      if (datePrevButton) datePrevButton.addEventListener('click', () => { if (olderDate) { dailyDate = olderDate; dailyPage = 0; renderDailyUI(); } });
+      const dateNextButton = document.getElementById('dailyDateNext');
+      if (dateNextButton) dateNextButton.addEventListener('click', () => { if (newerDate) { dailyDate = newerDate; dailyPage = 0; renderDailyUI(); } });
       const refreshButton = document.getElementById('dailyRefreshButton');
       if (refreshButton) refreshButton.addEventListener('click', refreshDaily);
       content.querySelectorAll('[data-daily-mode]').forEach(button => button.addEventListener('click', () => { dailyMode = button.dataset.dailyMode; dailyPage = 0; renderDailyUI(); }));
