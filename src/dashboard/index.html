@@ -471,7 +471,7 @@
     .ht-exclude-badge { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 5px 8px; text-transform: uppercase; white-space: nowrap; }
     .ht-agreement { border: 1px solid var(--line); color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 700; padding: 5px 8px; white-space: nowrap; }
     .ht-agreement.full { border-color: var(--win); color: var(--win); }
-    .ht-result-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(200px, 1.5fr) minmax(150px, 1fr) 130px 110px 90px 90px 90px; min-width: 970px; padding: 13px 18px; }
+    .ht-result-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: 108px minmax(200px, 1.5fr) minmax(150px, 1fr) 130px 110px 90px 90px 90px; min-width: 1080px; padding: 13px 18px; }
     .ht-result-row:last-child { border-bottom: 0; }
     .ht-result-row.header { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
     .ht-card { align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); display: grid; gap: 14px; grid-template-columns: 70px minmax(180px, 1fr) 150px 130px 110px; padding: 17px; }
@@ -942,6 +942,9 @@
 
     const formatKickoff = kickoffAt => new Date(kickoffAt).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' });
     const formatDate = kickoffAt => new Date(kickoffAt).toLocaleDateString('pt-BR', { weekday: 'long', day: '2-digit', month: 'long' });
+    const formatKickoffShort = kickoffAt => kickoffAt
+      ? new Date(kickoffAt).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', timeZone: 'America/Sao_Paulo' })
+      : '—';
     const competitionLabel = match => match.competition
       ? (match.country ? `${match.country} · ${match.competition}` : match.competition)
       : 'Competição não informada';
@@ -1225,10 +1228,12 @@
     let htMode = 'upcoming'; // 'upcoming' | 'history'
     let htMinConfidence = 0; // % de confiança mínima no lado excluído; 0 = cobertura total
     let htFavoritesOnly = true; // pré-selecionado: só países/ligas marcados na aba Favoritos
+    let htMinAgreement = 0; // quantas fontes (Poisson + odds 1T + odds FT) precisam concordar; 0 = todas
     let htConfidenceLocked = false; // true a partir do primeiro clique manual num corte
-    let htBestConfidenceCache = null; // Promise<{threshold,accuracy,n}|null> — refeita ao trocar o toggle de favoritas
+    let htBestConfidenceCache = null; // Promise<{threshold,accuracy,n}|null> — refeita ao trocar toggle de favoritas ou fontes
 
     const HT_CONFIDENCE_THRESHOLDS = [0, 72, 76, 80];
+    const HT_AGREEMENT_THRESHOLDS = [0, 2, 3];
     const HT_BEST_CONFIDENCE_MIN_N = 20;
     const HT_OUTCOME_LABEL = { home: 'Casa', draw: 'Empate', away: 'Fora' };
     const HT_OUTCOME_SHORT = { home: 'C', draw: 'E', away: 'F' };
@@ -1239,6 +1244,7 @@
     ).join('')}</div>`;
     const htExcludeBadge = record => `<span class="ht-exclude-badge">Exclui ${HT_OUTCOME_LABEL[record.excluded]}</span>`;
     const htAgreementBadge = record => `<span class="ht-agreement ${record.agreement === record.sourcesAvailable ? 'full' : ''}">${record.agreement}/${record.sourcesAvailable} fontes</span>`;
+    const htAgreementLabel = threshold => threshold ? `≥ ${threshold} fontes` : 'Todos';
 
     // Varre os mesmos cortes dos botões contra o histórico real e pega o de maior acerto
     // (mín. 20 jogos, mesmo critério do "melhor filtro" da aba Over 0.5/1.5). Sempre lê o
@@ -1248,7 +1254,7 @@
         const response = await fetch('/api/history/ht-exclusion');
         if (!response.ok) return null;
         const records = await response.json();
-        const pool = htFavoritesOnly ? records.filter(isFavoriteMatch) : records;
+        const pool = (htFavoritesOnly ? records.filter(isFavoriteMatch) : records).filter(record => record.agreement >= htMinAgreement);
         let best = null;
         for (const threshold of HT_CONFIDENCE_THRESHOLDS) {
           const atThreshold = pool.filter(record => htConfidence(record) >= threshold);
@@ -1276,10 +1282,11 @@
         if (bestConfidence && !htConfidenceLocked) htMinConfidence = bestConfidence.threshold;
         const records = await response.json();
         const favoritesFiltered = htFavoritesOnly ? records.filter(isFavoriteMatch) : records;
-        const selected = favoritesFiltered.filter(record => htConfidence(record) >= htMinConfidence);
+        const selected = favoritesFiltered.filter(record => htConfidence(record) >= htMinConfidence && record.agreement >= htMinAgreement);
 
         const modes = `<button class="prediction-filter ${htMode === 'upcoming' ? 'active' : ''}" data-ht-mode="upcoming">Próximos jogos</button><button class="prediction-filter ${htMode === 'history' ? 'active' : ''}" data-ht-mode="history">Histórico</button>`;
         const confidenceFilters = HT_CONFIDENCE_THRESHOLDS.map(threshold => `<button class="prediction-filter ${threshold === htMinConfidence ? 'active' : ''}" data-ht-confidence="${threshold}">${threshold ? `Confiança ≥ ${threshold}%` : 'Todos'}</button>`).join('');
+        const agreementFilters = HT_AGREEMENT_THRESHOLDS.map(threshold => `<button class="prediction-filter ${threshold === htMinAgreement ? 'active' : ''}" data-ht-agreement="${threshold}">${htAgreementLabel(threshold)}</button>`).join('');
         const favoritesToggle = `<button class="prediction-filter ${htFavoritesOnly ? 'active' : ''}" id="htFavoritesToggle">★ Só ligas favoritas</button>`;
         const bestConfidenceNote = bestConfidence
           ? `<p class="lab-source">🎯 Melhor confiança: <strong>${htConfidenceLabel(bestConfidence.threshold)}</strong> — ${bestConfidence.accuracy}% de acerto em ${bestConfidence.n} jogos${htConfidenceLocked ? '.' : ' (já selecionada abaixo).'}</p>`
@@ -1308,9 +1315,10 @@
             <div class="hero-fact"><div class="hero-fact-value">${clean.length ? `${rate(clean)}%` : '—'}</div><div class="hero-fact-label">Trilha limpa (n=${clean.length})</div></div>
             <div class="hero-fact"><div class="hero-fact-value">${dirty.length ? `${rate(dirty)}%` : '—'}</div><div class="hero-fact-label">Trilha backfill (n=${dirty.length})</div></div>`;
 
-          const header = `<div class="ht-result-row header"><div>Partida</div><div>Casa / Empate / Fora</div><div>Exclui</div><div>Fontes</div><div>Placar HT</div><div>Placar Final</div><div>Resultado</div></div>`;
+          const header = `<div class="ht-result-row header"><div>Data/Horário</div><div>Partida</div><div>Casa / Empate / Fora</div><div>Exclui</div><div>Fontes</div><div>Placar HT</div><div>Placar Final</div><div>Resultado</div></div>`;
           const rows = [...selected].sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? '')).map(record => `
             <div class="ht-result-row">
+              <div class="result-number">${formatKickoffShort(record.kickoffAt)}</div>
               <div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
               ${htProbsCell(record)}
               <div>${htExcludeBadge(record)}</div>
@@ -1323,6 +1331,7 @@
           content.innerHTML = `${intro}
             <div class="prediction-controls">${modes}</div>
             <div class="prediction-controls">${confidenceFilters}${favoritesToggle}</div>
+            <div class="prediction-controls">${agreementFilters}</div>
             ${bestConfidenceNote}
             <section class="lab-hero"><div class="hero-copy"><div class="hero-market">${htMinConfidence ? `Confiança ≥ ${htMinConfidence}%` : 'Cobertura total'}</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${hits} acertos em ${selected.length} jogos com placar HT conhecido.</p></div><div class="hero-facts">${heroFacts}</div></section>
             <div class="section-heading"><h2>Resultados históricos</h2><span>Mais recentes primeiro</span></div>
@@ -1347,6 +1356,7 @@
           content.innerHTML = `${intro}
             <div class="prediction-controls">${modes}</div>
             <div class="prediction-controls">${confidenceFilters}${favoritesToggle}</div>
+            <div class="prediction-controls">${agreementFilters}</div>
             ${bestConfidenceNote}
             <div class="section-heading"><h2>${selected.length} jogos com sinal</h2><span>Corte atual: ${htMinConfidence ? `confiança ≥ ${htMinConfidence}%` : 'todos'}</span></div>
             <div class="prediction-runway">${runway || '<div class="empty">Nenhum próximo jogo com médias de 1º tempo suficientes.</div>'}</div>
@@ -1355,6 +1365,7 @@
 
         content.querySelectorAll('[data-ht-mode]').forEach(button => button.addEventListener('click', () => { htMode = button.dataset.htMode; renderHtExclusion(); }));
         content.querySelectorAll('[data-ht-confidence]').forEach(button => button.addEventListener('click', () => { htMinConfidence = Number(button.dataset.htConfidence); htConfidenceLocked = true; renderHtExclusion(); }));
+        content.querySelectorAll('[data-ht-agreement]').forEach(button => button.addEventListener('click', () => { htMinAgreement = Number(button.dataset.htAgreement); htBestConfidenceCache = null; renderHtExclusion(); }));
         const htFavoritesToggleButton = document.getElementById('htFavoritesToggle');
         if (htFavoritesToggleButton) htFavoritesToggleButton.addEventListener('click', () => { htFavoritesOnly = !htFavoritesOnly; htBestConfidenceCache = null; renderHtExclusion(); });
       } catch (error) {
