@@ -1,9 +1,32 @@
 services:
+  dashboard:
+    build:
+      context: .
+      dockerfile: Dockerfile.dashboard
+    image: oracly-dashboard:latest
+    container_name: oracly-dashboard
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      - DASHBOARD_PORT=8081
+    network_mode: host
+    volumes:
+      - ./storage/output:/app/storage/output
+      - ./storage/logs:/app/storage/logs
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://127.0.0.1:8081/api/files').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
   scraper:
     build:
       context: .
       dockerfile: Dockerfile
-    container_name: sokkerpro-scraper
+    image: oracly-scraper:latest
+    container_name: oracly-scraper
+    profiles: ["scraper"]
     environment:
       - PLAYWRIGHT_HEADLESS=true
       - SCRAPER_CONCURRENCY=2
@@ -12,6 +35,7 @@ services:
       - SCRAPER_MAX_RETRIES=3
       - SCRAPER_SAVE_RAW_DATA=false
       - LOG_LEVEL=info
+    env_file: .env
     volumes:
       - ./storage/sessions:/app/storage/sessions
       - ./storage/output:/app/storage/output
