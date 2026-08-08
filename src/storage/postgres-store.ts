@@ -68,6 +68,15 @@ export interface KnownLeague {
   division: 'A' | 'B' | undefined;
 }
 
+// Compartilhado entre todos os navegadores/computadores (antes vivia só no localStorage,
+// cada máquina com sua própria lista). `leagues` chega/sai como "país::competição" —
+// mesma chave que o dashboard já usa — pra casar times com o mesmo nome de liga em
+// países diferentes (ex.: "Premier League" existe em Ucrânia, Rússia, Gales...).
+export interface Favorites {
+  countries: string[];
+  leagues: string[];
+}
+
 export const GOAL_MARKETS = [
   { key: 'gols_1t_05_over', label: 'Over 0.5 1T' },
   { key: 'gols_1t_15_over', label: 'Over 1.5 1T' },
@@ -794,6 +803,51 @@ export class PostgresMatchStore {
     }));
   }
 
+  async getFavorites(): Promise<Favorites> {
+    await this.ready;
+    const [{ rows: countryRows }, { rows: leagueRows }] = await Promise.all([
+      this.pool.query(`SELECT country FROM ${this.t('favorite_countries')} ORDER BY country`),
+      this.pool.query(`SELECT country, competition FROM ${this.t('favorite_leagues')} ORDER BY country, competition`),
+    ]);
+    return {
+      countries: countryRows.map((row) => String(row.country)),
+      leagues: leagueRows.map((row) => `${row.country}::${row.competition}`),
+    };
+  }
+
+  // Substitui a lista inteira (o dashboard sempre manda o estado completo desejado,
+  // igual fazia com localStorage.setItem) — mais simples e sem risco de divergir do
+  // que o front acha que salvou.
+  async setFavorites(favorites: Favorites): Promise<void> {
+    await this.ready;
+    const client = await this.pool.connect();
+    try {
+      await client.query('BEGIN');
+      await client.query(`DELETE FROM ${this.t('favorite_countries')}`);
+      await client.query(`DELETE FROM ${this.t('favorite_leagues')}`);
+
+      if (favorites.countries.length) {
+        const values = favorites.countries.map((_, i) => `($${i + 1})`).join(',');
+        await client.query(`INSERT INTO ${this.t('favorite_countries')} (country) VALUES ${values} ON CONFLICT DO NOTHING`, favorites.countries);
+      }
+
+      const leaguePairs = favorites.leagues
+        .map((key) => key.split('::'))
+        .filter((parts): parts is [string, string] => parts.length === 2 && parts[0] !== '' && parts[1] !== '');
+      if (leaguePairs.length) {
+        const values = leaguePairs.map((_, i) => `($${i * 2 + 1}, $${i * 2 + 2})`).join(',');
+        await client.query(`INSERT INTO ${this.t('favorite_leagues')} (country, competition) VALUES ${values} ON CONFLICT DO NOTHING`, leaguePairs.flat());
+      }
+
+      await client.query('COMMIT');
+    } catch (error) {
+      await client.query('ROLLBACK');
+      throw error;
+    } finally {
+      client.release();
+    }
+  }
+
   async close(): Promise<void> {
     await this.pool.end();
   }
@@ -922,6 +976,14 @@ export class PostgresMatchStore {
         PRIMARY KEY (country, competition)
       );
       ALTER TABLE ${this.t('leagues')} ADD COLUMN IF NOT EXISTS division TEXT;
+      CREATE TABLE IF NOT EXISTS ${this.t('favorite_countries')} (
+        country TEXT PRIMARY KEY
+      );
+      CREATE TABLE IF NOT EXISTS ${this.t('favorite_leagues')} (
+        country TEXT NOT NULL,
+        competition TEXT NOT NULL,
+        PRIMARY KEY (country, competition)
+      );
     `);
     await this.backfillLeaguesIfEmpty();
     await this.seedTopFlightLeagues();

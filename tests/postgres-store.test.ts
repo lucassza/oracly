@@ -481,4 +481,22 @@ describe('PostgresMatchStore', () => {
     expect(await store.getUpcomingHalfTimeExclusions('2026-07-25T00:00:00.000Z')).toHaveLength(0);
     await store.close();
   });
+
+  it('stores favorites shared across browsers, replacing the previous full state on each save', async () => {
+    const store = createStore();
+
+    expect(await store.getFavorites()).toEqual({ countries: [], leagues: [] });
+
+    await store.setFavorites({ countries: ['Brazil'], leagues: ['Argentina::Liga Profesional de Fútbol', 'Chile::Primera Division'] });
+    expect(await store.getFavorites()).toEqual({
+      countries: ['Brazil'],
+      leagues: ['Argentina::Liga Profesional de Fútbol', 'Chile::Primera Division'],
+    });
+
+    // Replaces the whole set — Brazil and the Argentina league drop out, only Chile stays.
+    await store.setFavorites({ countries: [], leagues: ['Chile::Primera Division'] });
+    expect(await store.getFavorites()).toEqual({ countries: [], leagues: ['Chile::Primera Division'] });
+
+    await store.close();
+  });
 });

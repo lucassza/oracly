@@ -615,19 +615,48 @@
       },
     };
 
+    // Favoritos vivem no Postgres (compartilhado entre todos os navegadores/computadores)
+    // desde que alguém abriu o dashboard depois dessa mudança. Antes viviam só no
+    // localStorage — cada máquina com sua própria lista, sem sincronia nenhuma, e foi
+    // exatamente esse o motivo de dois computadores mostrarem resultados diferentes.
     const FAVORITES_STORAGE_KEY = 'sokkerpro:favorites';
-    function loadFavorites() {
+    async function loadFavorites() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(FAVORITES_STORAGE_KEY) || '{}');
-        return { countries: parsed.countries || [], leagues: parsed.leagues || [] };
+        const response = await fetch('/api/favorites');
+        if (!response.ok) throw new Error('Banco local indisponível');
+        const dbFavorites = await response.json();
+        if (dbFavorites.countries.length || dbFavorites.leagues.length) {
+          favorites = dbFavorites;
+          return;
+        }
+        // Banco vazio: se este navegador já tinha favoritos salvos do jeito antigo
+        // (localStorage), usa como semente única pro banco compartilhado. A partir daqui
+        // o banco é a fonte da verdade — outros navegadores convergem pra essa lista.
+        const legacyRaw = localStorage.getItem(FAVORITES_STORAGE_KEY);
+        const legacy = legacyRaw ? JSON.parse(legacyRaw) : null;
+        if (legacy && (legacy.countries?.length || legacy.leagues?.length)) {
+          favorites = { countries: legacy.countries || [], leagues: legacy.leagues || [] };
+          await saveFavorites();
+        } else {
+          favorites = dbFavorites;
+        }
       } catch {
-        return { countries: [], leagues: [] };
+        // Sem banco disponível — mantém o que já estava em memória (vazio no primeiro load).
       }
     }
-    function saveFavorites() {
-      localStorage.setItem(FAVORITES_STORAGE_KEY, JSON.stringify(favorites));
+    async function saveFavorites() {
+      try {
+        await fetch('/api/favorites', {
+          method: 'PUT',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(favorites),
+        });
+      } catch {
+        // Falha ao salvar fica só nesta sessão; próxima carga volta pro que já tava no banco.
+      }
     }
-    let favorites = loadFavorites();
+    let favorites = { countries: [], leagues: [] };
+    const favoritesReady = loadFavorites(); // dispara uma vez só; todo consumidor espera essa mesma promise
     let knownLeagues = [];
     let favoritesSearchTerm = '';
     let favoriteLeaguesMigrated = false;
@@ -659,6 +688,7 @@
         const response = await fetch('/api/leagues');
         if (response.ok) {
           knownLeagues = await response.json();
+          await favoritesReady; // senão a migração roda cedo demais, sobre o placeholder vazio
           migrateLegacyFavoriteLeagues();
         }
       } catch {
@@ -1399,8 +1429,12 @@
       if (tab.dataset.view === 'favoritesView') renderFavorites();
     }));
 
-    // Init
-    renderDaily();
+    // Init — espera os favoritos (banco compartilhado) antes do primeiro render, senão a
+    // Lista diária abriria já filtrando com favoritos vazios por uma fração de segundo.
+    (async () => {
+      await favoritesReady;
+      renderDaily();
+    })();
   </script>
 </body>
 </html>

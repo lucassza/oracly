@@ -9,6 +9,23 @@ import { importOutputDirectory } from '../storage/import-output.js';
 import { normalizeFixtureFromList } from '../api/normalizer.js';
 import { backfillHalfTimeStats } from './backfill-ht.js';
 import type { Env } from '../config/env.js';
+import type { IncomingMessage } from 'node:http';
+
+function readJsonBody(req: IncomingMessage): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    const chunks: Buffer[] = [];
+    req.on('data', (chunk: Buffer) => chunks.push(chunk));
+    req.on('end', () => {
+      const raw = Buffer.concat(chunks).toString('utf-8');
+      try {
+        resolve(raw ? JSON.parse(raw) : {});
+      } catch (error) {
+        reject(error);
+      }
+    });
+    req.on('error', reject);
+  });
+}
 
 function createStore(env: Env): PostgresMatchStore {
   return new PostgresMatchStore({
@@ -505,6 +522,31 @@ async function runDashboard(): Promise<void> {
     if (url.pathname === '/api/leagues') {
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(await store.getKnownLeagues()));
+      return;
+    }
+
+    // Favoritos compartilhados entre navegadores/computadores (antes viviam só no
+    // localStorage — cada máquina tinha sua própria lista, sem sincronia nenhuma).
+    if (url.pathname === '/api/favorites') {
+      if (req.method === 'PUT' || req.method === 'POST') {
+        try {
+          const body = (await readJsonBody(req)) as { countries?: unknown; leagues?: unknown };
+          const favorites = {
+            countries: Array.isArray(body.countries) ? body.countries.filter((c): c is string => typeof c === 'string') : [],
+            leagues: Array.isArray(body.leagues) ? body.leagues.filter((l): l is string => typeof l === 'string') : [],
+          };
+          await store.setFavorites(favorites);
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(favorites));
+        } catch (error) {
+          const message = error instanceof Error ? error.message : String(error);
+          res.writeHead(400, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify({ error: message }));
+        }
+        return;
+      }
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getFavorites()));
       return;
     }
 
