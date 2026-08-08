@@ -1258,12 +1258,15 @@
     let htMode = 'upcoming'; // 'upcoming' | 'history'
     let htMinConfidence = 0; // % de confiança mínima no lado excluído; 0 = cobertura total
     let htFavoritesOnly = true; // pré-selecionado: só países/ligas marcados na aba Favoritos
-    let htMinAgreement = 0; // quantas fontes (Poisson + odds 1T + odds FT) precisam concordar; 0 = todas
+    let htAgreementFilter = 'all'; // 'all' ou "agreement/sourcesAvailable" exato (ex.: "3/3", "1/2")
     let htConfidenceLocked = false; // true a partir do primeiro clique manual num corte
     let htBestConfidenceCache = null; // Promise<{threshold,accuracy,n}|null> — refeita ao trocar toggle de favoritas ou fontes
 
     const HT_CONFIDENCE_THRESHOLDS = [0, 72, 76, 80];
-    const HT_AGREEMENT_THRESHOLDS = [0, 2, 3];
+    // Combinações reais de agreement/sourcesAvailable que o modelo produz: Poisson conta
+    // sempre, +1 se odds 1T disponível, +1 se odds FT disponível — daí 1/1, 1/2, 2/2, 1/3,
+    // 2/3, 3/3 (nunca "0/x", já que Poisson sempre concorda com a própria escolha).
+    const HT_AGREEMENT_FILTERS = ['all', '3/3', '2/2', '2/3', '1/2', '1/3', '1/1'];
     const HT_BEST_CONFIDENCE_MIN_N = 20;
     const HT_OUTCOME_LABEL = { home: 'Casa', draw: 'Empate', away: 'Fora' };
     const HT_OUTCOME_SHORT = { home: 'C', draw: 'E', away: 'F' };
@@ -1273,8 +1276,9 @@
       `<span class="ht-prob ${key === record.excluded ? 'excluded' : ''}">${HT_OUTCOME_SHORT[key]} ${Math.round(record.probs[key] * 100)}%</span>`
     ).join('')}</div>`;
     const htExcludeBadge = record => `<span class="ht-exclude-badge">Exclui ${HT_OUTCOME_LABEL[record.excluded]}</span>`;
-    const htAgreementBadge = record => `<span class="ht-agreement ${record.agreement === record.sourcesAvailable ? 'full' : ''}">${record.agreement}/${record.sourcesAvailable} fontes</span>`;
-    const htAgreementLabel = threshold => threshold ? `≥ ${threshold} fontes` : 'Todos';
+    const htAgreementKey = record => `${record.agreement}/${record.sourcesAvailable}`;
+    const htAgreementBadge = record => `<span class="ht-agreement ${record.agreement === record.sourcesAvailable ? 'full' : ''}">${htAgreementKey(record)} fontes</span>`;
+    const htAgreementLabel = key => key === 'all' ? 'Todos' : `${key} fontes`;
     const htFavToggle = record => {
       const fav = isFavoriteMatch(record);
       return `<button class="daily-fav-toggle ${fav ? 'active' : ''}" data-ht-toggle-fav="${favoriteLeagueKey(record.country, record.competition)}" title="${fav ? 'Remover liga dos favoritos' : 'Marcar liga como favorita'}">${fav ? '★' : '☆'}</button>`;
@@ -1288,7 +1292,8 @@
         const response = await fetch('/api/history/ht-exclusion');
         if (!response.ok) return null;
         const records = await response.json();
-        const pool = (htFavoritesOnly ? records.filter(isFavoriteMatch) : records).filter(record => record.agreement >= htMinAgreement);
+        const pool = (htFavoritesOnly ? records.filter(isFavoriteMatch) : records)
+          .filter(record => htAgreementFilter === 'all' || htAgreementKey(record) === htAgreementFilter);
         let best = null;
         for (const threshold of HT_CONFIDENCE_THRESHOLDS) {
           const atThreshold = pool.filter(record => htConfidence(record) >= threshold);
@@ -1316,11 +1321,14 @@
         if (bestConfidence && !htConfidenceLocked) htMinConfidence = bestConfidence.threshold;
         const records = await response.json();
         const favoritesFiltered = htFavoritesOnly ? records.filter(isFavoriteMatch) : records;
-        const selected = favoritesFiltered.filter(record => htConfidence(record) >= htMinConfidence && record.agreement >= htMinAgreement);
+        // Sem o filtro de fontes ainda — é a base usada pelos cards de "acerto por fonte",
+        // que precisam ver TODAS as combinações lado a lado, independente da selecionada.
+        const confidenceAndFavoritesFiltered = favoritesFiltered.filter(record => htConfidence(record) >= htMinConfidence);
+        const selected = confidenceAndFavoritesFiltered.filter(record => htAgreementFilter === 'all' || htAgreementKey(record) === htAgreementFilter);
 
         const modes = `<button class="prediction-filter ${htMode === 'upcoming' ? 'active' : ''}" data-ht-mode="upcoming">Próximos jogos</button><button class="prediction-filter ${htMode === 'history' ? 'active' : ''}" data-ht-mode="history">Histórico</button>`;
         const confidenceFilters = HT_CONFIDENCE_THRESHOLDS.map(threshold => `<button class="prediction-filter ${threshold === htMinConfidence ? 'active' : ''}" data-ht-confidence="${threshold}">${threshold ? `Confiança ≥ ${threshold}%` : 'Todos'}</button>`).join('');
-        const agreementFilters = HT_AGREEMENT_THRESHOLDS.map(threshold => `<button class="prediction-filter ${threshold === htMinAgreement ? 'active' : ''}" data-ht-agreement="${threshold}">${htAgreementLabel(threshold)}</button>`).join('');
+        const agreementFilters = HT_AGREEMENT_FILTERS.map(key => `<button class="prediction-filter ${key === htAgreementFilter ? 'active' : ''}" data-ht-agreement="${key}">${htAgreementLabel(key)}</button>`).join('');
         const favoritesToggle = `<button class="prediction-filter ${htFavoritesOnly ? 'active' : ''}" id="htFavoritesToggle">★ Só ligas favoritas</button>`;
         const bestConfidenceNote = bestConfidence
           ? `<p class="lab-source">🎯 Melhor confiança: <strong>${htConfidenceLabel(bestConfidence.threshold)}</strong> — ${bestConfidence.accuracy}% de acerto em ${bestConfidence.n} jogos${htConfidenceLocked ? '.' : ' (já selecionada abaixo).'}</p>`
@@ -1339,6 +1347,24 @@
           const confidenceOnly = records.filter(record => htConfidence(record) >= htMinConfidence);
           const favoriteRecords = confidenceOnly.filter(isFavoriteMatch);
           const otherRecords = confidenceOnly.filter(record => !isFavoriteMatch(record));
+
+          // Acerto de cada combinação fontes/concordância lado a lado, sempre com a mesma
+          // base (favoritas + confiança atuais, SEM o filtro de fontes) — pra comparar as 6
+          // combinações reais entre si e decidir qual corte vale a pena apertar.
+          const agreementBreakdown = HT_AGREEMENT_FILTERS.filter(key => key !== 'all').map(key => {
+            const bucket = confidenceAndFavoritesFiltered.filter(record => htAgreementKey(record) === key);
+            return { key, n: bucket.length, rate: bucket.length ? rate(bucket) : null };
+          });
+          const agreementBreakdownHtml = `
+            <section class="best-filter-banner">
+              <div class="best-filter-title">Acerto por fontes (com os filtros de confiança/favoritas atuais)</div>
+              <div class="best-filter-list">${agreementBreakdown.map(b => `
+                <div class="best-filter-item ${b.key === htAgreementFilter ? 'top' : ''}">
+                  <span class="best-filter-market">${b.key} fontes</span>
+                  <span class="best-filter-rate">${b.rate === null ? '—' : `${b.rate}%`}</span>
+                  <span class="best-filter-n">${b.n} jogos</span>
+                </div>`).join('')}</div>
+            </section>`;
 
           const heroFacts = `
             <div class="hero-fact"><div class="hero-fact-value">${selected.length}</div><div class="hero-fact-label">Jogos analisados</div></div>
@@ -1367,6 +1393,7 @@
             <div class="prediction-controls">${confidenceFilters}${favoritesToggle}</div>
             <div class="prediction-controls">${agreementFilters}</div>
             ${bestConfidenceNote}
+            ${agreementBreakdownHtml}
             <section class="lab-hero"><div class="hero-copy"><div class="hero-market">${htMinConfidence ? `Confiança ≥ ${htMinConfidence}%` : 'Cobertura total'}</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${hits} acertos em ${selected.length} jogos com placar HT conhecido.</p></div><div class="hero-facts">${heroFacts}</div></section>
             <div class="section-heading"><h2>Resultados históricos</h2><span>Mais recentes primeiro</span></div>
             <section class="lab-results">${header}${rows || '<div class="empty">Nenhum jogo com placar HT nesse corte.</div>'}</section>
@@ -1399,7 +1426,7 @@
 
         content.querySelectorAll('[data-ht-mode]').forEach(button => button.addEventListener('click', () => { htMode = button.dataset.htMode; renderHtExclusion(); }));
         content.querySelectorAll('[data-ht-confidence]').forEach(button => button.addEventListener('click', () => { htMinConfidence = Number(button.dataset.htConfidence); htConfidenceLocked = true; renderHtExclusion(); }));
-        content.querySelectorAll('[data-ht-agreement]').forEach(button => button.addEventListener('click', () => { htMinAgreement = Number(button.dataset.htAgreement); htBestConfidenceCache = null; renderHtExclusion(); }));
+        content.querySelectorAll('[data-ht-agreement]').forEach(button => button.addEventListener('click', () => { htAgreementFilter = button.dataset.htAgreement; htBestConfidenceCache = null; renderHtExclusion(); }));
         content.querySelectorAll('[data-ht-toggle-fav]').forEach(button => button.addEventListener('click', () => {
           const key = button.dataset.htToggleFav;
           if (!key) return;
