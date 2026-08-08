@@ -611,8 +611,41 @@
     let favorites = loadFavorites();
     let knownLeagues = [];
     let favoritesSearchTerm = '';
+    let favoriteLeaguesMigrated = false;
     const expandedFavoriteCountries = new Set();
-    const isFavoriteMatch = match => favorites.countries.includes(match.country) || favorites.leagues.includes(match.competition);
+    // "país::competição" — não só o nome, porque nomes de liga colidem entre países
+    // (ex.: "Premier League" existe em Ucrânia, Rússia, Gales, Cazaquistão...).
+    const favoriteLeagueKey = (country, competition) => `${country ?? ''}::${competition ?? ''}`;
+    const isFavoriteMatch = match => favorites.countries.includes(match.country) || favorites.leagues.includes(favoriteLeagueKey(match.country, match.competition));
+
+    // Favoritos antigos guardavam só o nome da competição (sem país) — migra pra
+    // "país::competição" na primeira vez que a lista de ligas conhecidas chegar. Nome que
+    // bate 0 ou 2+ países é descartado (ambíguo: não dá pra saber qual país era a intenção);
+    // o usuário remarca manualmente na aba Favoritos se precisar.
+    function migrateLegacyFavoriteLeagues() {
+      if (favoriteLeaguesMigrated || !knownLeagues.length) return;
+      favoriteLeaguesMigrated = true;
+      const isLegacyEntry = entry => !entry.includes('::');
+      const legacy = favorites.leagues.filter(isLegacyEntry);
+      if (!legacy.length) return;
+      const migrated = legacy.flatMap(competition => {
+        const matches = knownLeagues.filter(l => l.competition === competition);
+        return matches.length === 1 ? [favoriteLeagueKey(matches[0].country, competition)] : [];
+      });
+      favorites.leagues = [...favorites.leagues.filter((entry) => !isLegacyEntry(entry)), ...migrated];
+      saveFavorites();
+    }
+    (async () => {
+      try {
+        const response = await fetch('/api/leagues');
+        if (response.ok) {
+          knownLeagues = await response.json();
+          migrateLegacyFavoriteLeagues();
+        }
+      } catch {
+        // Favoritos tab tenta de novo quando aberta; não bloqueia o resto do dashboard.
+      }
+    })();
 
     async function renderFavorites() {
       const content = document.getElementById('favoritesContent');
@@ -624,6 +657,7 @@
         const response = await fetch('/api/leagues');
         if (!response.ok) throw new Error('Banco local indisponível');
         knownLeagues = await response.json();
+        migrateLegacyFavoriteLeagues();
       } catch (error) {
         if (!knownLeagues.length) {
           content.innerHTML = `<div class="empty">Não foi possível carregar países e ligas: ${error.message}</div>`;
@@ -646,7 +680,7 @@
         .sort((a, b) => a.country.localeCompare(b.country));
 
       const curatedAvailable = groups.filter(g => g.leagues.some(l => l.division));
-      const curatedMissing = curatedAvailable.filter(g => !g.leagues.some(l => l.division && favorites.leagues.includes(l.competition))).length;
+      const curatedMissing = curatedAvailable.filter(g => !g.leagues.some(l => l.division && favorites.leagues.includes(favoriteLeagueKey(g.country, l.competition)))).length;
       const divisionRank = { A: 0, B: 1 };
       const rankOf = l => l.division ? divisionRank[l.division] : 2;
 
@@ -655,7 +689,7 @@
         const countryChecked = favorites.countries.includes(group.country);
         const sortedLeagues = [...group.leagues].sort((a, b) => rankOf(a) - rankOf(b) || a.competition.localeCompare(b.competition));
         const leagueRows = sortedLeagues.map(({ competition, division }) => `
-          <label class="favorite-league-row"><input type="checkbox" data-fav-league="${competition}" ${favorites.leagues.includes(competition) ? 'checked' : ''}> ${competition}${division === 'A' ? ' <span class="favorite-top-flight">A</span>' : division === 'B' ? ' <span class="favorite-division-b">B</span>' : ''}</label>
+          <label class="favorite-league-row"><input type="checkbox" data-fav-league="${favoriteLeagueKey(group.country, competition)}" ${favorites.leagues.includes(favoriteLeagueKey(group.country, competition)) ? 'checked' : ''}> ${competition}${division === 'A' ? ' <span class="favorite-top-flight">A</span>' : division === 'B' ? ' <span class="favorite-division-b">B</span>' : ''}</label>
         `).join('');
         return `
           <div class="favorite-country-block">
@@ -683,8 +717,8 @@
         renderFavoritesUI();
       }));
       content.querySelectorAll('[data-fav-league]').forEach(box => box.addEventListener('change', () => {
-        const league = box.dataset.favLeague;
-        favorites.leagues = box.checked ? [...favorites.leagues, league] : favorites.leagues.filter(l => l !== league);
+        const key = box.dataset.favLeague;
+        favorites.leagues = box.checked ? [...favorites.leagues, key] : favorites.leagues.filter(l => l !== key);
         saveFavorites();
         renderFavoritesUI();
       }));
@@ -697,8 +731,8 @@
       const markTopFlightButton = document.getElementById('favoritesMarkTopFlight');
       if (markTopFlightButton) markTopFlightButton.addEventListener('click', () => {
         const toAdd = curatedAvailable
-          .flatMap(g => g.leagues.filter(l => l.division).map(l => l.competition))
-          .filter(league => !favorites.leagues.includes(league));
+          .flatMap(g => g.leagues.filter(l => l.division).map(l => favoriteLeagueKey(g.country, l.competition)))
+          .filter(key => !favorites.leagues.includes(key));
         favorites.leagues = [...favorites.leagues, ...toAdd];
         saveFavorites();
         renderFavoritesUI();
@@ -989,7 +1023,7 @@
         return `<div class="today-row">
           <div>${time}</div>
           <div>
-            <button class="daily-fav-toggle ${fav ? 'active' : ''}" data-daily-toggle-fav="${pick.competition ?? ''}" title="${fav ? 'Remover liga dos favoritos' : 'Marcar liga como favorita'}">${fav ? '★' : '☆'}</button>
+            <button class="daily-fav-toggle ${fav ? 'active' : ''}" data-daily-toggle-fav="${favoriteLeagueKey(pick.country, pick.competition)}" title="${fav ? 'Remover liga dos favoritos' : 'Marcar liga como favorita'}">${fav ? '★' : '☆'}</button>
             ${pick.homeTeam} × ${pick.awayTeam}<small>${competitionLabel(pick)}</small>
           </div>
           ${scoreCell}
@@ -1042,9 +1076,9 @@
       content.querySelectorAll('#dailyPagePrev').forEach(button => button.addEventListener('click', () => { dailyPage -= 1; renderDailyUI(); }));
       content.querySelectorAll('#dailyPageNext').forEach(button => button.addEventListener('click', () => { dailyPage += 1; renderDailyUI(); }));
       content.querySelectorAll('[data-daily-toggle-fav]').forEach(button => button.addEventListener('click', () => {
-        const league = button.dataset.dailyToggleFav;
-        if (!league) return;
-        favorites.leagues = favorites.leagues.includes(league) ? favorites.leagues.filter(l => l !== league) : [...favorites.leagues, league];
+        const key = button.dataset.dailyToggleFav;
+        if (!key) return;
+        favorites.leagues = favorites.leagues.includes(key) ? favorites.leagues.filter(l => l !== key) : [...favorites.leagues, key];
         saveFavorites();
         renderDailyUI();
       }));
