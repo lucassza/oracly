@@ -24,7 +24,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-<<<<<<< HEAD
     image: oracly-scraper:latest
     container_name: oracly-scraper
     profiles: ["scraper"]
@@ -53,12 +52,6 @@ services:
     profiles: ["automation"]
     env_file: .env
     environment: &automation-env
-=======
-    image: sokkerpro-scraper:local
-    env_file:
-      - .env
-    environment: &app-env
->>>>>>> 3538fcd (fix: align root Compose with Postgres and ignore Laravel locals)
       PLAYWRIGHT_HEADLESS: "true"
       DAILY_UPDATE_ENABLED: "true"
       DAILY_UPDATE_HOUR_BRASILIA: "6"
@@ -70,10 +63,6 @@ services:
       REALTIME_LOOKAHEAD_HOURS: "6"
       REALTIME_DETAIL_CONCURRENCY: "3"
       LOG_LEVEL: info
-<<<<<<< HEAD
-=======
-      DASHBOARD_PORT: "3000"
->>>>>>> 3538fcd (fix: align root Compose with Postgres and ignore Laravel locals)
       OUTPUT_PATH: /app/storage/output
       SCREENSHOT_PATH: /app/storage/screenshots
     volumes:
@@ -81,7 +70,6 @@ services:
     tmpfs:
       - /tmp
     restart: unless-stopped
-<<<<<<< HEAD
     command: ["automation:daily:daemon"]
 
   automation-realtime:
@@ -91,46 +79,6 @@ services:
     environment: *automation-env
     volumes:
       - ./storage:/app/storage
-=======
-    command: ["scrape"]
-
-  dashboard:
-    image: sokkerpro-scraper:local
-    depends_on:
-      - scraper
-    env_file:
-      - .env
-    environment: *app-env
-    volumes: *app-volumes
-    tmpfs:
-      - /tmp
-    ports:
-      - "3000:3000"
-    restart: unless-stopped
-    command: ["dashboard"]
-
-  automation-daily:
-    image: sokkerpro-scraper:local
-    depends_on:
-      - scraper
-    env_file:
-      - .env
-    environment: *app-env
-    volumes: *app-volumes
-    tmpfs:
-      - /tmp
-    restart: unless-stopped
-    command: ["automation:daily:daemon"]
-
-  automation-realtime:
-    image: sokkerpro-scraper:local
-    depends_on:
-      - scraper
-    env_file:
-      - .env
-    environment: *app-env
-    volumes: *app-volumes
->>>>>>> 3538fcd (fix: align root Compose with Postgres and ignore Laravel locals)
     tmpfs:
       - /tmp
     restart: unless-stopped
