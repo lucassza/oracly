@@ -1,0 +1,30 @@
+schema: spec-driven
+
+context: |
+  Projeto: Oracly V2 (frontend-laravel)
+  Runtime: Docker apenas — NÃO instalar PHP/Composer no host
+  Stack: Laravel 13, Filament 4, PHP 8.4 (imagem oficial), Livewire 3, SQLite (auth), Postgres Oracly schema sokkerpro (direto, SEM API Node)
+  Comandos: docker compose up -d --build ; docker compose exec app php artisan ...
+  Domínio: dashboard de apostas/previsões baseado no scraper SokkerPRO já existente
+  Restrições:
+    - NÃO alterar scrapers Node (`src/`, workers, docker scrape)
+    - NÃO migrar/alterar schema do banco Oracly de jogos
+    - NÃO usar API HTTP do dashboard Node
+    - Frontend V2 vive em `frontend-laravel/`
+    - Idioma da UI: português (Brasil)
+  Telas atuais (paridade com `src/dashboard/index.html`):
+    1. Lista diária
+    2. Hoje
+    3. Over 0.5 / 1.5
+    4. 1º Tempo
+    5. Favoritos
+  Auth: login Filament com e-mail e senha em `/admin/login`
+
+rules:
+  proposal:
+    - Propostas em português
+    - Sempre incluir seção "Fora de escopo" citando scrapers e schema Oracly
+    - Referenciar endpoints `/api/*` do dashboard Node como contrato de leitura
+  tasks:
+    - Preferir páginas Filament customizadas em `app/Filament/Pages`
+    - Separar conexão Laravel (auth) da conexão read-only `oracly` (Postgres)
