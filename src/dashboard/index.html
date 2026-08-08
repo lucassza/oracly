@@ -1245,6 +1245,10 @@
     const htExcludeBadge = record => `<span class="ht-exclude-badge">Exclui ${HT_OUTCOME_LABEL[record.excluded]}</span>`;
     const htAgreementBadge = record => `<span class="ht-agreement ${record.agreement === record.sourcesAvailable ? 'full' : ''}">${record.agreement}/${record.sourcesAvailable} fontes</span>`;
     const htAgreementLabel = threshold => threshold ? `≥ ${threshold} fontes` : 'Todos';
+    const htFavToggle = record => {
+      const fav = isFavoriteMatch(record);
+      return `<button class="daily-fav-toggle ${fav ? 'active' : ''}" data-ht-toggle-fav="${favoriteLeagueKey(record.country, record.competition)}" title="${fav ? 'Remover liga dos favoritos' : 'Marcar liga como favorita'}">${fav ? '★' : '☆'}</button>`;
+    };
 
     // Varre os mesmos cortes dos botões contra o histórico real e pega o de maior acerto
     // (mín. 20 jogos, mesmo critério do "melhor filtro" da aba Over 0.5/1.5). Sempre lê o
@@ -1319,7 +1323,7 @@
           const rows = [...selected].sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? '')).map(record => `
             <div class="ht-result-row">
               <div class="result-number">${formatKickoffShort(record.kickoffAt)}</div>
-              <div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
+              <div class="fixture">${htFavToggle(record)}${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
               ${htProbsCell(record)}
               <div>${htExcludeBadge(record)}</div>
               <div>${htAgreementBadge(record)}</div>
@@ -1347,7 +1351,7 @@
             <section><div class="prediction-date">${formatDate(group[0].kickoffAt)}</div>
             ${group.map(record => `<article class="ht-card">
               <div class="prediction-time">${formatKickoff(record.kickoffAt)}</div>
-              <div class="prediction-fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
+              <div class="prediction-fixture">${htFavToggle(record)}${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
               ${htProbsCell(record)}
               ${htExcludeBadge(record)}
               ${htAgreementBadge(record)}
@@ -1366,6 +1370,14 @@
         content.querySelectorAll('[data-ht-mode]').forEach(button => button.addEventListener('click', () => { htMode = button.dataset.htMode; renderHtExclusion(); }));
         content.querySelectorAll('[data-ht-confidence]').forEach(button => button.addEventListener('click', () => { htMinConfidence = Number(button.dataset.htConfidence); htConfidenceLocked = true; renderHtExclusion(); }));
         content.querySelectorAll('[data-ht-agreement]').forEach(button => button.addEventListener('click', () => { htMinAgreement = Number(button.dataset.htAgreement); htBestConfidenceCache = null; renderHtExclusion(); }));
+        content.querySelectorAll('[data-ht-toggle-fav]').forEach(button => button.addEventListener('click', () => {
+          const key = button.dataset.htToggleFav;
+          if (!key) return;
+          favorites.leagues = favorites.leagues.includes(key) ? favorites.leagues.filter(l => l !== key) : [...favorites.leagues, key];
+          saveFavorites();
+          htBestConfidenceCache = null;
+          renderHtExclusion();
+        }));
         const htFavoritesToggleButton = document.getElementById('htFavoritesToggle');
         if (htFavoritesToggleButton) htFavoritesToggleButton.addEventListener('click', () => { htFavoritesOnly = !htFavoritesOnly; htBestConfidenceCache = null; renderHtExclusion(); });
       } catch (error) {
