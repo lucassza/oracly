@@ -7,6 +7,7 @@ import { getLogger } from '../utils/logger.js';
 import { PostgresMatchStore } from '../storage/postgres-store.js';
 import { importOutputDirectory } from '../storage/import-output.js';
 import { normalizeFixtureFromList } from '../api/normalizer.js';
+import { backfillHalfTimeStats } from './backfill-ht.js';
 import type { Env } from '../config/env.js';
 
 function createStore(env: Env): PostgresMatchStore {
@@ -24,7 +25,7 @@ function createStore(env: Env): PostgresMatchStore {
 // CLI Entry Point
 // ============================================================
 
-function parseArgs(): { date: string; headless: boolean; command: string; from: string; to: string; days: number } {
+function parseArgs(): { date: string; headless: boolean; command: string; from: string; to: string; days: number; concurrency: number | undefined } {
   const args = process.argv.slice(2);
   let date = '';
   let headless = true;
@@ -32,6 +33,7 @@ function parseArgs(): { date: string; headless: boolean; command: string; from: 
   let from = '';
   let to = '';
   let days = 1;
+  let concurrency: number | undefined;
 
   // First positional arg is the command
   if (args.length > 0 && !args[0].startsWith('--')) {
@@ -51,6 +53,9 @@ function parseArgs(): { date: string; headless: boolean; command: string; from: 
     if (arg.startsWith('--days=')) {
       days = parseInt(arg.split('=')[1] || '1', 10) || 1;
     }
+    if (arg.startsWith('--concurrency=')) {
+      concurrency = parseInt(arg.split('=')[1] || '', 10) || undefined;
+    }
     if (arg === '--headless=false' || arg === '--no-headless') {
       headless = false;
     }
@@ -62,7 +67,7 @@ function parseArgs(): { date: string; headless: boolean; command: string; from: 
     date = now.toISOString().split('T')[0];
   }
 
-  return { date, headless, command, from, to, days };
+  return { date, headless, command, from, to, days, concurrency };
 }
 
 async function runScrape(date: string, from?: string, to?: string, days = 1): Promise<void> {
@@ -285,6 +290,21 @@ async function runInspect(date: string): Promise<void> {
   logger.info('Inspection complete');
 }
 
+async function runBackfillHt(concurrency: number | undefined): Promise<void> {
+  const env = getEnv();
+  const store = createStore(env);
+  const api = new SokkerProApi();
+  try {
+    const summary = await backfillHalfTimeStats(store, api, concurrency ? { concurrency } : undefined);
+    console.log(
+      `backfill-ht: ${summary.candidates} candidatos | ${summary.updatedSettled} placares HT corrigidos | ` +
+        `${summary.updatedFeatures} com médias 1T anexadas | ${summary.missingHtScore} sem placar HT na API | ${summary.failed} falhas`,
+    );
+  } finally {
+    await store.close();
+  }
+}
+
 async function runDatabaseImport(): Promise<void> {
   const env = getEnv();
   const store = createStore(env);
@@ -351,6 +371,18 @@ async function runDashboard(): Promise<void> {
         .filter((prediction) => prediction.probability >= minimumProbability);
       res.writeHead(200, { 'Content-Type': 'application/json' });
       res.end(JSON.stringify(predictions));
+      return;
+    }
+
+    if (url.pathname === '/api/history/ht-exclusion') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getHalfTimeExclusionResults()));
+      return;
+    }
+
+    if (url.pathname === '/api/predictions/ht-exclusion') {
+      res.writeHead(200, { 'Content-Type': 'application/json' });
+      res.end(JSON.stringify(await store.getUpcomingHalfTimeExclusions(new Date().toISOString())));
       return;
     }
 
@@ -535,7 +567,7 @@ async function runDashboard(): Promise<void> {
 }
 
 async function main(): Promise<void> {
-  const { date, command, from, to, days } = parseArgs();
+  const { date, command, from, to, days, concurrency } = parseArgs();
 
   switch (command) {
     case 'scrape':
@@ -550,6 +582,9 @@ async function main(): Promise<void> {
     case 'database:import':
       await runDatabaseImport();
       break;
+    case 'backfill:ht':
+      await runBackfillHt(concurrency);
+      break;
     case 'session:create':
       console.log('Session creation is not needed for SokkerPRO API (public endpoints).');
       console.log('The API at m2.sokkerpro.com does not require authentication for match data.');
@@ -563,7 +598,7 @@ async function main(): Promise<void> {
       break;
     default:
       console.error(`Unknown command: ${command}`);
-      console.log('Available commands: scrape, daily, dashboard, inspect, database:import, session:create, session:validate');
+      console.log('Available commands: scrape, daily, dashboard, inspect, database:import, backfill:ht, session:create, session:validate');
       process.exit(1);
   }
 }

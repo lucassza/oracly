@@ -9,6 +9,7 @@
     "scrape": "node dist/cli/run.js scrape",
     "scrape:daily": "node dist/cli/run.js daily",
     "database:import": "node dist/cli/run.js database:import",
+    "backfill:ht": "node dist/cli/run.js backfill:ht",
     "dashboard": "node dist/cli/run.js dashboard",
     "inspect": "node dist/cli/run.js inspect",
     "session:create": "node dist/cli/run.js session:create",

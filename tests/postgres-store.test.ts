@@ -343,4 +343,142 @@ describe('PostgresMatchStore', () => {
     expect(leagues).toEqual([{ country: 'Chile', competition: 'Primera Division', isTopFlight: true }]);
     await second.close();
   });
+
+  it('scores the half-time exclusion pick against the real per-team HT score, using pre-kickoff features only', async () => {
+    const store = createStore();
+    const baseMatch = {
+      provider: 'sokkerpro' as const,
+      providerMatchId: 'fixture-ht-exclusion',
+      sourceUrl: 'https://sokkerpro.com/fixture/fixture-ht-exclusion',
+      kickoffAt: '2026-07-24T18:00:00.000Z',
+      competition: 'Test League',
+      homeTeam: { name: 'Home' },
+      awayTeam: { name: 'Away' },
+    };
+    await store.saveMatches([
+      {
+        ...baseMatch,
+        collectedAt: '2026-07-24T10:00:00.000Z',
+        status: 'not_started',
+        statistics: { firstHalf: { homeGoalsAverage: 5, awayGoalsAverage: 0.01 } },
+      },
+      {
+        ...baseMatch,
+        collectedAt: '2026-07-24T20:00:00.000Z',
+        status: 'finished',
+        score: { home: 3, away: 0, halftimeHome: 2, halftimeAway: 0 },
+      },
+    ]);
+
+    const results = await store.getHalfTimeExclusionResults();
+    expect(results).toEqual([
+      expect.objectContaining({
+        providerMatchId: 'fixture-ht-exclusion',
+        halftimeHome: 2,
+        halftimeAway: 0,
+        homeScore: 3,
+        awayScore: 0,
+        actualOutcome: 'home',
+        excluded: 'away',
+        hit: true,
+        usedBackfilledFeatures: false,
+        agreement: 1,
+        sourcesAvailable: 1,
+      }),
+    ]);
+    await store.close();
+  });
+
+  it('flags usedBackfilledFeatures when the pre-kickoff snapshot carries backfilledHalfTimeStatsAt', async () => {
+    const store = createStore();
+    const baseMatch = {
+      provider: 'sokkerpro' as const,
+      providerMatchId: 'fixture-ht-backfilled',
+      sourceUrl: 'https://sokkerpro.com/fixture/fixture-ht-backfilled',
+      kickoffAt: '2026-07-24T18:00:00.000Z',
+      competition: 'Test League',
+      homeTeam: { name: 'Home' },
+      awayTeam: { name: 'Away' },
+    };
+    await store.saveMatches([
+      {
+        ...baseMatch,
+        collectedAt: '2026-07-24T10:00:00.000Z',
+        status: 'not_started',
+        statistics: { firstHalf: { homeGoalsAverage: 5, awayGoalsAverage: 0.01 } },
+        backfilledHalfTimeStatsAt: '2026-08-07T00:00:00.000Z',
+      },
+      {
+        ...baseMatch,
+        collectedAt: '2026-07-24T20:00:00.000Z',
+        status: 'finished',
+        score: { home: 3, away: 0, halftimeHome: 2, halftimeAway: 0 },
+      },
+    ]);
+
+    const [result] = await store.getHalfTimeExclusionResults();
+    expect(result).toEqual(expect.objectContaining({ usedBackfilledFeatures: true }));
+    await store.close();
+  });
+
+  it('excludes fixtures without a real per-team half-time score from getHalfTimeExclusionResults', async () => {
+    const store = createStore();
+    await store.saveMatches([
+      {
+        provider: 'sokkerpro',
+        providerMatchId: 'fixture-ht-no-score',
+        sourceUrl: 'https://sokkerpro.com/fixture/fixture-ht-no-score',
+        collectedAt: '2026-07-24T10:00:00.000Z',
+        kickoffAt: '2026-07-24T18:00:00.000Z',
+        competition: 'Test League',
+        homeTeam: { name: 'Home' },
+        awayTeam: { name: 'Away' },
+        status: 'not_started',
+        statistics: { firstHalf: { homeGoalsAverage: 1, awayGoalsAverage: 1 } },
+      },
+      {
+        provider: 'sokkerpro',
+        providerMatchId: 'fixture-ht-no-score',
+        sourceUrl: 'https://sokkerpro.com/fixture/fixture-ht-no-score',
+        collectedAt: '2026-07-24T20:00:00.000Z',
+        kickoffAt: '2026-07-24T18:00:00.000Z',
+        competition: 'Test League',
+        homeTeam: { name: 'Home' },
+        awayTeam: { name: 'Away' },
+        status: 'finished',
+        // halftimeHome without halftimeAway mimics the pre-fix mislabeled data (HT total,
+        // not a per-team score) — must not be scored as if it were a real HT result.
+        score: { home: 2, away: 1, halftimeHome: 1 },
+      },
+    ]);
+
+    expect(await store.getHalfTimeExclusionResults()).toHaveLength(0);
+    await store.close();
+  });
+
+  it('returns an upcoming half-time exclusion pick only while the match is still not_started and in the future', async () => {
+    const store = createStore();
+    await store.saveMatches([
+      {
+        provider: 'sokkerpro',
+        providerMatchId: 'fixture-ht-upcoming',
+        sourceUrl: 'https://sokkerpro.com/fixture/fixture-ht-upcoming',
+        collectedAt: '2026-07-24T10:00:00.000Z',
+        kickoffAt: '2026-07-24T18:00:00.000Z',
+        competition: 'Test League',
+        homeTeam: { name: 'Home' },
+        awayTeam: { name: 'Away' },
+        status: 'not_started',
+        statistics: { firstHalf: { homeGoalsAverage: 5, awayGoalsAverage: 0.01 } },
+      },
+    ]);
+
+    const upcoming = await store.getUpcomingHalfTimeExclusions('2026-07-24T12:00:00.000Z');
+    expect(upcoming).toEqual([
+      expect.objectContaining({ providerMatchId: 'fixture-ht-upcoming', excluded: 'away', agreement: 1, sourcesAvailable: 1 }),
+    ]);
+
+    expect(await store.getUpcomingHalfTimeExclusions('2026-07-25T00:00:00.000Z')).toHaveLength(0);
+    await store.close();
+  });
 });

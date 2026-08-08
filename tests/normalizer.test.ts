@@ -6,10 +6,13 @@ import {
   normalizeStatus,
   parsePrognosticos,
   normalizeFixtureFromList,
+  enrichMatchWithDetail,
+  extractHalfTimeDetailFields,
   deduplicateMatches,
   validateMatch,
 } from '../src/api/normalizer.js';
-import type { FixtureBase, CategorizedFixtures } from '../src/api/schemas.js';
+import type { FixtureBase, CategorizedFixtures, FixtureDetailResponse } from '../src/api/schemas.js';
+import type { NormalizedMatch } from '../src/types/schemas.js';
 
 describe('parseOddsValue', () => {
   it('should parse valid odds string', () => {
@@ -274,5 +277,121 @@ describe('validateMatch', () => {
     const result = validateMatch(match);
     expect(result.valid).toBe(false);
     expect(result.errors.length).toBeGreaterThan(0);
+  });
+});
+
+describe('extractHalfTimeDetailFields', () => {
+  it('extracts half-time score, odds, first-half averages and xG', () => {
+    const fields = extractHalfTimeDetailFields({
+      fixtureId: 1,
+      scoresLocalTeamHT: '1',
+      scoresVisitorTeamHT: '0',
+      BET365_VENCEDOR1T_HOME: '1.80#0',
+      BET365_VENCEDOR1T_DRAW: '2.50#0',
+      BET365_VENCEDOR1T_AWAY: '4.00#0',
+      medias_home_primeiro_tempo_goal: '0.6',
+      medias_away_primeiro_tempo_goal: '0.3',
+      medias_home_primeiro_tempo_shots_on_target: '1.4',
+      medias_away_primeiro_tempo_shots_on_target: '0.9',
+      medias_home_primeiro_tempo_possession: '55',
+      medias_away_primeiro_tempo_possession: '45',
+      medias_home_primeiro_tempo_dangerous_attacks: '22.1',
+      medias_away_primeiro_tempo_dangerous_attacks: '14.7',
+      medias_home_xg: '1.9',
+      medias_away_xg: '0.8',
+    });
+
+    expect(fields.halftimeHome).toBe(1);
+    expect(fields.halftimeAway).toBe(0);
+    expect(fields.oddsHalfTime).toEqual({ home: 1.8, draw: 2.5, away: 4.0, bookmaker: 'BET365' });
+    expect(fields.firstHalf).toEqual({
+      homeGoalsAverage: 0.6,
+      awayGoalsAverage: 0.3,
+      homeShotsOnTargetAverage: 1.4,
+      awayShotsOnTargetAverage: 0.9,
+      homePossessionAverage: 55,
+      awayPossessionAverage: 45,
+      homeDangerousAttacksAverage: 22.1,
+      awayDangerousAttacksAverage: 14.7,
+    });
+    expect(fields.homeXg).toBe(1.9);
+    expect(fields.awayXg).toBe(0.8);
+  });
+
+  it('falls back to XBET half-time odds when BET365 is absent', () => {
+    const fields = extractHalfTimeDetailFields({
+      fixtureId: 1,
+      XBET_VENCEDOR1T_HOME: '2.10#0',
+      XBET_VENCEDOR1T_DRAW: '2.90#0',
+      XBET_VENCEDOR1T_AWAY: '3.60#0',
+    });
+    expect(fields.oddsHalfTime).toEqual({ home: 2.1, draw: 2.9, away: 3.6, bookmaker: 'XBET' });
+  });
+
+  it('extracts whichever half-time score field is present, independently', () => {
+    const fields = extractHalfTimeDetailFields({ fixtureId: 1, scoresLocalTeamHT: '2' });
+    expect(fields.halftimeHome).toBe(2);
+    expect(fields.halftimeAway).toBeUndefined();
+  });
+
+  it('leaves everything undefined when the fixture carries none of these fields', () => {
+    const fields = extractHalfTimeDetailFields({ fixtureId: 1 });
+    expect(fields.halftimeHome).toBeUndefined();
+    expect(fields.halftimeAway).toBeUndefined();
+    expect(fields.oddsHalfTime).toBeUndefined();
+    expect(fields.firstHalf).toBeUndefined();
+    expect(fields.homeXg).toBeUndefined();
+    expect(fields.awayXg).toBeUndefined();
+  });
+});
+
+describe('enrichMatchWithDetail (half-time fields)', () => {
+  const baseMatch: NormalizedMatch = {
+    provider: 'sokkerpro',
+    providerMatchId: '999',
+    sourceUrl: 'https://sokkerpro.com/fixture/999',
+    collectedAt: '2026-07-24T10:00:00Z',
+    homeTeam: { name: 'Home' },
+    awayTeam: { name: 'Away' },
+  };
+
+  const buildDetail = (data: Partial<FixtureDetailResponse['data']> & { fixtureId: number }): FixtureDetailResponse => ({
+    success: true,
+    data: data as FixtureDetailResponse['data'],
+  });
+
+  it('sets score.halftimeHome/halftimeAway and oddsHalfTime from the detail response', () => {
+    const detail = buildDetail({
+      fixtureId: 999,
+      scoresLocalTeamHT: '1',
+      scoresVisitorTeamHT: '1',
+      BET365_VENCEDOR1T_HOME: '2.00#0',
+      BET365_VENCEDOR1T_DRAW: '2.40#0',
+      BET365_VENCEDOR1T_AWAY: '4.50#0',
+    });
+    const result = enrichMatchWithDetail({ ...baseMatch }, detail, undefined, '2026-07-24T20:00:00Z');
+
+    expect(result.score).toEqual({ halftimeHome: 1, halftimeAway: 1 });
+    expect(result.oddsHalfTime).toEqual({ home: 2.0, draw: 2.4, away: 4.5, bookmaker: 'BET365', collectedAt: '2026-07-24T20:00:00Z' });
+  });
+
+  it('does not touch score when the detail response has no half-time score', () => {
+    const match: NormalizedMatch = { ...baseMatch, score: { home: 2, away: 1, halftimeHome: 1, halftimeAway: 0 } };
+    const result = enrichMatchWithDetail(match, buildDetail({ fixtureId: 999 }), undefined, '2026-07-24T20:00:00Z');
+    expect(result.score).toEqual({ home: 2, away: 1, halftimeHome: 1, halftimeAway: 0 });
+  });
+
+  it('attaches statistics.firstHalf without discarding other statistics already on the match', () => {
+    const match: NormalizedMatch = { ...baseMatch, statistics: { combinedGoalsAverage: 3.1 } };
+    const detail = buildDetail({
+      fixtureId: 999,
+      medias_home_primeiro_tempo_goal: '0.4',
+      medias_away_primeiro_tempo_goal: '0.2',
+    });
+    const result = enrichMatchWithDetail(match, detail, undefined, '2026-07-24T20:00:00Z');
+
+    expect(result.statistics?.combinedGoalsAverage).toBe(3.1);
+    expect(result.statistics?.firstHalf?.homeGoalsAverage).toBe(0.4);
+    expect(result.statistics?.firstHalf?.awayGoalsAverage).toBe(0.2);
   });
 });

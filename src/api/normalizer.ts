@@ -66,6 +66,68 @@ export function parsePrognosticos(raw: string | undefined): Prognosticos | undef
   }
 }
 
+export interface HalfTimeDetailFields {
+  halftimeHome: number | undefined;
+  halftimeAway: number | undefined;
+  oddsHalfTime: Omit<NormalizedOdds, 'over05' | 'over15' | 'over25' | 'collectedAt'> | undefined;
+  firstHalf: NormalizedStatistics['firstHalf'] | undefined;
+  homeXg: number | undefined;
+  awayXg: number | undefined;
+}
+
+// Pulls every half-time-related field out of a GET /fixture/{id} response. Shared between
+// the normal enrichment path (enrichMatchWithDetail, called at scrape time) and the
+// backfill-ht CLI (called long after the fact for historical fixtures), so both extract the
+// exact same fields the exact same way. See the half-time exclusion plan for why these
+// fields matter and why the API's own scoresHT/mercado_1x2_1t can't be used directly.
+export function extractHalfTimeDetailFields(d: FixtureDetailResponse['data']): HalfTimeDetailFields {
+  // `scoresHT` from the fixtures list is a single total-goals number, not a "H-A" pair —
+  // scoresLocalTeamHT/scoresVisitorTeamHT here are the real per-team score.
+  const halftimeHome = parseNumber(d.scoresLocalTeamHT as string | number | undefined);
+  const halftimeAway = parseNumber(d.scoresVisitorTeamHT as string | number | undefined);
+
+  // Half-time 1X2 odds: BET365 primary, XBET fallback — both use fixed keys regardless of
+  // team names, unlike the DUPLA_CHANCE1T keys which embed the team name in the key itself.
+  const htHomeOdds = parseOddsValue(d.BET365_VENCEDOR1T_HOME as string | undefined) ?? parseOddsValue(d.XBET_VENCEDOR1T_HOME as string | undefined);
+  const htDrawOdds = parseOddsValue(d.BET365_VENCEDOR1T_DRAW as string | undefined) ?? parseOddsValue(d.XBET_VENCEDOR1T_DRAW as string | undefined);
+  const htAwayOdds = parseOddsValue(d.BET365_VENCEDOR1T_AWAY as string | undefined) ?? parseOddsValue(d.XBET_VENCEDOR1T_AWAY as string | undefined);
+  const oddsHalfTime = htHomeOdds !== undefined || htDrawOdds !== undefined || htAwayOdds !== undefined
+    ? {
+        home: htHomeOdds,
+        draw: htDrawOdds,
+        away: htAwayOdds,
+        bookmaker: parseOddsValue(d.BET365_VENCEDOR1T_HOME as string | undefined) !== undefined ? 'BET365' : 'XBET',
+      }
+    : undefined;
+
+  // First-half averages, used by the half-time exclusion model (Poisson on goals scored).
+  // *_goal_sofrido (conceded) is left out — covers only ~16% of fixtures.
+  const firstHalfHomeGoals = parseNumber(d.medias_home_primeiro_tempo_goal as string | number | undefined);
+  const firstHalfAwayGoals = parseNumber(d.medias_away_primeiro_tempo_goal as string | number | undefined);
+  const firstHalf = firstHalfHomeGoals !== undefined || firstHalfAwayGoals !== undefined
+    ? {
+        homeGoalsAverage: firstHalfHomeGoals,
+        awayGoalsAverage: firstHalfAwayGoals,
+        homeShotsOnTargetAverage: parseNumber(d.medias_home_primeiro_tempo_shots_on_target as string | number | undefined),
+        awayShotsOnTargetAverage: parseNumber(d.medias_away_primeiro_tempo_shots_on_target as string | number | undefined),
+        homePossessionAverage: parseNumber(d.medias_home_primeiro_tempo_possession as string | number | undefined),
+        awayPossessionAverage: parseNumber(d.medias_away_primeiro_tempo_possession as string | number | undefined),
+        homeDangerousAttacksAverage: parseNumber(d.medias_home_primeiro_tempo_dangerous_attacks as string | number | undefined),
+        awayDangerousAttacksAverage: parseNumber(d.medias_away_primeiro_tempo_dangerous_attacks as string | number | undefined),
+      }
+    : undefined;
+
+  return {
+    halftimeHome,
+    halftimeAway,
+    oddsHalfTime,
+    firstHalf,
+    // Season-long expected goals (not first-half specific, but cheap to carry alongside it).
+    homeXg: parseNumber(d.medias_home_xg as string | number | undefined),
+    awayXg: parseNumber(d.medias_away_xg as string | number | undefined),
+  };
+}
+
 // ============================================================
 // Normalizer
 // ============================================================
@@ -210,6 +272,31 @@ export function enrichMatchWithDetail(
       away: awayOdds,
       bookmaker: 'XBET',
       collectedAt,
+    };
+  }
+
+  // Half-time score, half-time odds, first-half averages, xG — see extractHalfTimeDetailFields.
+  const halfTimeFields = extractHalfTimeDetailFields(d);
+  if (halfTimeFields.halftimeHome !== undefined && halfTimeFields.halftimeAway !== undefined) {
+    match.score = {
+      ...match.score,
+      halftimeHome: halfTimeFields.halftimeHome,
+      halftimeAway: halfTimeFields.halftimeAway,
+    };
+  }
+  if (halfTimeFields.oddsHalfTime) {
+    match.oddsHalfTime = { ...halfTimeFields.oddsHalfTime, collectedAt };
+  }
+  if (halfTimeFields.firstHalf) {
+    if (!match.statistics) match.statistics = {};
+    match.statistics.firstHalf = halfTimeFields.firstHalf;
+  }
+  if (halfTimeFields.homeXg !== undefined || halfTimeFields.awayXg !== undefined) {
+    if (!match.statistics) match.statistics = {};
+    match.statistics.additional = {
+      ...match.statistics.additional,
+      homeXg: halfTimeFields.homeXg,
+      awayXg: halfTimeFields.awayXg,
     };
   }
 

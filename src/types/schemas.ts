@@ -52,6 +52,20 @@ export const timelineEventSchema = z.object({
   description: z.string().optional(),
 });
 
+// Pre-match first-half averages (last N matches), used by the half-time outcome-exclusion
+// model. *_goal_sofrido (conceded) fields exist in the API but cover only ~16% of fixtures,
+// so they're deliberately left out here.
+export const firstHalfStatisticsSchema = z.object({
+  homeGoalsAverage: z.number().optional(),
+  awayGoalsAverage: z.number().optional(),
+  homeShotsOnTargetAverage: z.number().optional(),
+  awayShotsOnTargetAverage: z.number().optional(),
+  homePossessionAverage: z.number().optional(),
+  awayPossessionAverage: z.number().optional(),
+  homeDangerousAttacksAverage: z.number().optional(),
+  awayDangerousAttacksAverage: z.number().optional(),
+});
+
 export const normalizedStatisticsSchema = z.object({
   homeGoalsAverage: z.number().optional(),
   awayGoalsAverage: z.number().optional(),
@@ -79,6 +93,8 @@ export const normalizedStatisticsSchema = z.object({
   goals: z.array(goalEventSchema).optional(),
   timeline: z.array(timelineEventSchema).optional(),
 
+  firstHalf: firstHalfStatisticsSchema.optional(),
+
   additional: z.record(z.unknown()).optional(),
 });
 
@@ -105,7 +121,16 @@ export const normalizedMatchSchema = z.object({
   liveMinute: z.string().optional(),
   score: normalizedScoreSchema.optional(),
   odds: normalizedOddsSchema.optional(),
+  // 1X2 odds for the first half only (BET365 primary, XBET fallback).
+  oddsHalfTime: normalizedOddsSchema.optional(),
   statistics: normalizedStatisticsSchema.optional(),
+  // Set only by the backfill-ht CLI when it retrofits `statistics.firstHalf`/`oddsHalfTime`
+  // onto a pre-existing snapshot. Marks that those specific values were fetched long after
+  // collectedAt (not alongside it), so if the provider's "last N games" average is a rolling
+  // current-time figure rather than a value frozen at prediction time, it may not reflect
+  // team form as of the original collectedAt. Absent on everything collected by the normal
+  // scrape pipeline. See the half-time exclusion plan, Etapa 5.
+  backfilledHalfTimeStatsAt: z.string().optional(),
 
   raw: z.record(z.unknown()).optional(),
 });
@@ -113,6 +138,7 @@ export const normalizedMatchSchema = z.object({
 export type NormalizedTeam = z.infer<typeof normalizedTeamSchema>;
 export type NormalizedScore = z.infer<typeof normalizedScoreSchema>;
 export type NormalizedOdds = z.infer<typeof normalizedOddsSchema>;
+export type FirstHalfStatistics = z.infer<typeof firstHalfStatisticsSchema>;
 export type HeadToHeadEntry = z.infer<typeof headToHeadEntrySchema>;
 export type NormalizedStatistics = z.infer<typeof normalizedStatisticsSchema>;
 export type NormalizedMatch = z.infer<typeof normalizedMatchSchema>;

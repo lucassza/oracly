@@ -1,6 +1,7 @@
 import { Pool } from 'pg';
 import type { NormalizedMatch } from '../types/schemas.js';
 import { isMainLeague } from '../utils/league-filter.js';
+import { pickExclusion, type Outcome } from '../analysis/half-time-exclusion.js';
 
 export interface UpcomingOver05FtPrediction {
   providerMatchId: string;
@@ -195,6 +196,45 @@ export interface UpcomingOver15FtSignal {
   signalScore: number;
 }
 
+interface HalfTimeExclusionPick {
+  excluded: Outcome;
+  probs: { home: number; draw: number; away: number };
+  sources: { poisson: Outcome; oddsHt?: Outcome; oddsFt?: Outcome };
+  agreement: number;
+  sourcesAvailable: number;
+}
+
+// "Qual resultado NÃO vai sair no intervalo" — escolhe, por jogo, o resultado (casa/empate/
+// fora) menos provável ao intervalo. Núcleo do sinal é Poisson sobre a média de gols do 1º
+// tempo (cobertura ~100%, 84.5% de acerto no backtest); odds 1T/FT de mercado só corroboram
+// via `agreement`, nunca substituem a escolha do Poisson. Ver src/analysis/half-time-exclusion.ts.
+export interface HalfTimeExclusionHistoryResult extends HalfTimeExclusionPick {
+  providerMatchId: string;
+  kickoffAt: string | undefined;
+  country: string | undefined;
+  competition: string | undefined;
+  homeTeam: string;
+  awayTeam: string;
+  halftimeHome: number;
+  halftimeAway: number;
+  homeScore: number | undefined;
+  awayScore: number | undefined;
+  actualOutcome: Outcome;
+  hit: boolean;
+  // true quando a média de gols 1º tempo usada veio do backfill-ht (buscada muito depois do
+  // jogo) em vez do scrape normal pré-jogo — ver nota em NormalizedMatch.backfilledHalfTimeStatsAt.
+  usedBackfilledFeatures: boolean;
+}
+
+export interface UpcomingHalfTimeExclusion extends HalfTimeExclusionPick {
+  providerMatchId: string;
+  kickoffAt: string | undefined;
+  country: string | undefined;
+  competition: string | undefined;
+  homeTeam: string;
+  awayTeam: string;
+}
+
 // Um jogo (passado ou futuro) com as 4 previsões usadas no filtro "O0.5FT>=85 & U3.5FT<=70"
 // validado por backtest. finalGoals só vem preenchido quando o jogo já terminou.
 export interface DailyPick {
@@ -259,6 +299,15 @@ const getUnder35FtModelOdd = (match: NormalizedMatch): number | undefined =>
 const getBttsPrediction = (match: NormalizedMatch): number | undefined =>
   (match.statistics?.additional?.x7Predictions as Record<string, { pred?: number }> | undefined)?.btts_sim?.pred;
 
+const getFirstHalfHomeGoalsAverage = (match: NormalizedMatch): number | undefined => match.statistics?.firstHalf?.homeGoalsAverage;
+const getFirstHalfAwayGoalsAverage = (match: NormalizedMatch): number | undefined => match.statistics?.firstHalf?.awayGoalsAverage;
+
+type OddsTriplet = { home: number | undefined; draw: number | undefined; away: number | undefined };
+const getOddsHalfTime = (match: NormalizedMatch): OddsTriplet | undefined =>
+  match.oddsHalfTime ? { home: match.oddsHalfTime.home, draw: match.oddsHalfTime.draw, away: match.oddsHalfTime.away } : undefined;
+const getOddsFullTime = (match: NormalizedMatch): OddsTriplet | undefined =>
+  match.odds ? { home: match.odds.home, draw: match.odds.draw, away: match.odds.away } : undefined;
+
 type ZeroAt30Signals = Pick<ZeroAt30Result, 'over25FtProbability' | 'bttsProbability' | 'bttsPercentage' | 'combinedGoalsAverage'>;
 
 // Cortes descobertos por busca exaustiva com validacao temporal (644 jogos):
@@ -303,6 +352,12 @@ const getGoalBand = (minute: number | undefined): string => {
 // seguro que loop infinito).
 const STILL_PENDING_STATUSES = new Set(['not_started', 'live', 'half_time', '1st', '2nd', 'et', 'extra_time']);
 export const isStillPending = (status: string | undefined): boolean => STILL_PENDING_STATUSES.has(status ?? '');
+
+// Última ocorrência definida numa lista já ordenada por collectedAt ascendente — mesmo
+// padrão do `lastPreKickoffValue` inline usado nos outros métodos, generalizado aqui porque
+// as odds HT/FT são objetos (home/draw/away), não só números.
+const lastDefinedValue = <T,>(matches: NormalizedMatch[], getValue: (match: NormalizedMatch) => T | undefined): T | undefined =>
+  matches.map(getValue).filter((value): value is T => value !== undefined).at(-1);
 
 const groupByFixture = (matches: NormalizedMatch[]): Map<string, NormalizedMatch[]> =>
   matches.reduce((groups, match) => {
@@ -585,6 +640,78 @@ export class PostgresMatchStore {
         };
       })
       .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? '') || b.signalScore - a.signalScore);
+  }
+
+  // "Qual resultado NÃO sai no intervalo": para cada jogo finalizado com placar HT por time
+  // (halftimeHome/halftimeAway ambos definidos — precisa do backfill-ht ou de scrape já
+  // corrigido), roda o modelo com as features conhecidas ANTES do kickoff e compara com o
+  // resultado HT real. Jogos sem placar HT por time ou sem médias de gols 1º tempo ficam de
+  // fora (pickExclusion retorna undefined).
+  async getHalfTimeExclusionResults(): Promise<HalfTimeExclusionHistoryResult[]> {
+    const byFixture = groupByFixture(await this.getAllSnapshots());
+
+    return [...byFixture.entries()].flatMap(([providerMatchId, snapshots]) => {
+      const settled = snapshots.filter((match) => match.status === 'finished').sort(byLatestCollection).at(-1);
+      const kickoffAt = settled?.kickoffAt;
+      if (!settled || !kickoffAt) return [];
+      const halftimeHome = settled.score?.halftimeHome;
+      const halftimeAway = settled.score?.halftimeAway;
+      if (halftimeHome === undefined || halftimeAway === undefined) return [];
+      const actualOutcome: Outcome = halftimeHome > halftimeAway ? 'home' : halftimeHome < halftimeAway ? 'away' : 'draw';
+
+      const preKickoff = snapshots.filter((match) => match.collectedAt < kickoffAt).sort(byLatestCollection);
+      const featureSnapshot = [...preKickoff].reverse().find((match) => getFirstHalfHomeGoalsAverage(match) !== undefined);
+
+      const pick = pickExclusion({
+        homeFirstHalfGoalsAverage: featureSnapshot && getFirstHalfHomeGoalsAverage(featureSnapshot),
+        awayFirstHalfGoalsAverage: featureSnapshot && getFirstHalfAwayGoalsAverage(featureSnapshot),
+        oddsHalfTime: lastDefinedValue(preKickoff, getOddsHalfTime),
+        oddsFullTime: lastDefinedValue(preKickoff, getOddsFullTime),
+      });
+      if (!pick) return [];
+
+      return [{
+        providerMatchId,
+        kickoffAt,
+        country: settled.country,
+        competition: settled.competition,
+        homeTeam: settled.homeTeam.name,
+        awayTeam: settled.awayTeam.name,
+        halftimeHome,
+        halftimeAway,
+        homeScore: settled.score?.home,
+        awayScore: settled.score?.away,
+        actualOutcome,
+        ...pick,
+        hit: pick.excluded !== actualOutcome,
+        usedBackfilledFeatures: featureSnapshot?.backfilledHalfTimeStatsAt !== undefined,
+      }];
+    }).sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? ''));
+  }
+
+  async getUpcomingHalfTimeExclusions(now: string): Promise<UpcomingHalfTimeExclusion[]> {
+    return (await this.getLatestSnapshots())
+      .filter((match) => isMainLeague(match.competition))
+      .filter((match) => match.status === 'not_started' && (match.kickoffAt ?? '') > now)
+      .flatMap((match) => {
+        const pick = pickExclusion({
+          homeFirstHalfGoalsAverage: getFirstHalfHomeGoalsAverage(match),
+          awayFirstHalfGoalsAverage: getFirstHalfAwayGoalsAverage(match),
+          oddsHalfTime: getOddsHalfTime(match),
+          oddsFullTime: getOddsFullTime(match),
+        });
+        if (!pick) return [];
+        return [{
+          providerMatchId: match.providerMatchId ?? '',
+          kickoffAt: match.kickoffAt,
+          country: match.country,
+          competition: match.competition,
+          homeTeam: match.homeTeam.name,
+          awayTeam: match.awayTeam.name,
+          ...pick,
+        }];
+      })
+      .sort((a, b) => (a.kickoffAt ?? '').localeCompare(b.kickoffAt ?? ''));
   }
 
   // Cobre passado (jogos finalizados, pra analisar acerto histórico) e futuro (jogos de

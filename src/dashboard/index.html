@@ -465,6 +465,18 @@
     .favorite-division-b { background: transparent; border: 1px solid var(--line); color: var(--muted); font-size: 9px; font-weight: 800; letter-spacing: .05em; padding: 1px 5px; text-transform: uppercase; }
     #favoritesMarkTopFlight { margin: 4px 0 0; }
     #favoritesMarkTopFlight:disabled { cursor: default; opacity: .4; }
+    .ht-probs { display: flex; gap: 7px; font-size: 12px; font-variant-numeric: tabular-nums; font-weight: 700; }
+    .ht-prob { color: var(--ink); }
+    .ht-prob.excluded { color: var(--loss); text-decoration: line-through; }
+    .ht-exclude-badge { background: var(--signal-wash); border: 1px solid var(--signal); color: var(--signal); font-size: 11px; font-weight: 800; letter-spacing: .04em; padding: 5px 8px; text-transform: uppercase; white-space: nowrap; }
+    .ht-agreement { border: 1px solid var(--line); color: var(--muted); font-size: 11px; font-variant-numeric: tabular-nums; font-weight: 700; padding: 5px 8px; white-space: nowrap; }
+    .ht-agreement.full { border-color: var(--win); color: var(--win); }
+    .ht-result-row { align-items: center; border-bottom: 1px solid var(--line); display: grid; gap: 12px; grid-template-columns: minmax(200px, 1.5fr) minmax(150px, 1fr) 130px 110px 90px 90px 90px; min-width: 970px; padding: 13px 18px; }
+    .ht-result-row:last-child { border-bottom: 0; }
+    .ht-result-row.header { color: var(--muted); font-size: 10px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; }
+    .ht-card { align-items: center; background: var(--surface); border-bottom: 1px solid var(--line); display: grid; gap: 14px; grid-template-columns: 70px minmax(180px, 1fr) 150px 130px 110px; padding: 17px; }
+    .ht-card:last-child { border-bottom: 0; }
+    @media (max-width: 800px) { .ht-card { grid-template-columns: 56px 1fr; } .ht-card .ht-exclude-badge, .ht-card .ht-agreement { grid-column: 2; } }
     @media (max-width: 900px) { .today-market-strip { grid-template-columns: repeat(3, 1fr); } }
     @media (max-width: 800px) {
       .header { align-items: flex-start; flex-wrap: wrap; gap: 14px; }
@@ -489,6 +501,7 @@
         <button class="view-tab active" data-view="dailyView">Lista diária</button>
         <button class="view-tab" data-view="todayView">Hoje</button>
         <button class="view-tab" data-view="predictionsView">Over 0.5 / 1.5</button>
+        <button class="view-tab" data-view="htExclusionView">1º Tempo</button>
         <button class="view-tab" data-view="favoritesView">Favoritos</button>
       </div>
   </div>
@@ -508,6 +521,12 @@
   <main class="app-view goals-lab active" id="dailyView">
     <div class="lab-shell" id="dailyContent">
       <div class="lab-loading">Carregando lista diária…</div>
+    </div>
+  </main>
+
+  <main class="app-view goals-lab" id="htExclusionView">
+    <div class="lab-shell" id="htExclusionContent">
+      <div class="lab-loading">Consultando modelo de 1º tempo…</div>
     </div>
   </main>
 
@@ -1198,6 +1217,151 @@
       }
     }
 
+    // "Qual resultado NÃO sai no intervalo": modelo escolhe, por jogo, o resultado
+    // (casa/empate/fora) menos provável ao intervalo — núcleo é Poisson sobre a média de
+    // gols do 1º tempo (backtest: 84.5% de acerto com cobertura total; base "sempre excluir
+    // Fora" ~73.5%). Odds de mercado (1T/FT) só reforçam via "fontes", nunca substituem a
+    // escolha do Poisson. Ver src/analysis/half-time-exclusion.ts.
+    let htMode = 'upcoming'; // 'upcoming' | 'history'
+    let htMinConfidence = 0; // % de confiança mínima no lado excluído; 0 = cobertura total
+    let htFavoritesOnly = true; // pré-selecionado: só países/ligas marcados na aba Favoritos
+    let htConfidenceLocked = false; // true a partir do primeiro clique manual num corte
+    let htBestConfidenceCache = null; // Promise<{threshold,accuracy,n}|null> — refeita ao trocar o toggle de favoritas
+
+    const HT_CONFIDENCE_THRESHOLDS = [0, 72, 76, 80];
+    const HT_BEST_CONFIDENCE_MIN_N = 20;
+    const HT_OUTCOME_LABEL = { home: 'Casa', draw: 'Empate', away: 'Fora' };
+    const HT_OUTCOME_SHORT = { home: 'C', draw: 'E', away: 'F' };
+    const htConfidence = record => Math.round((1 - record.probs[record.excluded]) * 100);
+    const htConfidenceLabel = threshold => threshold ? `≥ ${threshold}%` : 'cobertura total (sem corte)';
+    const htProbsCell = record => `<div class="ht-probs">${['home', 'draw', 'away'].map(key =>
+      `<span class="ht-prob ${key === record.excluded ? 'excluded' : ''}">${HT_OUTCOME_SHORT[key]} ${Math.round(record.probs[key] * 100)}%</span>`
+    ).join('')}</div>`;
+    const htExcludeBadge = record => `<span class="ht-exclude-badge">Exclui ${HT_OUTCOME_LABEL[record.excluded]}</span>`;
+    const htAgreementBadge = record => `<span class="ht-agreement ${record.agreement === record.sourcesAvailable ? 'full' : ''}">${record.agreement}/${record.sourcesAvailable} fontes</span>`;
+
+    // Varre os mesmos cortes dos botões contra o histórico real e pega o de maior acerto
+    // (mín. 20 jogos, mesmo critério do "melhor filtro" da aba Over 0.5/1.5). Sempre lê o
+    // histórico (não o endpoint do modo atual), pra funcionar igual em Próximos e Histórico.
+    async function computeBestHtConfidence() {
+      try {
+        const response = await fetch('/api/history/ht-exclusion');
+        if (!response.ok) return null;
+        const records = await response.json();
+        const pool = htFavoritesOnly ? records.filter(isFavoriteMatch) : records;
+        let best = null;
+        for (const threshold of HT_CONFIDENCE_THRESHOLDS) {
+          const atThreshold = pool.filter(record => htConfidence(record) >= threshold);
+          if (atThreshold.length < HT_BEST_CONFIDENCE_MIN_N) continue;
+          const hits = atThreshold.filter(record => record.hit).length;
+          const accuracy = Math.round((hits / atThreshold.length) * 100);
+          if (!best || accuracy > best.accuracy || (accuracy === best.accuracy && atThreshold.length > best.n)) {
+            best = { threshold, accuracy, n: atThreshold.length };
+          }
+        }
+        return best;
+      } catch {
+        return null;
+      }
+    }
+
+    async function renderHtExclusion() {
+      const content = document.getElementById('htExclusionContent');
+      content.innerHTML = '<div class="lab-loading">Consultando modelo de 1º tempo…</div>';
+      try {
+        const endpoint = htMode === 'upcoming' ? '/api/predictions/ht-exclusion' : '/api/history/ht-exclusion';
+        if (!htBestConfidenceCache) htBestConfidenceCache = computeBestHtConfidence();
+        const [response, bestConfidence] = await Promise.all([fetch(endpoint), htBestConfidenceCache]);
+        if (!response.ok) throw new Error('Banco local indisponível');
+        if (bestConfidence && !htConfidenceLocked) htMinConfidence = bestConfidence.threshold;
+        const records = await response.json();
+        const favoritesFiltered = htFavoritesOnly ? records.filter(isFavoriteMatch) : records;
+        const selected = favoritesFiltered.filter(record => htConfidence(record) >= htMinConfidence);
+
+        const modes = `<button class="prediction-filter ${htMode === 'upcoming' ? 'active' : ''}" data-ht-mode="upcoming">Próximos jogos</button><button class="prediction-filter ${htMode === 'history' ? 'active' : ''}" data-ht-mode="history">Histórico</button>`;
+        const confidenceFilters = HT_CONFIDENCE_THRESHOLDS.map(threshold => `<button class="prediction-filter ${threshold === htMinConfidence ? 'active' : ''}" data-ht-confidence="${threshold}">${threshold ? `Confiança ≥ ${threshold}%` : 'Todos'}</button>`).join('');
+        const favoritesToggle = `<button class="prediction-filter ${htFavoritesOnly ? 'active' : ''}" id="htFavoritesToggle">★ Só ligas favoritas</button>`;
+        const bestConfidenceNote = bestConfidence
+          ? `<p class="lab-source">🎯 Melhor confiança: <strong>${htConfidenceLabel(bestConfidence.threshold)}</strong> — ${bestConfidence.accuracy}% de acerto em ${bestConfidence.n} jogos${htConfidenceLocked ? '.' : ' (já selecionada abaixo).'}</p>`
+          : `<p class="lab-source">Ainda sem jogos suficientes (mín. ${HT_BEST_CONFIDENCE_MIN_N} por corte) pra recomendar uma confiança.</p>`;
+        const intro = `<div class="lab-eyebrow">Banco local · Poisson sobre médias de gols 1º tempo · somente ligas principais</div><div class="lab-title-row"><h1 class="lab-title">Qual resultado<br>não sai no intervalo.</h1><p class="lab-source">Escolhe, por jogo, o resultado (casa/empate/fora) menos provável ao intervalo. Confirme escalações e cotação real antes de qualquer decisão.</p></div>`;
+
+        if (htMode === 'history') {
+          const hits = selected.filter(record => record.hit).length;
+          const accuracy = selected.length ? Math.round(100 * hits / selected.length) : 0;
+          const clean = selected.filter(record => !record.usedBackfilledFeatures);
+          const dirty = selected.filter(record => record.usedBackfilledFeatures);
+          const rate = list => list.length ? Math.round(100 * list.filter(record => record.hit).length / list.length) : 0;
+
+          // Independente do toggle "Só ligas favoritas" (senão, com o toggle ligado, "Outras
+          // ligas" sempre daria n=0) — respeita só o corte de confiança atual.
+          const confidenceOnly = records.filter(record => htConfidence(record) >= htMinConfidence);
+          const favoriteRecords = confidenceOnly.filter(isFavoriteMatch);
+          const otherRecords = confidenceOnly.filter(record => !isFavoriteMatch(record));
+
+          const heroFacts = `
+            <div class="hero-fact"><div class="hero-fact-value">${selected.length}</div><div class="hero-fact-label">Jogos analisados</div></div>
+            <div class="hero-fact"><div class="hero-fact-value">${hits}</div><div class="hero-fact-label">Green</div></div>
+            <div class="hero-fact"><div class="hero-fact-value">${selected.length - hits}</div><div class="hero-fact-label">Red</div></div>
+            <div class="hero-fact"><div class="hero-fact-value">${favoriteRecords.length ? `${rate(favoriteRecords)}%` : '—'}</div><div class="hero-fact-label">Ligas favoritas (n=${favoriteRecords.length})</div></div>
+            <div class="hero-fact"><div class="hero-fact-value">${otherRecords.length ? `${rate(otherRecords)}%` : '—'}</div><div class="hero-fact-label">Outras ligas (n=${otherRecords.length})</div></div>
+            <div class="hero-fact"><div class="hero-fact-value">${clean.length ? `${rate(clean)}%` : '—'}</div><div class="hero-fact-label">Trilha limpa (n=${clean.length})</div></div>
+            <div class="hero-fact"><div class="hero-fact-value">${dirty.length ? `${rate(dirty)}%` : '—'}</div><div class="hero-fact-label">Trilha backfill (n=${dirty.length})</div></div>`;
+
+          const header = `<div class="ht-result-row header"><div>Partida</div><div>Casa / Empate / Fora</div><div>Exclui</div><div>Fontes</div><div>Placar HT</div><div>Placar Final</div><div>Resultado</div></div>`;
+          const rows = [...selected].sort((a, b) => (b.kickoffAt ?? '').localeCompare(a.kickoffAt ?? '')).map(record => `
+            <div class="ht-result-row">
+              <div class="fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
+              ${htProbsCell(record)}
+              <div>${htExcludeBadge(record)}</div>
+              <div>${htAgreementBadge(record)}</div>
+              <div class="result-number">${record.halftimeHome}–${record.halftimeAway}</div>
+              <div class="result-number">${record.homeScore ?? '—'}–${record.awayScore ?? '—'}</div>
+              <div class="outcome ${record.hit ? 'win' : 'loss'}">${record.hit ? 'Green' : 'Red'}</div>
+            </div>`).join('');
+
+          content.innerHTML = `${intro}
+            <div class="prediction-controls">${modes}</div>
+            <div class="prediction-controls">${confidenceFilters}${favoritesToggle}</div>
+            ${bestConfidenceNote}
+            <section class="lab-hero"><div class="hero-copy"><div class="hero-market">${htMinConfidence ? `Confiança ≥ ${htMinConfidence}%` : 'Cobertura total'}</div><div class="hero-rate">${accuracy}%</div><p class="hero-caption">${hits} acertos em ${selected.length} jogos com placar HT conhecido.</p></div><div class="hero-facts">${heroFacts}</div></section>
+            <div class="section-heading"><h2>Resultados históricos</h2><span>Mais recentes primeiro</span></div>
+            <section class="lab-results">${header}${rows || '<div class="empty">Nenhum jogo com placar HT nesse corte.</div>'}</section>
+            <p class="lab-note">"Trilha backfill" usa médias de 1º tempo buscadas bem depois do jogo (comando backfill-ht) — pode não refletir a forma do time como era antes da partida. "Trilha limpa" vem do scrape normal, coletado antes do kickoff. Placar HT via scoresLocalTeamHT/scoresVisitorTeamHT da SokkerPRO.</p>`;
+        } else {
+          const groups = selected.reduce((grouped, record) => {
+            const key = record.kickoffAt?.slice(0, 10) || 'sem-data';
+            (grouped[key] ||= []).push(record);
+            return grouped;
+          }, {});
+          const runway = Object.values(groups).map(group => `
+            <section><div class="prediction-date">${formatDate(group[0].kickoffAt)}</div>
+            ${group.map(record => `<article class="ht-card">
+              <div class="prediction-time">${formatKickoff(record.kickoffAt)}</div>
+              <div class="prediction-fixture">${record.homeTeam} × ${record.awayTeam}<small>${competitionLabel(record)}</small></div>
+              ${htProbsCell(record)}
+              ${htExcludeBadge(record)}
+              ${htAgreementBadge(record)}
+            </article>`).join('')}</section>`).join('');
+
+          content.innerHTML = `${intro}
+            <div class="prediction-controls">${modes}</div>
+            <div class="prediction-controls">${confidenceFilters}${favoritesToggle}</div>
+            ${bestConfidenceNote}
+            <div class="section-heading"><h2>${selected.length} jogos com sinal</h2><span>Corte atual: ${htMinConfidence ? `confiança ≥ ${htMinConfidence}%` : 'todos'}</span></div>
+            <div class="prediction-runway">${runway || '<div class="empty">Nenhum próximo jogo com médias de 1º tempo suficientes.</div>'}</div>
+            <p class="lab-note">Horário em Brasília. "Fontes" mostra quantas fontes (Poisson + odds 1T + odds FT, quando disponíveis) concordam com a exclusão. Amador, juvenil, feminino e regional/reserva ficam de fora.</p>`;
+        }
+
+        content.querySelectorAll('[data-ht-mode]').forEach(button => button.addEventListener('click', () => { htMode = button.dataset.htMode; renderHtExclusion(); }));
+        content.querySelectorAll('[data-ht-confidence]').forEach(button => button.addEventListener('click', () => { htMinConfidence = Number(button.dataset.htConfidence); htConfidenceLocked = true; renderHtExclusion(); }));
+        const htFavoritesToggleButton = document.getElementById('htFavoritesToggle');
+        if (htFavoritesToggleButton) htFavoritesToggleButton.addEventListener('click', () => { htFavoritesOnly = !htFavoritesOnly; htBestConfidenceCache = null; renderHtExclusion(); });
+      } catch (error) {
+        content.innerHTML = `<div class="empty">Não foi possível carregar o modelo de 1º tempo: ${error.message}</div>`;
+      }
+    }
+
     document.querySelectorAll('.view-tab').forEach(tab => tab.addEventListener('click', () => {
       document.querySelectorAll('.view-tab, .app-view').forEach(element => element.classList.remove('active'));
       tab.classList.add('active');
@@ -1208,6 +1372,7 @@
       if (tab.dataset.view === 'predictionsView') renderPredictions();
       if (tab.dataset.view === 'todayView') renderToday();
       if (tab.dataset.view === 'dailyView') renderDaily();
+      if (tab.dataset.view === 'htExclusionView') renderHtExclusion();
       if (tab.dataset.view === 'favoritesView') renderFavorites();
     }));
 
