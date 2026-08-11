@@ -48,6 +48,7 @@ final class TodayMatchService
         foreach ($byFixture as $snapshots) {
             usort($snapshots, fn ($a, $b) => strcmp($a['collectedAt'] ?? '', $b['collectedAt'] ?? ''));
             $latest = $snapshots[array_key_last($snapshots)];
+            $latest = $this->withBestAvailableResultScore($latest, $snapshots);
             $latestWithStats = null;
             foreach (array_reverse($snapshots) as $snap) {
                 if (data_get($snap, 'statistics.additional.x7Predictions')) {
@@ -71,6 +72,40 @@ final class TodayMatchService
         usort($rows, fn ($a, $b) => strcmp($a['kickoffAt'] ?? '', $b['kickoffAt'] ?? ''));
 
         return $rows;
+    }
+
+    /**
+     * The final snapshot can contain the FT score before the detail request
+     * that supplies the per-team HT score. Keep the final values and fill any
+     * missing result fields from the most recent snapshot that has them.
+     *
+     * @param  array<string, mixed>  $latest
+     * @param  list<array<string, mixed>>  $snapshots
+     * @return array<string, mixed>
+     */
+    private function withBestAvailableResultScore(array $latest, array $snapshots): array
+    {
+        $score = is_array($latest['score'] ?? null) ? $latest['score'] : [];
+        $fields = ['home', 'away', 'halftimeHome', 'halftimeAway'];
+
+        foreach (array_reverse($snapshots) as $snapshot) {
+            $snapshotScore = is_array($snapshot['score'] ?? null) ? $snapshot['score'] : [];
+            foreach ($fields as $field) {
+                if (($score[$field] ?? null) === null && ($snapshotScore[$field] ?? null) !== null) {
+                    $score[$field] = $snapshotScore[$field];
+                }
+            }
+
+            if (count(array_filter($fields, fn (string $field) => ($score[$field] ?? null) !== null)) === count($fields)) {
+                break;
+            }
+        }
+
+        if ($score !== []) {
+            $latest['score'] = $score;
+        }
+
+        return $latest;
     }
 
     /**
@@ -116,6 +151,8 @@ final class TodayMatchService
             'liveMinute' => $match['liveMinute'] ?? null,
             'homeScore' => data_get($match, 'score.home'),
             'awayScore' => data_get($match, 'score.away'),
+            'halftimeHomeScore' => data_get($match, 'score.halftimeHome'),
+            'halftimeAwayScore' => data_get($match, 'score.halftimeAway'),
             'combinedGoalsAverage' => is_numeric($avg) ? (float) $avg : null,
             'bttsPercentage' => is_numeric($bttsPct) ? (float) $bttsPct : null,
             'signalScore' => $score,

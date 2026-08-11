@@ -15,6 +15,7 @@ final class PredictionService
         'over_05_ft' => ['pred' => 'over_05_ft_over', 'odd' => 'over_05_ft_over', 'label' => 'O0.5 FT'],
         'over_15_ft' => ['pred' => 'over_15_ft_over', 'odd' => 'over_15_ft_over', 'label' => 'O1.5 FT'],
         'under_35_ft' => ['pred' => 'over_35_ft_under', 'odd' => 'over_35_ft_under', 'label' => 'U3.5 FT'],
+        'btts' => ['pred' => 'btts_sim', 'odd' => 'btts_sim', 'label' => 'Ambas marcam'],
     ];
 
     public function __construct(private readonly MatchSnapshotRepository $snapshots) {}
@@ -127,7 +128,21 @@ final class PredictionService
                 continue;
             }
 
-            $htGoals = (int) data_get($settled, 'score.halftimeHome', 0) + (int) data_get($settled, 'score.halftimeAway', 0);
+            $halftimeHomeScore = data_get($settled, 'score.halftimeHome');
+            $halftimeAwayScore = data_get($settled, 'score.halftimeAway');
+            foreach (array_reverse($snapshots) as $snapshot) {
+                if ($halftimeHomeScore === null) {
+                    $halftimeHomeScore = data_get($snapshot, 'score.halftimeHome');
+                }
+                if ($halftimeAwayScore === null) {
+                    $halftimeAwayScore = data_get($snapshot, 'score.halftimeAway');
+                }
+                if ($halftimeHomeScore !== null && $halftimeAwayScore !== null) {
+                    break;
+                }
+            }
+
+            $htGoals = (int) ($halftimeHomeScore ?? 0) + (int) ($halftimeAwayScore ?? 0);
             $ftGoals = (int) data_get($settled, 'score.home', 0) + (int) data_get($settled, 'score.away', 0);
             $hit = match ($market) {
                 'over_05_ht' => $htGoals >= 1,
@@ -135,6 +150,8 @@ final class PredictionService
                 'over_05_ft' => $ftGoals >= 1,
                 'over_15_ft' => $ftGoals >= 2,
                 'under_35_ft' => $ftGoals <= 3,
+                'btts' => (int) data_get($settled, 'score.home', 0) > 0
+                    && (int) data_get($settled, 'score.away', 0) > 0,
                 default => false,
             };
 
@@ -147,7 +164,11 @@ final class PredictionService
                 'awayTeam' => data_get($settled, 'awayTeam.name', ''),
                 'probability' => $probability,
                 'halftimeGoals' => $htGoals,
+                'halftimeHomeScore' => $halftimeHomeScore,
+                'halftimeAwayScore' => $halftimeAwayScore,
                 'finalGoals' => $ftGoals,
+                'homeScore' => data_get($settled, 'score.home'),
+                'awayScore' => data_get($settled, 'score.away'),
                 'hit' => $hit,
                 'companionProbability' => X7::pred($predicted, 'over_05_ft_over'),
                 'bttsPercentage' => data_get($predicted, 'statistics.bttsPercentage'),

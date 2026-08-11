@@ -15,9 +15,9 @@ class Predictions extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
 
-    protected static ?string $navigationLabel = 'Over 0.5 / 1.5';
+    protected static ?string $navigationLabel = 'Previsões';
 
-    protected static ?string $title = 'Over 0.5 / 1.5';
+    protected static ?string $title = 'Previsões';
 
     protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
 
@@ -25,33 +25,44 @@ class Predictions extends Page
 
     protected string $view = 'filament.pages.predictions';
 
+    /** @var array<int, string> */
+    public const CONFIDENCE_THRESHOLDS = [70, 75, 80, 85, 90];
+
+    /** @var array<string, string> */
+    public const MODE_OPTIONS = [
+        'upcoming' => 'Próximos jogos',
+        'history' => 'Histórico',
+    ];
+
     public string $market = 'over_05_ht';
 
     public string $mode = 'upcoming';
 
     public int $minProbability = 80;
 
-    /** @var list<array<string, mixed>> */
-    public array $rows = [];
+    /** Unfiltered rows for the current market/mode, fetched once and filtered client-side per threshold. */
+    public array $allRows = [];
 
     public function mount(): void
     {
         $this->reload();
     }
 
-    public function updatedMarket(): void
+    public function setMarket(string $value): void
     {
+        $this->market = $value;
         $this->reload();
     }
 
-    public function updatedMode(): void
+    public function setMode(string $value): void
     {
+        $this->mode = $value;
         $this->reload();
     }
 
-    public function updatedMinProbability(): void
+    public function setMinProbability(int $value): void
     {
-        $this->reload();
+        $this->minProbability = $value;
     }
 
     public function reload(): void
@@ -59,23 +70,104 @@ class Predictions extends Page
         OraclyCache::forgetPrefix();
         try {
             $service = app(PredictionService::class);
-            $this->rows = $this->mode === 'history'
-                ? $service->history($this->market, (float) $this->minProbability)
-                : $service->upcoming($this->market, now()->toIso8601String(), (float) $this->minProbability);
+            $this->allRows = $this->mode === 'history'
+                ? $service->history($this->market, 0)
+                : $service->upcoming($this->market, now()->toIso8601String(), 0);
         } catch (\Throwable $e) {
-            $this->rows = [];
+            $this->allRows = [];
             Notification::make()->title('Erro ao ler Postgres Oracly')->body($e->getMessage())->danger()->send();
         }
     }
 
-    public function getHitRateProperty(): ?string
+    /** @return list<array<string, mixed>> */
+    public function getRowsProperty(): array
     {
-        if ($this->mode !== 'history' || $this->rows === []) {
-            return null;
-        }
-        $hits = count(array_filter($this->rows, fn ($r) => ! empty($r['hit'])));
+        return $this->filterByProbability($this->allRows, $this->minProbability);
+    }
 
-        return number_format(($hits / count($this->rows)) * 100, 1).'% ('.$hits.'/'.count($this->rows).')';
+    /** @return list<array<string, mixed>> */
+    private function filterByProbability(array $rows, float $minProbability): array
+    {
+        return array_values(array_filter(
+            $rows,
+            fn (array $row) => ($row['probability'] ?? 0) >= $minProbability,
+        ));
+    }
+
+    /** @return array{sampleSize: int, entries: int, wins: ?int, coverage: float, hitRate: ?float} */
+    public function getStatsProperty(): array
+    {
+        $sampleSize = count($this->allRows);
+        $entries = count($this->rows);
+        $wins = $this->mode === 'history' ? count(array_filter($this->rows, fn ($r) => ! empty($r['hit']))) : null;
+
+        return [
+            'sampleSize' => $sampleSize,
+            'entries' => $entries,
+            'wins' => $wins,
+            'coverage' => $sampleSize > 0 ? ($entries / $sampleSize) * 100 : 0.0,
+            'hitRate' => ($wins !== null && $entries > 0) ? ($wins / $entries) * 100 : null,
+        ];
+    }
+
+    /** @return array<int, array{entries: int, coverage: float, hitRate: ?float}> */
+    public function getConfidenceLineProperty(): array
+    {
+        $sampleSize = count($this->allRows);
+        $line = [];
+
+        foreach (self::CONFIDENCE_THRESHOLDS as $threshold) {
+            $filtered = $this->filterByProbability($this->allRows, $threshold);
+            $entries = count($filtered);
+            $wins = $this->mode === 'history' ? count(array_filter($filtered, fn ($r) => ! empty($r['hit']))) : null;
+
+            $line[$threshold] = [
+                'entries' => $entries,
+                'coverage' => $sampleSize > 0 ? ($entries / $sampleSize) * 100 : 0.0,
+                'hitRate' => ($wins !== null && $entries > 0) ? ($wins / $entries) * 100 : null,
+            ];
+        }
+
+        return $line;
+    }
+
+    /** @return array<string, array{label: string, hitRate: ?float, active: bool}> */
+    public function getMarketSummaryProperty(): array
+    {
+        if ($this->mode !== 'history') {
+            return [];
+        }
+
+        $service = app(PredictionService::class);
+        $summary = [];
+
+        foreach (PredictionService::MARKETS as $key => $meta) {
+            if ($key === $this->market) {
+                $summary[$key] = [
+                    'label' => $meta['label'],
+                    'hitRate' => $this->stats['hitRate'],
+                    'active' => true,
+                ];
+
+                continue;
+            }
+
+            try {
+                $rows = $service->history($key, (float) $this->minProbability);
+                $hits = count(array_filter($rows, fn ($r) => ! empty($r['hit'])));
+                $hitRate = count($rows) > 0 ? ($hits / count($rows)) * 100 : null;
+            } catch (\Throwable) {
+                $hitRate = null;
+            }
+
+            $summary[$key] = [
+                'label' => $meta['label'],
+                'hitRate' => $hitRate,
+                'active' => false,
+            ];
+        }
+
+        return $summary;
     }
 
     protected function getHeaderActions(): array

@@ -12,3 +12,6 @@ frontend-laravel/vendor/
 frontend-laravel/node_modules/
 frontend-laravel/.env
 frontend-laravel/database/*.sqlite
+
+# Claude Code local overrides (personal, not shared)
+.claude/settings.local.json

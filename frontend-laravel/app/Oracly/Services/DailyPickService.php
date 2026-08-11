@@ -69,13 +69,16 @@ final class DailyPickService
                     : null,
                 'homeScore' => $isFinished ? data_get($latest, 'score.home') : null,
                 'awayScore' => $isFinished ? data_get($latest, 'score.away') : null,
+                'halftimeHomeScore' => $isFinished ? data_get($latest, 'score.halftimeHome') : null,
+                'halftimeAwayScore' => $isFinished ? data_get($latest, 'score.halftimeAway') : null,
                 'over05' => $lastPred('over_05_ft_over'),
                 'under35' => $lastPred('over_35_ft_under'),
                 'over15' => $lastPred('over_15_ft_over'),
                 'over25' => $lastPred('over_25_ft_over'),
+                'btts' => $lastPred('btts_sim'),
             ];
 
-            if ($pick['over05'] === null && $pick['over15'] === null && $pick['over25'] === null && $pick['under35'] === null) {
+            if ($pick['over05'] === null && $pick['over15'] === null && $pick['over25'] === null && $pick['under35'] === null && $pick['btts'] === null) {
                 continue;
             }
 

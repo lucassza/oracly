@@ -1,62 +1,121 @@
-<x-filament-panels::page>
-    <x-filament::section>
-        <div class="flex flex-wrap gap-3 mb-4 items-end">
-            <div>
-                <label class="text-xs text-gray-500">Mercado</label>
-                <select wire:model.live="market" class="block rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900">
-                    @foreach (\App\Oracly\Services\PredictionService::MARKETS as $key => $meta)
-                        <option value="{{ $key }}">{{ $meta['label'] }}</option>
-                    @endforeach
-                </select>
-            </div>
-            <div>
-                <label class="text-xs text-gray-500">Modo</label>
-                <select wire:model.live="mode" class="block rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900">
-                    <option value="upcoming">Upcoming</option>
-                    <option value="history">Histórico</option>
-                </select>
-            </div>
-            <div>
-                <label class="text-xs text-gray-500">Min. prob.</label>
-                <input type="number" min="0" max="100" wire:model.live="minProbability" class="block w-24 rounded border-gray-300 dark:border-gray-700 dark:bg-gray-900" />
-            </div>
-            @if ($this->hitRate)
-                <div class="text-sm font-semibold text-amber-600">Acerto: {{ $this->hitRate }}</div>
-            @endif
-        </div>
+@php
+    $marketOptions = collect(\App\Oracly\Services\PredictionService::MARKETS)->map(fn ($m) => $m['label'])->all();
+    $probabilityOptions = collect($this::CONFIDENCE_THRESHOLDS)->mapWithKeys(fn ($t) => [$t => "≥ {$t}%"])->all();
+    $marketLabel = \App\Oracly\Services\PredictionService::MARKETS[$market]['label'] ?? $market;
+@endphp
 
-        <div class="overflow-x-auto">
-            <table class="w-full text-sm">
-                <thead>
-                    <tr class="text-left border-b border-gray-200 dark:border-gray-700">
-                        <th class="py-2 pr-3">Horário</th>
-                        <th class="py-2 pr-3">Jogo</th>
-                        <th class="py-2 pr-3">Prob.</th>
+<x-filament-panels::page>
+    <x-oracly.page-header eyebrow="Banco local · previsão pré-jogo × placar · somente ligas principais">
+        {{ $marketLabel }}.
+
+        <x-slot name="description">
+            {{ $mode === 'history' ? 'Histórico consolidado com a última previsão registrada antes do início da partida.' : 'Próximos jogos com previsão do modelo acima do corte selecionado.' }}
+            @if ($market === 'btts')
+                A entrada é validada quando os dois times marcam no placar final.
+            @endif
+        </x-slot>
+    </x-oracly.page-header>
+
+    <x-oracly.chip-group :options="$marketOptions" :active="$market" method="setMarket" />
+    <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
+    <x-oracly.chip-group :options="$probabilityOptions" :active="$minProbability" method="setMinProbability" />
+
+    <div class="grid gap-4 lg:grid-cols-[2fr_1fr]">
+        <x-oracly.stat-tile
+            hero
+            accent
+            :value="$this->stats['hitRate'] !== null ? number_format($this->stats['hitRate'], 0).'%' : number_format($this->stats['coverage'], 0).'%'"
+            :label="'Corte ≥ '.$minProbability.'%'"
+        >
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                @if ($this->stats['hitRate'] !== null)
+                    {{ $this->stats['wins'] }} acertos em {{ $this->stats['entries'] }} previsões selecionadas.
+                @else
+                    {{ $this->stats['entries'] }} jogos futuros selecionados.
+                @endif
+            </p>
+        </x-oracly.stat-tile>
+        <div class="grid grid-cols-2 gap-3">
+            <x-oracly.stat-tile :value="$this->stats['sampleSize']" label="Amostra elegível" />
+            <x-oracly.stat-tile :value="$this->stats['entries']" label="Entradas" />
+            @if ($this->stats['wins'] !== null)
+                <x-oracly.stat-tile :value="$this->stats['wins']" label="Vitórias" />
+            @endif
+            <x-oracly.stat-tile :value="number_format($this->stats['coverage'], 0).'%'" label="Cobertura" />
+        </div>
+    </div>
+
+    <div>
+        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Linha de confiança</h2>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+            @foreach ($this->confidenceLine as $threshold => $data)
+                <x-oracly.stat-tile
+                    :active="$minProbability === $threshold"
+                    :value="$data['hitRate'] !== null ? number_format($data['hitRate'], 0).'%' : number_format($data['coverage'], 0).'%'"
+                    :label="'Probabilidade ≥ '.$threshold.'%'"
+                />
+            @endforeach
+        </div>
+    </div>
+
+    @if ($mode === 'history' && count($this->marketSummary))
+        <div>
+            <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Acerto por mercado neste corte</h2>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+                @foreach ($this->marketSummary as $data)
+                    <x-oracly.stat-tile
+                        :active="$data['active']"
+                        :value="$data['hitRate'] !== null ? number_format($data['hitRate'], 0).'%' : '—'"
+                        :label="$data['label']"
+                    />
+                @endforeach
+            </div>
+        </div>
+    @endif
+
+    <div class="overflow-x-auto">
+        <table class="oracly-table">
+            <thead>
+                <tr>
+                    <th>Horário</th>
+                    <th>Jogo</th>
+                    <th>Prob.</th>
+                    @if ($market === 'btts')
+                        <th>BTTS base</th>
+                    @endif
+                    @if ($mode === 'history')
+                        <th>Resultado</th>
+                        <th>Acerto</th>
+                    @endif
+                </tr>
+            </thead>
+            <tbody>
+                @forelse ($this->rows as $row)
+                    <tr>
+                        <td class="whitespace-nowrap">{{ $row['kickoffAt'] ? \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('d/m H:i') : '—' }}</td>
+                        <td>
+                            <div class="font-medium text-gray-950 dark:text-white">{{ $row['homeTeam'] }} x {{ $row['awayTeam'] }}</div>
+                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $row['country'] }} · {{ $row['competition'] }}</div>
+                        </td>
+                        <td class="font-semibold">{{ number_format($row['probability'], 0) }}%</td>
+                        @if ($market === 'btts')
+                            <td>{{ ($row['bttsPercentage'] ?? null) !== null ? number_format($row['bttsPercentage'], 0).'%' : '—' }}</td>
+                        @endif
                         @if ($mode === 'history')
-                            <th class="py-2 pr-3">Resultado</th>
-                            <th class="py-2 pr-3">Hit</th>
+                            <td>
+                                @if ($market === 'btts' && ($row['homeScore'] ?? null) !== null && ($row['awayScore'] ?? null) !== null)
+                                    FT {{ $row['homeScore'] }}-{{ $row['awayScore'] }}
+                                @else
+                                    HT {{ $row['halftimeGoals'] }} · FT {{ $row['finalGoals'] }}
+                                @endif
+                            </td>
+                            <td><x-oracly.result-badge :hit="$row['hit']" /></td>
                         @endif
                     </tr>
-                </thead>
-                <tbody>
-                    @forelse ($rows as $row)
-                        <tr class="border-b border-gray-100 dark:border-gray-800">
-                            <td class="py-2 pr-3 whitespace-nowrap">{{ $row['kickoffAt'] ? \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('d/m H:i') : '—' }}</td>
-                            <td class="py-2 pr-3">
-                                <div>{{ $row['homeTeam'] }} x {{ $row['awayTeam'] }}</div>
-                                <div class="text-xs text-gray-500">{{ $row['country'] }} · {{ $row['competition'] }}</div>
-                            </td>
-                            <td class="py-2 pr-3 font-semibold">{{ number_format($row['probability'], 0) }}%</td>
-                            @if ($mode === 'history')
-                                <td class="py-2 pr-3">HT {{ $row['halftimeGoals'] }} · FT {{ $row['finalGoals'] }}</td>
-                                <td class="py-2 pr-3">{{ $row['hit'] ? '✓' : '✗' }}</td>
-                            @endif
-                        </tr>
-                    @empty
-                        <tr><td colspan="5" class="py-6 text-gray-500">Sem resultados.</td></tr>
-                    @endforelse
-                </tbody>
-            </table>
-        </div>
-    </x-filament::section>
+                @empty
+                    <tr><td colspan="5" class="py-6 text-gray-500 dark:text-gray-400">Sem resultados.</td></tr>
+                @endforelse
+            </tbody>
+        </table>
+    </div>
 </x-filament-panels::page>

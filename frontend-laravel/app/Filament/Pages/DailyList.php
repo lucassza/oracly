@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Oracly\Services\DailyPickService;
+use App\Oracly\Services\FavoritesService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\OraclyCache;
 use BackedEnum;
@@ -35,6 +36,27 @@ class DailyList extends Page
     /** @var list<array<string, mixed>> */
     public array $rows = [];
 
+    /** @var list<string> */
+    public array $favoriteLeagues = [];
+
+    public int $favoriteFilter = 0;
+
+    public int $minProbability = 0;
+
+    /** @var array<int, string> */
+    public const FAVORITE_OPTIONS = [
+        0 => 'Todas as ligas',
+        1 => 'Somente favoritos',
+    ];
+
+    /** @var array<int, string> */
+    public const PROBABILITY_OPTIONS = [
+        0 => 'Todas',
+        60 => '≥ 60%',
+        70 => '≥ 70%',
+        80 => '≥ 80%',
+    ];
+
     public function mount(): void
     {
         $this->date = BrasiliaDate::today();
@@ -46,11 +68,35 @@ class DailyList extends Page
         OraclyCache::forgetPrefix();
         try {
             $this->rows = app(DailyPickService::class)->forDate($this->date);
+            $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
             $this->pageNumber = 1;
         } catch (\Throwable $e) {
             $this->rows = [];
+            $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao ler Postgres Oracly')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function toggleLeague(string $country, string $competition): void
+    {
+        try {
+            app(FavoritesService::class)->toggleLeague($country, $competition);
+            $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
+        } catch (\Throwable $e) {
+            Notification::make()->title('Erro ao salvar favorito')->body($e->getMessage())->danger()->send();
+        }
+    }
+
+    public function setFavoriteFilter(int $value): void
+    {
+        $this->favoriteFilter = $value;
+        $this->pageNumber = 1;
+    }
+
+    public function setMinProbability(int $value): void
+    {
+        $this->minProbability = $value;
+        $this->pageNumber = 1;
     }
 
     public function previousDay(): void
@@ -70,12 +116,40 @@ class DailyList extends Page
     {
         $offset = ($this->pageNumber - 1) * $this->pageSize;
 
-        return array_slice($this->rows, $offset, $this->pageSize);
+        return array_slice($this->filteredRows, $offset, $this->pageSize);
+    }
+
+    /** @return list<array<string, mixed>> */
+    public function getFilteredRowsProperty(): array
+    {
+        return array_values(array_filter($this->rows, function (array $row): bool {
+            if ($this->favoriteFilter === 1) {
+                $key = ($row['country'] ?? '').'::'.($row['competition'] ?? '');
+                if (! in_array($key, $this->favoriteLeagues, true)) {
+                    return false;
+                }
+            }
+
+            if ($this->minProbability > 0 && $this->maxProbability($row) < $this->minProbability) {
+                return false;
+            }
+
+            return true;
+        }));
     }
 
     public function getTotalPagesProperty(): int
     {
-        return max(1, (int) ceil(count($this->rows) / $this->pageSize));
+        return max(1, (int) ceil(count($this->filteredRows) / $this->pageSize));
+    }
+
+    /** @param array<string, mixed> $row */
+    private function maxProbability(array $row): float
+    {
+        return max(array_map(
+            fn (string $market): float => (float) ($row[$market] ?? 0),
+            ['over05', 'over15', 'over25', 'under35'],
+        ));
     }
 
     protected function getHeaderActions(): array
