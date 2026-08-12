@@ -46,6 +46,7 @@
                     <th>{{ $mode === 'history' ? 'Data' : 'Horário' }}</th>
                     <th>Jogo</th>
                     <th>Liga</th>
+                    <th>Odds 1X2</th>
                     <th>O1.5</th>
                     <th>O2.5</th>
                     <th>BTTS</th>
@@ -63,6 +64,15 @@
                         <td class="whitespace-nowrap">{{ $row['kickoffAt'] ? \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format($mode === 'history' ? 'd/m H:i' : 'H:i') : '—' }}</td>
                         <td class="font-medium text-gray-950 dark:text-white">{{ $row['homeTeam'] }} x {{ $row['awayTeam'] }}</td>
                         <td class="text-gray-500 dark:text-gray-400">{{ $row['country'] }} · {{ $row['competition'] }}</td>
+                        <td class="whitespace-nowrap text-xs" title="{{ $row['oddsBookmaker'] ?? '' }}">
+                            @if ($row['homeOdd'] !== null || $row['drawOdd'] !== null || $row['awayOdd'] !== null)
+                                {{ $row['homeOdd'] !== null ? number_format($row['homeOdd'], 2) : '—' }} /
+                                {{ $row['drawOdd'] !== null ? number_format($row['drawOdd'], 2) : '—' }} /
+                                {{ $row['awayOdd'] !== null ? number_format($row['awayOdd'], 2) : '—' }}
+                            @else
+                                —
+                            @endif
+                        </td>
                         <td class="font-semibold">{{ number_format($row['probability'], 0) }}%</td>
                         <td>{{ ($row['over25Probability'] ?? null) !== null ? number_format($row['over25Probability'], 0).'%' : '—' }}</td>
                         <td>{{ ($row['bttsProbability'] ?? null) !== null ? number_format($row['bttsProbability'], 0).'%' : '—' }}</td>
@@ -74,7 +84,7 @@
                         @endif
                     </tr>
                 @empty
-                    <tr><td colspan="{{ $mode === 'history' ? 10 : 7 }}" class="py-6 text-gray-500 dark:text-gray-400">Sem jogos para este corte.</td></tr>
+                    <tr><td colspan="{{ $mode === 'history' ? 11 : 8 }}" class="py-6 text-gray-500 dark:text-gray-400">Sem jogos para este corte.</td></tr>
                 @endforelse
             </tbody>
         </table>

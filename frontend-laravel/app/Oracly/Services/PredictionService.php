@@ -51,6 +51,7 @@ final class PredictionService
                 'competition' => $match['competition'] ?? null,
                 'homeTeam' => data_get($match, 'homeTeam.name', ''),
                 'awayTeam' => data_get($match, 'awayTeam.name', ''),
+                ...$this->oddsFields($match['odds'] ?? null),
                 'probability' => $probability,
                 'modelOdd' => X7::odd($match, $keys['odd']),
                 'combinedGoalsAverage' => data_get($match, 'statistics.combinedGoalsAverage'),
@@ -164,6 +165,7 @@ final class PredictionService
                 'competition' => $settled['competition'] ?? null,
                 'homeTeam' => data_get($settled, 'homeTeam.name', ''),
                 'awayTeam' => data_get($settled, 'awayTeam.name', ''),
+                ...$this->oddsFields($predicted['odds'] ?? null),
                 'probability' => $probability,
                 'halftimeGoals' => $htGoals,
                 'halftimeHomeScore' => $halftimeHomeScore,
@@ -183,5 +185,16 @@ final class PredictionService
         usort($rows, fn ($a, $b) => strcmp($b['kickoffAt'] ?? '', $a['kickoffAt'] ?? ''));
 
         return $rows;
+    }
+
+    /** @return array{homeOdd: ?float, drawOdd: ?float, awayOdd: ?float, oddsBookmaker: ?string} */
+    private function oddsFields(mixed $odds): array
+    {
+        return [
+            'homeOdd' => is_array($odds) && is_numeric($odds['home'] ?? null) ? (float) $odds['home'] : null,
+            'drawOdd' => is_array($odds) && is_numeric($odds['draw'] ?? null) ? (float) $odds['draw'] : null,
+            'awayOdd' => is_array($odds) && is_numeric($odds['away'] ?? null) ? (float) $odds['away'] : null,
+            'oddsBookmaker' => is_array($odds) && is_string($odds['bookmaker'] ?? null) ? $odds['bookmaker'] : null,
+        ];
     }
 }

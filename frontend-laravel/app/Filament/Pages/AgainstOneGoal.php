@@ -192,10 +192,10 @@ class AgainstOneGoal extends Page
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
         return HistoryCsv::download('historico-contra-0x0-1x0-0x1.csv', [
-            'Data', 'Casa', 'Visitante', 'Liga', 'O1.5', 'O2.5', 'BTTS', 'Média gols', 'HT', 'FT', 'Acerto',
+            'Data', 'Casa', 'Visitante', 'Liga', 'Odd casa', 'Odd empate', 'Odd visitante', 'O1.5', 'O2.5', 'BTTS', 'Média gols', 'HT', 'FT', 'Acerto',
         ], array_map(fn (array $row) => [
             $row['kickoffAt'] ?? '', $row['homeTeam'] ?? '', $row['awayTeam'] ?? '',
-            ($row['country'] ?? '').' · '.($row['competition'] ?? ''), $row['probability'] ?? '',
+            ($row['country'] ?? '').' · '.($row['competition'] ?? ''), $row['homeOdd'] ?? '', $row['drawOdd'] ?? '', $row['awayOdd'] ?? '', $row['probability'] ?? '',
             $row['over25Probability'] ?? '', $row['bttsProbability'] ?? '', $row['combinedGoalsAverage'] ?? '',
             ($row['halftimeHomeScore'] ?? '—').'-'.($row['halftimeAwayScore'] ?? '—'),
             ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), ! empty($row['againstHit']) ? 'Green' : 'Red',
