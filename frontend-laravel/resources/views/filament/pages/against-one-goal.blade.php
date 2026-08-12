@@ -1,9 +1,9 @@
 <x-filament-panels::page>
     <x-oracly.page-header eyebrow="Estratégia FT · somente ligas principais">
-        Contra os placares 0x0, 1x0 e 0x1.
+        Escolha única: contra 0x1 ou 1x0.
 
         <x-slot name="description">
-            A entrada é green quando o placar final não é 0x0, 1x0 nem 0x1. O sinal principal é a previsão Over 1.5 FT.
+            Para cada jogo, escolhemos o menos provável entre 0x1 e 1x0 pelas médias de gols pré-jogo. Green quando esse placar não acontece; red quando acontece.
         </x-slot>
     </x-oracly.page-header>
 
@@ -13,7 +13,7 @@
 
     @if ($this->bestCutoff)
         <x-oracly.stat-tile hero accent :value="number_format($this->bestCutoff['hitRate'], 0).'%'" :label="'Melhor corte: O1.5 ≥ '.$this->bestCutoff['threshold'].'%'">
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $this->bestCutoff['wins'] }} greens em {{ $this->bestCutoff['entries'] }} jogos.</p>
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $this->bestCutoff['wins'] }} greens · {{ $this->bestCutoff['reds'] }} reds em {{ $this->bestCutoff['entries'] }} jogos.</p>
         </x-oracly.stat-tile>
     @endif
 
@@ -22,7 +22,7 @@
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
             @foreach ($this->cutoffStats as $threshold => $stat)
                 <x-oracly.stat-tile :active="$minProbability === $threshold" :value="$stat['hitRate'] !== null ? number_format($stat['hitRate'], 0).'%' : '—'" :label="'O1.5 ≥ '.$threshold.'%'">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }} / {{ $stat['entries'] }} jogos</p>
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }}G · {{ $stat['reds'] }}R / {{ $stat['entries'] }}</p>
                 </x-oracly.stat-tile>
             @endforeach
         </div>
@@ -51,10 +51,11 @@
                     <th>O2.5</th>
                     <th>BTTS</th>
                     <th>Média gols</th>
+                    <th>Melhor escolha</th>
                     @if ($mode === 'history')
                         <th>HT</th>
                         <th>FT</th>
-                        <th>Acerto</th>
+                        <th>Resultado</th>
                     @endif
                 </tr>
             </thead>
@@ -77,14 +78,28 @@
                         <td>{{ ($row['over25Probability'] ?? null) !== null ? number_format($row['over25Probability'], 0).'%' : '—' }}</td>
                         <td>{{ ($row['bttsProbability'] ?? null) !== null ? number_format($row['bttsProbability'], 0).'%' : '—' }}</td>
                         <td>{{ ($row['combinedGoalsAverage'] ?? null) !== null ? number_format($row['combinedGoalsAverage'], 1) : '—' }}</td>
+                        <td class="font-semibold">
+                            @if ($row['bestAgainstScore'] ?? null)
+                                Contra {{ str_replace('-', ' x ', $row['bestAgainstScore']) }}
+                                <span class="font-normal text-xs text-gray-500">({{ number_format(($row['bestAgainstProbability'] ?? 0) * 100, 1) }}%)</span>
+                            @else
+                                —
+                            @endif
+                        </td>
                         @if ($mode === 'history')
                             <td>{{ $row['halftimeHomeScore'] !== null && $row['halftimeAwayScore'] !== null ? $row['halftimeHomeScore'].'-'.$row['halftimeAwayScore'] : '—' }}</td>
                             <td>{{ $row['homeScore'] }}-{{ $row['awayScore'] }}</td>
-                            <td><x-oracly.result-badge :hit="$row['againstHit']" /></td>
+                            <td>
+                                @if ($row['againstHit'] === null)
+                                    —
+                                @else
+                                    <x-oracly.result-badge :hit="$row['againstHit']" />
+                                @endif
+                            </td>
                         @endif
                     </tr>
                 @empty
-                    <tr><td colspan="{{ $mode === 'history' ? 11 : 8 }}" class="py-6 text-gray-500 dark:text-gray-400">Sem jogos para este corte.</td></tr>
+                    <tr><td colspan="{{ $mode === 'history' ? 12 : 9 }}" class="py-6 text-gray-500 dark:text-gray-400">Sem jogos para este corte.</td></tr>
                 @endforelse
             </tbody>
         </table>

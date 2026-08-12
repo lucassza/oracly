@@ -18,9 +18,9 @@ class AgainstOneGoal extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
 
-    protected static ?string $navigationLabel = 'Contra 0x0 / 1x0 / 0x1';
+    protected static ?string $navigationLabel = 'Contra 0x1 ou 1x0';
 
-    protected static ?string $title = 'Contra os placares 0x0, 1x0 e 0x1';
+    protected static ?string $title = 'Contra 0x1 ou 1x0';
 
     protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
 
@@ -94,7 +94,7 @@ class AgainstOneGoal extends Page
             $this->rows = [];
             $this->historyRows = [];
             $this->favoriteLeagues = [];
-            Notification::make()->title('Erro ao ler estratégia contra 0x0/1x0/0x1')->body($e->getMessage())->danger()->send();
+            Notification::make()->title('Erro ao ler estratégia contra 0x1/1x0')->body($e->getMessage())->danger()->send();
         }
     }
 
@@ -144,15 +144,18 @@ class AgainstOneGoal extends Page
             && ($this->favoriteFilter === 0 || in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true))));
     }
 
-    /** @return array<int, array{entries: int, wins: int, hitRate: ?float}> */
+    /** @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float}> */
     public function getCutoffStatsProperty(): array
     {
         $stats = [];
         foreach (array_keys(self::THRESHOLDS) as $threshold) {
-            $entries = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $threshold && $this->matchesFavorite($row));
+            $entries = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $threshold
+                && $row['bestAgainstScore'] !== null
+                && $this->matchesFavorite($row));
             $count = count($entries);
             $wins = count(array_filter($entries, fn (array $row) => ! empty($row['againstHit'])));
-            $stats[$threshold] = ['entries' => $count, 'wins' => $wins, 'hitRate' => $count > 0 ? ($wins / $count) * 100 : null];
+            $reds = $count - $wins;
+            $stats[$threshold] = ['entries' => $count, 'wins' => $wins, 'reds' => $reds, 'hitRate' => $count > 0 ? ($wins / $count) * 100 : null];
         }
 
         return $stats;
@@ -191,14 +194,15 @@ class AgainstOneGoal extends Page
 
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        return HistoryCsv::download('historico-contra-0x0-1x0-0x1.csv', [
-            'Data', 'Casa', 'Visitante', 'Liga', 'Odd casa', 'Odd empate', 'Odd visitante', 'O1.5', 'O2.5', 'BTTS', 'Média gols', 'HT', 'FT', 'Acerto',
+        return HistoryCsv::download('historico-contra-0x1-ou-1x0.csv', [
+            'Data', 'Casa', 'Visitante', 'Liga', 'Odd casa', 'Odd empate', 'Odd visitante', 'O1.5', 'O2.5', 'BTTS', 'Média gols', 'Melhor escolha', 'HT', 'FT', 'Resultado',
         ], array_map(fn (array $row) => [
             $row['kickoffAt'] ?? '', $row['homeTeam'] ?? '', $row['awayTeam'] ?? '',
             ($row['country'] ?? '').' · '.($row['competition'] ?? ''), $row['homeOdd'] ?? '', $row['drawOdd'] ?? '', $row['awayOdd'] ?? '', $row['probability'] ?? '',
             $row['over25Probability'] ?? '', $row['bttsProbability'] ?? '', $row['combinedGoalsAverage'] ?? '',
+            $row['bestAgainstScore'] ?? '—',
             ($row['halftimeHomeScore'] ?? '—').'-'.($row['halftimeAwayScore'] ?? '—'),
-            ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), ! empty($row['againstHit']) ? 'Green' : 'Red',
+            ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), $row['againstHit'] === null ? '—' : (! empty($row['againstHit']) ? 'Green' : 'Red'),
         ], $this->filteredRows));
     }
 
@@ -208,11 +212,38 @@ class AgainstOneGoal extends Page
     private function withAgainstResult(array $rows): array
     {
         return array_map(function (array $row): array {
-            $score = $this->scoreKey($row);
-            $row['againstHit'] = $score !== null && ! in_array($score, ['0-0', '1-0', '0-1'], true);
+            $choice = $this->bestAgainstChoice($row);
+            $row['bestAgainstScore'] = $choice['score'] ?? null;
+            $row['bestAgainstProbability'] = $choice['probability'] ?? null;
+            $actual = $this->scoreKey($row);
+            $row['againstHit'] = $choice !== null && $actual !== null ? $actual !== $choice['score'] : null;
 
             return $row;
         }, $rows);
+    }
+
+    /** @return array{score: string, probability: float}|null */
+    private function bestAgainstChoice(array $row): ?array
+    {
+        $homeAverage = is_numeric($row['homeGoalsAverage'] ?? null) ? (float) $row['homeGoalsAverage'] : null;
+        $awayAverage = is_numeric($row['awayGoalsAverage'] ?? null) ? (float) $row['awayGoalsAverage'] : null;
+        if ($homeAverage === null || $awayAverage === null) {
+            return null;
+        }
+
+        $homeAverage = max(0.08, $homeAverage);
+        $awayAverage = max(0.08, $awayAverage);
+        $zeroOne = $this->poisson($homeAverage, 0) * $this->poisson($awayAverage, 1);
+        $oneZero = $this->poisson($homeAverage, 1) * $this->poisson($awayAverage, 0);
+
+        return $zeroOne <= $oneZero
+            ? ['score' => '0-1', 'probability' => $zeroOne]
+            : ['score' => '1-0', 'probability' => $oneZero];
+    }
+
+    private function poisson(float $average, int $goals): float
+    {
+        return exp(-$average) * ($average ** $goals);
     }
 
     /** @param array<string, mixed> $row */
