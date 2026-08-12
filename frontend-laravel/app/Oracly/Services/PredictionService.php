@@ -56,6 +56,8 @@ final class PredictionService
                 'combinedGoalsAverage' => data_get($match, 'statistics.combinedGoalsAverage'),
                 'over05Percentage' => data_get($match, 'statistics.over05Percentage'),
                 'bttsPercentage' => data_get($match, 'statistics.bttsPercentage'),
+                'over25Probability' => X7::pred($match, 'over_25_ft_over'),
+                'bttsProbability' => X7::pred($match, 'btts_sim'),
                 'companionProbability' => X7::pred($match, 'over_05_ft_over'),
             ];
         }
@@ -172,6 +174,9 @@ final class PredictionService
                 'hit' => $hit,
                 'companionProbability' => X7::pred($predicted, 'over_05_ft_over'),
                 'bttsPercentage' => data_get($predicted, 'statistics.bttsPercentage'),
+                'over25Probability' => X7::pred($predicted, 'over_25_ft_over'),
+                'bttsProbability' => X7::pred($predicted, 'btts_sim'),
+                'combinedGoalsAverage' => data_get($predicted, 'statistics.combinedGoalsAverage'),
             ];
         }
 

@@ -2,8 +2,8 @@
 
 namespace App\Filament\Pages;
 
-use App\Oracly\Services\PredictionService;
 use App\Oracly\Services\FavoritesService;
+use App\Oracly\Services\PredictionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\OraclyCache;
 use App\Oracly\Support\HistoryCsv;
@@ -14,29 +14,29 @@ use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 use UnitEnum;
 
-class DailyOver15 extends Page
+class AgainstOneGoal extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
 
-    protected static ?string $navigationLabel = 'Over 1.5 FT';
+    protected static ?string $navigationLabel = 'Contra 0x0 / 1x0 / 0x1';
 
-    protected static ?string $title = 'Over 1.5 FT';
+    protected static ?string $title = 'Contra os placares 0x0, 1x0 e 0x1';
 
     protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 8;
 
-    protected string $view = 'filament.pages.daily-over15';
+    protected string $view = 'filament.pages.against-one-goal';
 
     public string $mode = 'upcoming';
 
     public string $date = '';
 
-    public int $minProbability = 60;
-
-    public string $scoreFilter = 'all';
+    public int $minProbability = 75;
 
     public int $favoriteFilter = 0;
+
+    public string $scoreFilter = 'all';
 
     /** @var list<array<string, mixed>> */
     public array $rows = [];
@@ -55,11 +55,12 @@ class DailyOver15 extends Page
 
     /** @var array<int, string> */
     public const THRESHOLDS = [
-        55 => '≥ 55%',
         60 => '≥ 60%',
         65 => '≥ 65%',
         70 => '≥ 70%',
         75 => '≥ 75%',
+        80 => '≥ 80%',
+        85 => '≥ 85%',
     ];
 
     /** @var array<int, string> */
@@ -81,20 +82,19 @@ class DailyOver15 extends Page
         OraclyCache::forgetPrefix();
         try {
             $service = app(PredictionService::class);
-            $this->historyRows = $service->history('over_15_ft', 0);
+            $this->historyRows = $this->withAgainstResult($service->history('over_15_ft', 0));
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
             $this->rows = $this->mode === 'history'
                 ? $this->historyRows
-                : array_values(array_filter(
+                : $this->withAgainstResult(array_values(array_filter(
                     $service->upcoming('over_15_ft', now()->toIso8601String(), 0),
-                    fn (array $row) => ! empty($row['kickoffAt'])
-                        && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date,
-                ));
+                    fn (array $row) => ! empty($row['kickoffAt']) && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date,
+                )));
         } catch (\Throwable $e) {
             $this->rows = [];
             $this->historyRows = [];
             $this->favoriteLeagues = [];
-            Notification::make()->title('Erro ao ler previsões Over 1.5')->body($e->getMessage())->danger()->send();
+            Notification::make()->title('Erro ao ler estratégia contra 0x0/1x0/0x1')->body($e->getMessage())->danger()->send();
         }
     }
 
@@ -139,40 +139,9 @@ class DailyOver15 extends Page
     /** @return list<array<string, mixed>> */
     public function getFilteredRowsProperty(): array
     {
-        return array_values(array_filter(
-            $this->rows,
-            fn (array $row) => (float) ($row['probability'] ?? 0) >= $this->minProbability
-                && ($this->mode !== 'history' || $this->scoreFilter === 'all' || $this->scoreKey($row) === $this->scoreFilter)
-                && ($this->favoriteFilter === 0 || in_array(
-                    ($row['country'] ?? '').'::'.($row['competition'] ?? ''),
-                    $this->favoriteLeagues,
-                    true,
-                )),
-        ));
-    }
-
-    /** @return array<string, string> */
-    public function getScoreOptionsProperty(): array
-    {
-        $options = ['all' => 'Todos os placares'];
-        foreach ($this->historyRows as $row) {
-            $key = $this->scoreKey($row);
-            if ($key !== null) {
-                $options[$key] = str_replace('-', ' x ', $key);
-            }
-        }
-
-        return $options;
-    }
-
-    /** @param array<string, mixed> $row */
-    private function scoreKey(array $row): ?string
-    {
-        if (! is_numeric($row['homeScore'] ?? null) || ! is_numeric($row['awayScore'] ?? null)) {
-            return null;
-        }
-
-        return sprintf('%d-%d', (int) $row['homeScore'], (int) $row['awayScore']);
+        return array_values(array_filter($this->rows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $this->minProbability
+            && ($this->mode !== 'history' || $this->scoreFilter === 'all' || $this->scoreKey($row) === $this->scoreFilter)
+            && ($this->favoriteFilter === 0 || in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true))));
     }
 
     /** @return array<int, array{entries: int, wins: int, hitRate: ?float}> */
@@ -180,14 +149,10 @@ class DailyOver15 extends Page
     {
         $stats = [];
         foreach (array_keys(self::THRESHOLDS) as $threshold) {
-            $entries = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $threshold);
+            $entries = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $threshold && $this->matchesFavorite($row));
             $count = count($entries);
-            $wins = count(array_filter($entries, fn (array $row) => ! empty($row['hit'])));
-            $stats[$threshold] = [
-                'entries' => $count,
-                'wins' => $wins,
-                'hitRate' => $count > 0 ? ($wins / $count) * 100 : null,
-            ];
+            $wins = count(array_filter($entries, fn (array $row) => ! empty($row['againstHit'])));
+            $stats[$threshold] = ['entries' => $count, 'wins' => $wins, 'hitRate' => $count > 0 ? ($wins / $count) * 100 : null];
         }
 
         return $stats;
@@ -210,16 +175,60 @@ class DailyOver15 extends Page
         return ['threshold' => (int) $threshold, ...$eligible[$threshold]];
     }
 
+    /** @return array<string, string> */
+    public function getScoreOptionsProperty(): array
+    {
+        $options = ['all' => 'Todos os placares'];
+        foreach ($this->historyRows as $row) {
+            $key = $this->scoreKey($row);
+            if ($key !== null) {
+                $options[$key] = str_replace('-', ' x ', $key);
+            }
+        }
+
+        return $options;
+    }
+
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        return HistoryCsv::download('historico-over-15-ft.csv', [
-            'Data', 'Casa', 'Visitante', 'Liga', 'O1.5', 'HT', 'FT', 'Acerto',
+        return HistoryCsv::download('historico-contra-0x0-1x0-0x1.csv', [
+            'Data', 'Casa', 'Visitante', 'Liga', 'O1.5', 'O2.5', 'BTTS', 'Média gols', 'HT', 'FT', 'Acerto',
         ], array_map(fn (array $row) => [
             $row['kickoffAt'] ?? '', $row['homeTeam'] ?? '', $row['awayTeam'] ?? '',
             ($row['country'] ?? '').' · '.($row['competition'] ?? ''), $row['probability'] ?? '',
+            $row['over25Probability'] ?? '', $row['bttsProbability'] ?? '', $row['combinedGoalsAverage'] ?? '',
             ($row['halftimeHomeScore'] ?? '—').'-'.($row['halftimeAwayScore'] ?? '—'),
-            ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), ! empty($row['hit']) ? 'Green' : 'Red',
+            ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), ! empty($row['againstHit']) ? 'Green' : 'Red',
         ], $this->filteredRows));
+    }
+
+    /** @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function withAgainstResult(array $rows): array
+    {
+        return array_map(function (array $row): array {
+            $score = $this->scoreKey($row);
+            $row['againstHit'] = $score !== null && ! in_array($score, ['0-0', '1-0', '0-1'], true);
+
+            return $row;
+        }, $rows);
+    }
+
+    /** @param array<string, mixed> $row */
+    private function scoreKey(array $row): ?string
+    {
+        if (! is_numeric($row['homeScore'] ?? null) || ! is_numeric($row['awayScore'] ?? null)) {
+            return null;
+        }
+
+        return sprintf('%d-%d', (int) $row['homeScore'], (int) $row['awayScore']);
+    }
+
+    /** @param array<string, mixed> $row */
+    private function matchesFavorite(array $row): bool
+    {
+        return $this->favoriteFilter === 0 || in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true);
     }
 
     protected function getHeaderActions(): array

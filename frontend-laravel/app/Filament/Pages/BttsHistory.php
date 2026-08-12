@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Oracly\Services\PredictionService;
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Support\OraclyCache;
+use App\Oracly\Support\HistoryCsv;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -207,9 +208,22 @@ class BttsHistory extends Page
         return ['threshold' => (int) $threshold, ...$eligible[$threshold]];
     }
 
+    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return HistoryCsv::download('historico-btts.csv', [
+            'Data', 'Casa', 'Visitante', 'Liga', 'BTTS', 'HT', 'FT', 'Acerto',
+        ], array_map(fn (array $row) => [
+            $row['kickoffAt'] ?? '', $row['homeTeam'] ?? '', $row['awayTeam'] ?? '',
+            ($row['country'] ?? '').' · '.($row['competition'] ?? ''), $row['probability'] ?? '',
+            ($row['halftimeHomeScore'] ?? '—').'-'.($row['halftimeAwayScore'] ?? '—'),
+            ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), ! empty($row['hit']) ? 'Green' : 'Red',
+        ], $this->filteredRows));
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('exportCsv')->label('Exportar CSV')->action('exportCsv'),
             Action::make('reload')->label('Recarregar banco')->action('reload'),
         ];
     }

@@ -28,6 +28,17 @@
         @endforeach
     </div>
 
+    @if ($mode === 'history')
+        <div class="max-w-xs">
+            <label for="ht-score-filter" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Placar final</label>
+            <select id="ht-score-filter" wire:model.live="scoreFilter" class="oracly-select">
+                @foreach ($this->scoreOptions as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+    @endif
+
     <div class="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <x-oracly.stat-tile
             hero

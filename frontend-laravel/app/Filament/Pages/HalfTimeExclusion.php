@@ -5,6 +5,7 @@ namespace App\Filament\Pages;
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Services\HalfTimeExclusionService;
 use App\Oracly\Support\OraclyCache;
+use App\Oracly\Support\HistoryCsv;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -47,6 +48,8 @@ class HalfTimeExclusion extends Page
     public array $agreementFilters = [];
 
     public int $favoriteFilter = 0;
+
+    public string $scoreFilter = 'all';
 
     /** Unfiltered rows for the current mode, fetched once and filtered client-side per agreement tier. */
     public array $allRows = [];
@@ -119,10 +122,26 @@ class HalfTimeExclusion extends Page
     /** @return list<array<string, mixed>> */
     public function getRowsProperty(): array
     {
-        $rows = $this->filterByAgreement($this->filterByFavorite($this->allRows), $this->agreementFilters);
+        $rows = $this->filterByScore(
+            $this->filterByAgreement($this->filterByFavorite($this->allRows), $this->agreementFilters),
+        );
         usort($rows, fn (array $a, array $b) => strcmp($a['kickoffAt'] ?? '', $b['kickoffAt'] ?? ''));
 
         return $rows;
+    }
+
+    /** @return array<string, string> */
+    public function getScoreOptionsProperty(): array
+    {
+        $options = ['all' => 'Todos os placares'];
+        foreach ($this->allRows as $row) {
+            $key = $this->scoreKey($row);
+            if ($key !== null) {
+                $options[$key] = str_replace('-', ' x ', $key);
+            }
+        }
+
+        return $options;
     }
 
     /** @return list<array<string, mixed>> */
@@ -150,6 +169,28 @@ class HalfTimeExclusion extends Page
             $rows,
             fn (array $row) => in_array($row['agreementKey'] ?? null, $agreementFilters, true),
         ));
+    }
+
+    /** @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function filterByScore(array $rows): array
+    {
+        if ($this->mode !== 'history' || $this->scoreFilter === 'all') {
+            return $rows;
+        }
+
+        return array_values(array_filter($rows, fn (array $row) => $this->scoreKey($row) === $this->scoreFilter));
+    }
+
+    /** @param array<string, mixed> $row */
+    private function scoreKey(array $row): ?string
+    {
+        if (! is_numeric($row['homeScore'] ?? null) || ! is_numeric($row['awayScore'] ?? null)) {
+            return null;
+        }
+
+        return sprintf('%d-%d', (int) $row['homeScore'], (int) $row['awayScore']);
     }
 
     /** @return array{sampleSize: int, entries: int, wins: ?int, coverage: float, hitRate: ?float} */
@@ -190,9 +231,23 @@ class HalfTimeExclusion extends Page
         return $line;
     }
 
+    public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
+    {
+        return HistoryCsv::download('historico-exclusao-primeiro-tempo.csv', [
+            'Data', 'Casa', 'Visitante', 'Liga', 'HT', 'FT', 'Excluir', 'Acordo', 'Resultado HT', 'Acerto',
+        ], array_map(fn (array $row) => [
+            $row['kickoffAt'] ?? '', $row['homeTeam'] ?? '', $row['awayTeam'] ?? '',
+            ($row['country'] ?? '').' · '.($row['competition'] ?? ''),
+            ($row['halftimeHomeScore'] ?? '—').'-'.($row['halftimeAwayScore'] ?? '—'),
+            ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), $row['excluded'] ?? '',
+            $row['agreementKey'] ?? '', $row['actual'] ?? '', ! empty($row['hit']) ? 'Green' : 'Red',
+        ], $this->rows));
+    }
+
     protected function getHeaderActions(): array
     {
         return [
+            Action::make('exportCsv')->label('Exportar CSV')->visible(fn (): bool => $this->mode === 'history')->action('exportCsv'),
             Action::make('reload')->label('Recarregar banco')->action('reload'),
         ];
     }

@@ -8,6 +8,7 @@
     </x-oracly.page-header>
 
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
+    <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
 
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <x-oracly.stat-tile :value="$this->stats['entries']" :label="$mode === 'history' ? 'Jogos analisados' : 'Próximos jogos'" />
@@ -16,6 +17,17 @@
             <x-oracly.stat-tile :value="$this->stats['wins']" label="Acertos" />
         @endif
     </div>
+
+    @if ($mode === 'history')
+        <div class="max-w-xs">
+            <label for="final-score-filter" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Placar final</label>
+            <select id="final-score-filter" wire:model.live="scoreFilter" class="oracly-select">
+                @foreach ($this->scoreOptions as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+    @endif
 
     <div class="overflow-x-auto">
         <table class="oracly-table">
@@ -33,7 +45,7 @@
                 </tr>
             </thead>
             <tbody>
-                @forelse ($rows as $row)
+                @forelse ($this->filteredRows as $row)
                     <tr>
                         <td class="whitespace-nowrap">{{ $row['kickoffAt'] ? \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format($mode === 'history' ? 'd/m H:i' : 'H:i') : '—' }}</td>
                         <td class="font-medium text-gray-950 dark:text-white">{{ $row['homeTeam'] }} x {{ $row['awayTeam'] }}</td>

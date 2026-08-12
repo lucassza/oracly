@@ -19,6 +19,18 @@
     <x-oracly.chip-group :options="$marketOptions" :active="$market" method="setMarket" />
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
     <x-oracly.chip-group :options="$probabilityOptions" :active="$minProbability" method="setMinProbability" />
+    <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+
+    @if ($mode === 'history')
+        <div class="max-w-xs">
+            <label for="prediction-score-filter" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Placar final</label>
+            <select id="prediction-score-filter" wire:model.live="scoreFilter" class="oracly-select">
+                @foreach ($this->scoreOptions as $value => $label)
+                    <option value="{{ $value }}">{{ $label }}</option>
+                @endforeach
+            </select>
+        </div>
+    @endif
 
     <div class="grid gap-4 lg:grid-cols-[2fr_1fr]">
         <x-oracly.stat-tile
