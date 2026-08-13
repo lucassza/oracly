@@ -144,7 +144,7 @@ class AgainstOneGoal extends Page
             && ($this->favoriteFilter === 0 || in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true))));
     }
 
-    /** @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float}> */
+    /** @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float, htEntries: int, htWins: int, htReds: int, htHitRate: ?float}> */
     public function getCutoffStatsProperty(): array
     {
         $stats = [];
@@ -155,7 +155,19 @@ class AgainstOneGoal extends Page
             $count = count($entries);
             $wins = count(array_filter($entries, fn (array $row) => ! empty($row['againstHit'])));
             $reds = $count - $wins;
-            $stats[$threshold] = ['entries' => $count, 'wins' => $wins, 'reds' => $reds, 'hitRate' => $count > 0 ? ($wins / $count) * 100 : null];
+            $htEntries = array_filter($entries, fn (array $row) => ($row['againstHtHit'] ?? null) !== null);
+            $htCount = count($htEntries);
+            $htWins = count(array_filter($htEntries, fn (array $row) => ! empty($row['againstHtHit'])));
+            $stats[$threshold] = [
+                'entries' => $count,
+                'wins' => $wins,
+                'reds' => $reds,
+                'hitRate' => $count > 0 ? ($wins / $count) * 100 : null,
+                'htEntries' => $htCount,
+                'htWins' => $htWins,
+                'htReds' => $htCount - $htWins,
+                'htHitRate' => $htCount > 0 ? ($htWins / $htCount) * 100 : null,
+            ];
         }
 
         return $stats;
@@ -216,7 +228,9 @@ class AgainstOneGoal extends Page
             $row['bestAgainstScore'] = $choice['score'] ?? null;
             $row['bestAgainstProbability'] = $choice['probability'] ?? null;
             $actual = $this->scoreKey($row);
+            $actualHt = $this->halftimeScoreKey($row);
             $row['againstHit'] = $choice !== null && $actual !== null ? $actual !== $choice['score'] : null;
+            $row['againstHtHit'] = $choice !== null && $actualHt !== null ? $actualHt !== $choice['score'] : null;
 
             return $row;
         }, $rows);
@@ -254,6 +268,16 @@ class AgainstOneGoal extends Page
         }
 
         return sprintf('%d-%d', (int) $row['homeScore'], (int) $row['awayScore']);
+    }
+
+    /** @param array<string, mixed> $row */
+    private function halftimeScoreKey(array $row): ?string
+    {
+        if (! is_numeric($row['halftimeHomeScore'] ?? null) || ! is_numeric($row['halftimeAwayScore'] ?? null)) {
+            return null;
+        }
+
+        return sprintf('%d-%d', (int) $row['halftimeHomeScore'], (int) $row['halftimeAwayScore']);
     }
 
     /** @param array<string, mixed> $row */

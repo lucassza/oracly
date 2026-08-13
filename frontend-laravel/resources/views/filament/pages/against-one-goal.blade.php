@@ -1,9 +1,9 @@
 <x-filament-panels::page>
-    <x-oracly.page-header eyebrow="Estratégia FT · somente ligas principais">
+    <x-oracly.page-header eyebrow="Estratégia FT + HT · somente ligas principais">
         Escolha única: contra 0x1 ou 1x0.
 
         <x-slot name="description">
-            Para cada jogo, escolhemos o menos provável entre 0x1 e 1x0 pelas médias de gols pré-jogo. Green quando esse placar não acontece; red quando acontece.
+            Para cada jogo, escolhemos o menos provável entre 0x1 e 1x0 pelas médias de gols pré-jogo. Os cards medem separadamente o resultado no FT e no HT.
         </x-slot>
     </x-oracly.page-header>
 
@@ -23,6 +23,17 @@
             @foreach ($this->cutoffStats as $threshold => $stat)
                 <x-oracly.stat-tile :active="$minProbability === $threshold" :value="$stat['hitRate'] !== null ? number_format($stat['hitRate'], 0).'%' : '—'" :label="'O1.5 ≥ '.$threshold.'%'">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }}G · {{ $stat['reds'] }}R / {{ $stat['entries'] }}</p>
+                </x-oracly.stat-tile>
+            @endforeach
+        </div>
+    </div>
+
+    <div>
+        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade no HT por corte O1.5</h2>
+        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+            @foreach ($this->cutoffStats as $threshold => $stat)
+                <x-oracly.stat-tile :active="$minProbability === $threshold" :value="$stat['htHitRate'] !== null ? number_format($stat['htHitRate'], 0).'%' : '—'" :label="'O1.5 ≥ '.$threshold.'%'">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['htWins'] }}G · {{ $stat['htReds'] }}R / {{ $stat['htEntries'] }}</p>
                 </x-oracly.stat-tile>
             @endforeach
         </div>
@@ -90,10 +101,16 @@
                             <td>{{ $row['halftimeHomeScore'] !== null && $row['halftimeAwayScore'] !== null ? $row['halftimeHomeScore'].'-'.$row['halftimeAwayScore'] : '—' }}</td>
                             <td>{{ $row['homeScore'] }}-{{ $row['awayScore'] }}</td>
                             <td>
-                                @if ($row['againstHit'] === null)
+                                @if (($row['againstHit'] ?? null) === null && ($row['againstHtHit'] ?? null) === null)
                                     —
                                 @else
-                                    <x-oracly.result-badge :hit="$row['againstHit']" />
+                                    @if (($row['againstHit'] ?? null) !== null)
+                                        FT <x-oracly.result-badge :hit="$row['againstHit']" />
+                                    @endif
+                                    @if (($row['againstHtHit'] ?? null) !== null)
+                                        <br>
+                                        HT <x-oracly.result-badge :hit="$row['againstHtHit']" />
+                                    @endif
                                 @endif
                             </td>
                         @endif
