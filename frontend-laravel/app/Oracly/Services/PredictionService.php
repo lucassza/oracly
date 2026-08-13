@@ -62,6 +62,7 @@ final class PredictionService
                 'over25Probability' => X7::pred($match, 'over_25_ft_over'),
                 'bttsProbability' => X7::pred($match, 'btts_sim'),
                 'companionProbability' => X7::pred($match, 'over_05_ft_over'),
+                'signalScore' => $this->over15SignalScore($match),
             ];
         }
 
@@ -183,6 +184,7 @@ final class PredictionService
                 'over25Probability' => X7::pred($predicted, 'over_25_ft_over'),
                 'bttsProbability' => X7::pred($predicted, 'btts_sim'),
                 'combinedGoalsAverage' => data_get($predicted, 'statistics.combinedGoalsAverage'),
+                'signalScore' => $this->over15SignalScore($predicted),
             ];
         }
 
@@ -200,5 +202,15 @@ final class PredictionService
             'awayOdd' => is_array($odds) && is_numeric($odds['away'] ?? null) ? (float) $odds['away'] : null,
             'oddsBookmaker' => is_array($odds) && is_string($odds['bookmaker'] ?? null) ? $odds['bookmaker'] : null,
         ];
+    }
+
+    private function over15SignalScore(array $match): int
+    {
+        return count(array_filter([
+            (float) (X7::pred($match, 'over_25_ft_over') ?? 0) >= 70,
+            (float) (X7::pred($match, 'btts_sim') ?? 0) >= 65,
+            (float) (data_get($match, 'statistics.combinedGoalsAverage') ?? 0) >= 3.8,
+            (float) (data_get($match, 'statistics.over05Percentage') ?? 0) >= 90,
+        ]));
     }
 }

@@ -1,10 +1,10 @@
 <x-filament-panels::page>
-    <x-oracly.page-header eyebrow="Over 1.5 FT · somente ligas principais">
-        Over 1.5 gols no jogo.
+    <x-oracly.page-header eyebrow="Sinais validados · somente ligas principais">
+        Melhores entradas Over 1.5 FT.
 
         <x-slot name="description">
             @if ($mode === 'upcoming')
-                Jogos de {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }} com previsão pré-jogo para pelo menos dois gols.
+                Jogos de {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }} com pelo menos 2 dos 4 sinais validados.
             @else
                 Histórico consolidado com a última previsão antes do início de cada jogo.
             @endif
@@ -14,23 +14,23 @@
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
 
     @if ($this->bestCutoff)
-        <x-oracly.stat-tile hero accent :value="number_format($this->bestCutoff['hitRate'], 0).'%'" :label="'Melhor corte: ≥ '.$this->bestCutoff['threshold'].'%'">
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $this->bestCutoff['wins'] }} acertos em {{ $this->bestCutoff['entries'] }} jogos.</p>
+        <x-oracly.stat-tile hero accent :value="number_format($this->bestCutoff['hitRate'], 0).'%'" :label="'Melhor corte: ≥ '.$this->bestCutoff['threshold'].'/4 sinais'">
+            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $this->bestCutoff['wins'] }} greens · {{ $this->bestCutoff['reds'] }} reds em {{ $this->bestCutoff['entries'] }} jogos.</p>
         </x-oracly.stat-tile>
     @endif
 
     <div>
-        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por corte</h2>
+        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por força do sinal</h2>
         <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
             @foreach ($this->cutoffStats as $threshold => $stat)
-                <x-oracly.stat-tile :active="$minProbability === $threshold" :value="$stat['hitRate'] !== null ? number_format($stat['hitRate'], 0).'%' : '—'" :label="'O1.5 ≥ '.$threshold.'%'">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }} / {{ $stat['entries'] }} jogos</p>
+                <x-oracly.stat-tile :active="$minSignalScore === $threshold" :value="$stat['hitRate'] !== null ? number_format($stat['hitRate'], 0).'%' : '—'" :label="'≥ '.$threshold.'/4 sinais'">
+                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }}G · {{ $stat['reds'] }}R / {{ $stat['entries'] }}</p>
                 </x-oracly.stat-tile>
             @endforeach
         </div>
     </div>
 
-    <x-oracly.chip-group :options="$this::THRESHOLDS" :active="$minProbability" method="setMinProbability" />
+    <x-oracly.chip-group :options="$this::SIGNAL_THRESHOLDS" :active="$minSignalScore" method="setMinSignalScore" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
 
     @if ($mode === 'history')
@@ -52,6 +52,7 @@
                     <th>Jogo</th>
                     <th>Liga</th>
                     <th>O1.5</th>
+                    <th>Sinais</th>
                     @if ($mode === 'history')
                         <th>Resultado HT</th>
                         <th>Resultado FT</th>
@@ -66,6 +67,7 @@
                         <td class="font-medium text-gray-950 dark:text-white">{{ $row['homeTeam'] }} x {{ $row['awayTeam'] }}</td>
                         <td class="text-gray-500 dark:text-gray-400">{{ $row['country'] }} · {{ $row['competition'] }}</td>
                         <td class="font-semibold">{{ number_format($row['probability'], 0) }}%</td>
+                        <td class="font-semibold">{{ $row['signalScore'] ?? 0 }}/4</td>
                         @if ($mode === 'history')
                             <td>{{ $row['halftimeHomeScore'] !== null && $row['halftimeAwayScore'] !== null ? 'HT '.$row['halftimeHomeScore'].'-'.$row['halftimeAwayScore'] : '—' }}</td>
                             <td>FT {{ $row['homeScore'] }}-{{ $row['awayScore'] }}</td>

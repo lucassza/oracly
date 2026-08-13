@@ -18,9 +18,9 @@ class DailyOver15 extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
 
-    protected static ?string $navigationLabel = 'Over 1.5 FT';
+    protected static ?string $navigationLabel = 'Melhores entradas O1.5';
 
-    protected static ?string $title = 'Over 1.5 FT';
+    protected static ?string $title = 'Melhores entradas Over 1.5 FT';
 
     protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
 
@@ -32,7 +32,7 @@ class DailyOver15 extends Page
 
     public string $date = '';
 
-    public int $minProbability = 60;
+    public int $minSignalScore = 2;
 
     public string $scoreFilter = 'all';
 
@@ -54,12 +54,11 @@ class DailyOver15 extends Page
     ];
 
     /** @var array<int, string> */
-    public const THRESHOLDS = [
-        55 => '≥ 55%',
-        60 => '≥ 60%',
-        65 => '≥ 65%',
-        70 => '≥ 70%',
-        75 => '≥ 75%',
+    public const SIGNAL_THRESHOLDS = [
+        1 => '≥ 1/4 sinais',
+        2 => '≥ 2/4 sinais',
+        3 => '≥ 3/4 sinais',
+        4 => '4/4 sinais',
     ];
 
     /** @var array<int, string> */
@@ -106,10 +105,10 @@ class DailyOver15 extends Page
         }
     }
 
-    public function setMinProbability(int $value): void
+    public function setMinSignalScore(int $value): void
     {
-        if (array_key_exists($value, self::THRESHOLDS)) {
-            $this->minProbability = $value;
+        if (array_key_exists($value, self::SIGNAL_THRESHOLDS)) {
+            $this->minSignalScore = $value;
         }
     }
 
@@ -141,7 +140,7 @@ class DailyOver15 extends Page
     {
         return array_values(array_filter(
             $this->rows,
-            fn (array $row) => (float) ($row['probability'] ?? 0) >= $this->minProbability
+            fn (array $row) => (int) ($row['signalScore'] ?? 0) >= $this->minSignalScore
                 && ($this->mode !== 'history' || $this->scoreFilter === 'all' || $this->scoreKey($row) === $this->scoreFilter)
                 && ($this->favoriteFilter === 0 || in_array(
                     ($row['country'] ?? '').'::'.($row['competition'] ?? ''),
@@ -179,13 +178,15 @@ class DailyOver15 extends Page
     public function getCutoffStatsProperty(): array
     {
         $stats = [];
-        foreach (array_keys(self::THRESHOLDS) as $threshold) {
-            $entries = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $threshold);
+        foreach (array_keys(self::SIGNAL_THRESHOLDS) as $threshold) {
+            $entries = array_filter($this->historyRows, fn (array $row) => (int) ($row['signalScore'] ?? 0) >= $threshold);
             $count = count($entries);
             $wins = count(array_filter($entries, fn (array $row) => ! empty($row['hit'])));
+            $reds = $count - $wins;
             $stats[$threshold] = [
                 'entries' => $count,
                 'wins' => $wins,
+                'reds' => $reds,
                 'hitRate' => $count > 0 ? ($wins / $count) * 100 : null,
             ];
         }
@@ -212,11 +213,11 @@ class DailyOver15 extends Page
 
     public function exportCsv(): \Symfony\Component\HttpFoundation\StreamedResponse
     {
-        return HistoryCsv::download('historico-over-15-ft.csv', [
-            'Data', 'Casa', 'Visitante', 'Liga', 'O1.5', 'HT', 'FT', 'Acerto',
+        return HistoryCsv::download('historico-melhores-entradas-over-15-ft.csv', [
+            'Data', 'Casa', 'Visitante', 'Liga', 'O1.5', 'Sinais', 'HT', 'FT', 'Acerto',
         ], array_map(fn (array $row) => [
             $row['kickoffAt'] ?? '', $row['homeTeam'] ?? '', $row['awayTeam'] ?? '',
-            ($row['country'] ?? '').' · '.($row['competition'] ?? ''), $row['probability'] ?? '',
+            ($row['country'] ?? '').' · '.($row['competition'] ?? ''), $row['probability'] ?? '', ($row['signalScore'] ?? 0).'/4',
             ($row['halftimeHomeScore'] ?? '—').'-'.($row['halftimeAwayScore'] ?? '—'),
             ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), ! empty($row['hit']) ? 'Green' : 'Red',
         ], $this->filteredRows));
