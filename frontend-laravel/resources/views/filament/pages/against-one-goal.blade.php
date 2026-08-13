@@ -39,6 +39,15 @@
         </div>
     </div>
 
+    <div>
+        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Reds no HT por placar · corte selecionado</h2>
+        <div class="grid grid-cols-3 gap-3">
+            @foreach (['1-0' => 'HT 1x0', '0-1' => 'HT 0x1', '0-0' => 'HT 0x0'] as $score => $label)
+                <x-oracly.stat-tile :value="$this->htRedsByScore[$score]" :label="$label" />
+            @endforeach
+        </div>
+    </div>
+
     @if ($mode === 'history')
         <div class="max-w-xs">
             <label for="against-one-goal-score" class="mb-1 block text-sm font-medium text-gray-700 dark:text-gray-300">Placar final</label>

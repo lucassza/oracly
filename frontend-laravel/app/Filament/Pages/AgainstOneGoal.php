@@ -173,6 +173,25 @@ class AgainstOneGoal extends Page
         return $stats;
     }
 
+    /** @return array<string, int> */
+    public function getHtRedsByScoreProperty(): array
+    {
+        $rows = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $this->minProbability
+            && $row['bestAgainstScore'] !== null
+            && ($row['againstHtHit'] ?? null) === false
+            && $this->matchesFavorite($row));
+        $counts = ['1-0' => 0, '0-1' => 0, '0-0' => 0];
+
+        foreach ($rows as $row) {
+            $score = $this->halftimeScoreKey($row);
+            if (isset($counts[$score])) {
+                $counts[$score]++;
+            }
+        }
+
+        return $counts;
+    }
+
     /** @return array{threshold: int, entries: int, wins: int, hitRate: float}|null */
     public function getBestCutoffProperty(): ?array
     {
