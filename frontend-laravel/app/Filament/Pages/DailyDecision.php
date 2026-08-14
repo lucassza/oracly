@@ -7,6 +7,7 @@ use App\Oracly\Services\AgainstThreeOneStrategy;
 use App\Oracly\Services\AgainstTwoGoalsStrategy;
 use App\Oracly\Services\DailyPickService;
 use App\Oracly\Services\FinalScoreExclusionService;
+use App\Oracly\Services\FavoritesService;
 use App\Oracly\Services\HalfTimeExclusionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\OraclyCache;
@@ -28,6 +29,17 @@ class DailyDecision extends Page
 
     public string $date = '';
 
+    public int $favoriteFilter = 0;
+
+    /** @var list<string> */
+    public array $favoriteLeagues = [];
+
+    /** @var array<int, string> */
+    public const FAVORITE_OPTIONS = [
+        0 => 'Todas as ligas',
+        1 => 'Somente favoritas',
+    ];
+
     /** @var list<array<string, mixed>> */
     public array $cards = [];
 
@@ -40,9 +52,11 @@ class DailyDecision extends Page
     public function reload(): void
     {
         try {
+            $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
             $this->cards = $this->buildCards(app(DailyPickService::class)->forDate($this->date));
         } catch (\Throwable $e) {
             $this->cards = [];
+            $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao montar radar diário')->body($e->getMessage())->danger()->send();
         }
     }
@@ -65,6 +79,14 @@ class DailyDecision extends Page
         $this->reload();
     }
 
+    public function setFavoriteFilter(int $value): void
+    {
+        if (array_key_exists($value, self::FAVORITE_OPTIONS)) {
+            $this->favoriteFilter = $value;
+            $this->reload();
+        }
+    }
+
     /** @param list<array<string, mixed>> $rows
      * @return list<array<string, mixed>>
      */
@@ -77,6 +99,9 @@ class DailyDecision extends Page
         $byStrategy = [];
         foreach ($rows as $row) {
             if (($row['status'] ?? null) !== 'not_started') {
+                continue;
+            }
+            if ($this->favoriteFilter === 1 && ! in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true)) {
                 continue;
             }
             $id = (string) ($row['providerMatchId'] ?? '');
