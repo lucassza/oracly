@@ -208,6 +208,14 @@
                                     <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200" title="Menor probabilidade estimada de placar exato entre as oportunidades desta hora">
                                         👑 Melhor da hora
                                     </span>
+                                @elseif ($mode === 'upcoming' && ($row['opportunityRank'] ?? null) === 2)
+                                    <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-orange-100 px-2 py-0.5 text-[11px] font-bold text-orange-800 dark:bg-orange-400/20 dark:text-orange-200" title="Segunda melhor oportunidade desta hora">
+                                        🔥 2ª da hora
+                                    </span>
+                                @elseif ($mode === 'upcoming' && ($row['opportunityRank'] ?? null) === 3)
+                                    <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-bold text-emerald-800 dark:bg-emerald-400/20 dark:text-emerald-200" title="Terceira melhor oportunidade desta hora">
+                                        ● 3ª da hora
+                                    </span>
                                 @endif
                             @else
                                 —

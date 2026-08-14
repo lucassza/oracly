@@ -82,6 +82,8 @@ class AgainstOneGoal extends Page
     public const BEST_PER_HOUR_OPTIONS = [
         0 => 'Todas oportunidades',
         1 => 'Somente 👑 melhor da hora',
+        2 => 'Top 2 por hora',
+        3 => 'Top 3 por hora',
     ];
 
     private const MIN_SAMPLE_FOR_RECOMMENDATION = 20;
@@ -192,8 +194,8 @@ class AgainstOneGoal extends Page
         }
         $rows = $this->rankUpcomingRowsByHour($rows);
 
-        return $this->bestPerHourFilter === 1
-            ? array_values(array_filter($rows, fn (array $row): bool => ($row['opportunityRank'] ?? null) === 1))
+        return $this->bestPerHourFilter > 0
+            ? array_values(array_filter($rows, fn (array $row): bool => ($row['opportunityRank'] ?? PHP_INT_MAX) <= $this->bestPerHourFilter))
             : $rows;
     }
 
