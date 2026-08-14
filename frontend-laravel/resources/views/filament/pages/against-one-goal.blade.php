@@ -38,7 +38,9 @@
                     <thead><tr><th>Período</th><th>Acerto</th><th>Amostra</th></tr></thead>
                     <tbody>
                         @foreach (['development' => 'Desenvolvimento · 70% mais antigo', 'validation' => 'Teste · 30% mais recente'] as $key => $label)
-                            @php($stat = $this->temporalValidation[$key])
+                            @php
+                                $stat = $this->temporalValidation[$key];
+                            @endphp
                             <tr>
                                 <td>{{ $label }}</td>
                                 <td class="font-semibold">{{ $stat['hitRate'] !== null ? number_format($stat['hitRate'], 1).'%' : '—' }}</td>
