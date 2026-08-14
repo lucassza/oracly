@@ -147,9 +147,31 @@ class AgainstOneGoal extends Page
     /** @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float, htEntries: int, htWins: int, htReds: int, htHitRate: ?float}> */
     public function getCutoffStatsProperty(): array
     {
+        return $this->buildCutoffStats($this->historyRows);
+    }
+
+    /** @return array<string, array<int, array{entries: int, wins: int, reds: int, hitRate: ?float, htEntries: int, htWins: int, htReds: int, htHitRate: ?float}>> */
+    public function getCutoffStatsByMethodProperty(): array
+    {
+        $stats = [];
+        foreach (['1-0', '0-1'] as $method) {
+            $stats[$method] = $this->buildCutoffStats(array_values(array_filter(
+                $this->historyRows,
+                fn (array $row): bool => ($row['bestAgainstScore'] ?? null) === $method,
+            )));
+        }
+
+        return $stats;
+    }
+
+    /** @param list<array<string, mixed>> $rows
+     * @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float, htEntries: int, htWins: int, htReds: int, htHitRate: ?float}>
+     */
+    private function buildCutoffStats(array $rows): array
+    {
         $stats = [];
         foreach (array_keys(self::THRESHOLDS) as $threshold) {
-            $entries = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $threshold
+            $entries = array_filter($rows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $threshold
                 && $row['bestAgainstScore'] !== null
                 && $this->matchesFavorite($row));
             $count = count($entries);
@@ -173,19 +195,24 @@ class AgainstOneGoal extends Page
         return $stats;
     }
 
-    /** @return array<string, int> */
-    public function getHtRedsByScoreProperty(): array
+    /** @return array<string, array<string, int>> */
+    public function getHtResultsByMethodProperty(): array
     {
-        $rows = array_filter($this->historyRows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $this->minProbability
-            && $row['bestAgainstScore'] !== null
-            && ($row['againstHtHit'] ?? null) === false
-            && $this->matchesFavorite($row));
-        $counts = ['1-0' => 0, '0-1' => 0, '0-0' => 0];
+        $counts = [
+            '1-0' => ['1-0' => 0, '0-1' => 0, '0-0' => 0],
+            '0-1' => ['1-0' => 0, '0-1' => 0, '0-0' => 0],
+        ];
 
-        foreach ($rows as $row) {
+        foreach ($this->historyRows as $row) {
+            if ((float) ($row['probability'] ?? 0) < $this->minProbability
+                || ! isset($counts[$row['bestAgainstScore'] ?? ''])
+                || ! $this->matchesFavorite($row)) {
+                continue;
+            }
+
             $score = $this->halftimeScoreKey($row);
-            if (isset($counts[$score])) {
-                $counts[$score]++;
+            if ($score !== null && isset($counts[$row['bestAgainstScore']][$score])) {
+                $counts[$row['bestAgainstScore']][$score]++;
             }
         }
 

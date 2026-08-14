@@ -35,4 +35,11 @@ return [
         ],
     ],
 
+    'openrouter' => [
+        'key' => env('OPENROUTER_TOKEN', env('OPENROUTER_API_KEY')),
+        'model' => env('OPENROUTER_MODEL', 'deepseek/deepseek-v3.2'),
+        'timeout' => (int) env('OPENROUTER_TIMEOUT', 45),
+        'max_tokens' => (int) env('OPENROUTER_MAX_TOKENS', 350),
+    ],
+
 ];

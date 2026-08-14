@@ -12,39 +12,95 @@
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
 
     @if ($this->bestCutoff)
-        <x-oracly.stat-tile hero accent :value="number_format($this->bestCutoff['hitRate'], 0).'%'" :label="'Melhor corte: O1.5 ≥ '.$this->bestCutoff['threshold'].'%'">
-            <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $this->bestCutoff['wins'] }} greens · {{ $this->bestCutoff['reds'] }} reds em {{ $this->bestCutoff['entries'] }} jogos.</p>
-        </x-oracly.stat-tile>
+        <p class="text-sm text-gray-600 dark:text-gray-300">
+            Melhor corte global: <span class="font-semibold text-emerald-700 dark:text-emerald-300">O1.5 ≥ {{ $this->bestCutoff['threshold'] }}% · {{ number_format($this->bestCutoff['hitRate'], 0) }}%</span>
+            <span class="text-gray-500 dark:text-gray-400">({{ $this->bestCutoff['wins'] }} greens · {{ $this->bestCutoff['reds'] }} reds / {{ $this->bestCutoff['entries'] }} jogos)</span>
+        </p>
     @endif
 
     <div>
         <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por corte O1.5</h2>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            @foreach ($this->cutoffStats as $threshold => $stat)
-                <x-oracly.stat-tile :active="$minProbability === $threshold" :value="$stat['hitRate'] !== null ? number_format($stat['hitRate'], 0).'%' : '—'" :label="'O1.5 ≥ '.$threshold.'%'">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }}G · {{ $stat['reds'] }}R / {{ $stat['entries'] }}</p>
-                </x-oracly.stat-tile>
+        <div class="max-w-7xl space-y-4">
+            @foreach (['1-0' => 'Contra 1x0', '0-1' => 'Contra 0x1'] as $method => $methodLabel)
+                <div>
+                    <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $methodLabel }}</h3>
+                    <div class="overflow-x-auto">
+                        <table class="oracly-table min-w-[42rem] table-fixed">
+                            <thead><tr>
+                                @foreach ($this->cutoffStatsByMethod[$method] as $threshold => $stat)
+                                    <th class="text-center">O1.5 ≥ {{ $threshold }}%</th>
+                                @endforeach
+                            </tr></thead>
+                            <tbody>
+                                <tr>
+                                    @foreach ($this->cutoffStatsByMethod[$method] as $threshold => $stat)
+                                        <td class="text-center font-semibold {{ $minProbability === $threshold ? 'text-amber-600 dark:text-amber-300' : '' }}">{{ $stat['hitRate'] !== null ? number_format($stat['hitRate'], 0).'%' : '—' }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    @foreach ($this->cutoffStatsByMethod[$method] as $stat)
+                                        <td class="text-center text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }}G · {{ $stat['reds'] }}R / {{ $stat['entries'] }}</td>
+                                    @endforeach
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             @endforeach
         </div>
     </div>
 
     <div>
         <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade no HT por corte O1.5</h2>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
-            @foreach ($this->cutoffStats as $threshold => $stat)
-                <x-oracly.stat-tile :active="$minProbability === $threshold" :value="$stat['htHitRate'] !== null ? number_format($stat['htHitRate'], 0).'%' : '—'" :label="'O1.5 ≥ '.$threshold.'%'">
-                    <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['htWins'] }}G · {{ $stat['htReds'] }}R / {{ $stat['htEntries'] }}</p>
-                </x-oracly.stat-tile>
+        <div class="max-w-7xl space-y-4">
+            @foreach (['1-0' => 'Contra 1x0', '0-1' => 'Contra 0x1'] as $method => $methodLabel)
+                <div>
+                    <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $methodLabel }}</h3>
+                    <div class="overflow-x-auto">
+                        <table class="oracly-table min-w-[42rem] table-fixed">
+                            <thead><tr>
+                                @foreach ($this->cutoffStatsByMethod[$method] as $threshold => $stat)
+                                    <th class="text-center">O1.5 ≥ {{ $threshold }}%</th>
+                                @endforeach
+                            </tr></thead>
+                            <tbody>
+                                <tr>
+                                    @foreach ($this->cutoffStatsByMethod[$method] as $threshold => $stat)
+                                        <td class="text-center font-semibold {{ $minProbability === $threshold ? 'text-amber-600 dark:text-amber-300' : '' }}">{{ $stat['htHitRate'] !== null ? number_format($stat['htHitRate'], 0).'%' : '—' }}</td>
+                                    @endforeach
+                                </tr>
+                                <tr>
+                                    @foreach ($this->cutoffStatsByMethod[$method] as $stat)
+                                        <td class="text-center text-xs text-gray-500 dark:text-gray-400">{{ $stat['htWins'] }}G · {{ $stat['htReds'] }}R / {{ $stat['htEntries'] }}</td>
+                                    @endforeach
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
             @endforeach
         </div>
     </div>
 
     <div>
-        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Reds no HT por placar · corte selecionado</h2>
-        <div class="grid grid-cols-3 gap-3">
-            @foreach (['1-0' => 'HT 1x0', '0-1' => 'HT 0x1', '0-0' => 'HT 0x0'] as $score => $label)
-                <x-oracly.stat-tile :value="$this->htRedsByScore[$score]" :label="$label" />
-            @endforeach
+        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Resultados no HT por placar · corte selecionado</h2>
+        <div class="max-w-5xl overflow-x-auto">
+            <table class="oracly-table min-w-[42rem] table-fixed">
+                <thead><tr>
+                    @foreach (['1-0' => 'Contra 1x0', '0-1' => 'Contra 0x1'] as $method => $methodLabel)
+                        @foreach (['1-0' => 'HT 1x0', '0-1' => 'HT 0x1', '0-0' => 'HT 0x0'] as $score => $label)
+                            <th class="text-center">{{ $methodLabel }} · {{ $label }}</th>
+                        @endforeach
+                    @endforeach
+                </tr></thead>
+                <tbody><tr>
+                    @foreach (['1-0', '0-1'] as $method)
+                        @foreach (['1-0', '0-1', '0-0'] as $score)
+                            <td class="text-center font-semibold">{{ $this->htResultsByMethod[$method][$score] }}</td>
+                        @endforeach
+                    @endforeach
+                </tr></tbody>
+            </table>
         </div>
     </div>
 
