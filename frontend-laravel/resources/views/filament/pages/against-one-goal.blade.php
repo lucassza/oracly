@@ -11,6 +11,9 @@
     <x-oracly.chip-group :options="$this::THRESHOLDS" :active="$minProbability" method="setMinProbability" />
     <x-oracly.chip-group :options="$this::SIGNAL_PROFILES" :active="$signalProfile" method="setSignalProfile" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+    @if ($mode === 'upcoming')
+        <x-oracly.chip-group :options="$this::BEST_PER_HOUR_OPTIONS" :active="$bestPerHourFilter" method="setBestPerHourFilter" />
+    @endif
 
     <p class="text-xs text-gray-500 dark:text-gray-400">
         @if ($signalProfile === 'baseline')
@@ -201,6 +204,11 @@
                             @if ($row['bestAgainstScore'] ?? null)
                                 Contra {{ str_replace('-', ' x ', $row['bestAgainstScore']) }}
                                 <span class="font-normal text-xs text-gray-500">({{ number_format(($row['bestAgainstProbability'] ?? 0) * 100, 1) }}%)</span>
+                                @if ($mode === 'upcoming' && ($row['opportunityRank'] ?? null) === 1)
+                                    <span class="ml-1 inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200" title="Menor probabilidade estimada de placar exato entre as oportunidades desta hora">
+                                        👑 Melhor da hora
+                                    </span>
+                                @endif
                             @else
                                 —
                             @endif

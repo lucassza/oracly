@@ -42,6 +42,8 @@ class AgainstOneGoal extends Page
 
     public string $signalProfile = 'baseline';
 
+    public int $bestPerHourFilter = 0;
+
     /** @var list<array<string, mixed>> */
     public array $rows = [];
 
@@ -75,6 +77,12 @@ class AgainstOneGoal extends Page
 
     /** @var array<string, string> */
     public const SIGNAL_PROFILES = AgainstOneGoalStrategy::PROFILES;
+
+    /** @var array<int, string> */
+    public const BEST_PER_HOUR_OPTIONS = [
+        0 => 'Todas oportunidades',
+        1 => 'Somente 👑 melhor da hora',
+    ];
 
     private const MIN_SAMPLE_FOR_RECOMMENDATION = 20;
 
@@ -138,6 +146,13 @@ class AgainstOneGoal extends Page
         }
     }
 
+    public function setBestPerHourFilter(int $value): void
+    {
+        if (array_key_exists($value, self::BEST_PER_HOUR_OPTIONS)) {
+            $this->bestPerHourFilter = $value;
+        }
+    }
+
     public function toggleLeague(string $country, string $competition): void
     {
         try {
@@ -167,10 +182,19 @@ class AgainstOneGoal extends Page
     /** @return list<array<string, mixed>> */
     public function getFilteredRowsProperty(): array
     {
-        return array_values(array_filter($this->rows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $this->minProbability
+        $rows = array_values(array_filter($this->rows, fn (array $row) => (float) ($row['probability'] ?? 0) >= $this->minProbability
             && $this->strategy()->matchesProfile($row, $this->signalProfile)
             && ($this->mode !== 'history' || $this->scoreFilter === 'all' || $this->scoreKey($row) === $this->scoreFilter)
             && ($this->favoriteFilter === 0 || in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true))));
+
+        if ($this->mode !== 'upcoming') {
+            return $rows;
+        }
+        $rows = $this->rankUpcomingRowsByHour($rows);
+
+        return $this->bestPerHourFilter === 1
+            ? array_values(array_filter($rows, fn (array $row): bool => ($row['opportunityRank'] ?? null) === 1))
+            : $rows;
     }
 
     /** @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float, htEntries: int, htWins: int, htReds: int, htHitRate: ?float}> */
@@ -387,6 +411,45 @@ class AgainstOneGoal extends Page
         $wins = count(array_filter($rows, fn (array $row): bool => ! empty($row['againstHit'])));
 
         return ['entries' => $entries, 'wins' => $wins, 'hitRate' => $entries > 0 ? ($wins / $entries) * 100 : null];
+    }
+
+    /**
+     * Ranks only visible upcoming entries.  A lower estimated probability for
+     * the exact score is preferred; goal-market signals break a tie.
+     *
+     * @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function rankUpcomingRowsByHour(array $rows): array
+    {
+        $byHour = [];
+        foreach ($rows as $index => $row) {
+            $hour = isset($row['kickoffAt'])
+                ? \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('Y-m-d H')
+                : 'unknown';
+            $byHour[$hour][] = $index;
+        }
+        foreach ($byHour as $indexes) {
+            usort($indexes, function (int $left, int $right) use ($rows): int {
+                $a = $rows[$left];
+                $b = $rows[$right];
+                $exact = (float) ($a['bestAgainstProbability'] ?? INF) <=> (float) ($b['bestAgainstProbability'] ?? INF);
+                if ($exact !== 0) {
+                    return $exact;
+                }
+                $over15 = (float) ($b['probability'] ?? 0) <=> (float) ($a['probability'] ?? 0);
+                if ($over15 !== 0) {
+                    return $over15;
+                }
+
+                return (float) ($b['bttsProbability'] ?? 0) <=> (float) ($a['bttsProbability'] ?? 0);
+            });
+            foreach ($indexes as $rank => $index) {
+                $rows[$index]['opportunityRank'] = $rank + 1;
+            }
+        }
+
+        return $rows;
     }
 
     protected function strategy(): AgainstOneGoalStrategy
