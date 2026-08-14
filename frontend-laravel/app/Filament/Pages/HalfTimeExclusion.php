@@ -88,7 +88,6 @@ class HalfTimeExclusion extends Page
 
     public function reload(): void
     {
-        OraclyCache::forgetPrefix();
         try {
             $service = app(HalfTimeExclusionService::class);
             $this->allRows = $this->mode === 'history'
@@ -100,6 +99,12 @@ class HalfTimeExclusion extends Page
             $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao ler Postgres Oracly')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function refresh(): void
+    {
+        OraclyCache::forgetPrefix();
+        $this->reload();
     }
 
     public function toggleFavoriteLeague(string $country, string $competition): void
@@ -248,7 +253,7 @@ class HalfTimeExclusion extends Page
     {
         return [
             Action::make('exportCsv')->label('Exportar CSV')->visible(fn (): bool => $this->mode === 'history')->action('exportCsv'),
-            Action::make('reload')->label('Recarregar banco')->action('reload'),
+            Action::make('reload')->label('Recarregar banco')->action('refresh'),
         ];
     }
 }

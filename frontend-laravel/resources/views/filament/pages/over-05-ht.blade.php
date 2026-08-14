@@ -11,7 +11,7 @@
     <x-oracly.chip-group :options="$this::THRESHOLDS" :active="$minProbability" method="setMinProbability" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
 
-    @if ($this->bestCutoff)
+    @if ($mode === 'history' && $this->bestCutoff)
         <p class="text-sm text-gray-600 dark:text-gray-300">
             Melhor corte {{ $favoriteFilter === 1 ? 'nas favoritas' : 'na base atual' }}:
             <span class="font-semibold text-emerald-700 dark:text-emerald-300">O0.5 HT ≥ {{ $this->bestCutoff['threshold'] }}% · {{ number_format($this->bestCutoff['hitRate'], 0) }}%</span>
@@ -19,10 +19,11 @@
         </p>
     @endif
 
-    <div>
-        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por corte</h2>
-        <div class="overflow-x-auto">
-            <table class="oracly-table min-w-[42rem] table-fixed">
+    @if ($mode === 'history')
+        <div>
+            <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por corte</h2>
+            <div class="overflow-x-auto">
+                <table class="oracly-table min-w-[42rem] table-fixed">
                 <thead><tr>
                     @foreach ($this->cutoffStats as $threshold => $stat)
                         <th class="text-center">O0.5 HT ≥ {{ $threshold }}%</th>
@@ -40,9 +41,10 @@
                         @endforeach
                     </tr>
                 </tbody>
-            </table>
+                </table>
+            </div>
         </div>
-    </div>
+    @endif
 
     @if ($mode === 'history')
         <div class="max-w-xs">

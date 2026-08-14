@@ -76,12 +76,11 @@ class DailyBtts extends Page
 
     public function reload(): void
     {
-        OraclyCache::forgetPrefix();
         try {
-            $this->historyRows = app(PredictionService::class)->history('btts', 0);
-            $this->rows = $this->mode === 'history'
-                ? $this->historyRows
-                : app(DailyPickService::class)->forDate($this->date);
+            $this->historyRows = $this->mode === 'history'
+                ? app(PredictionService::class)->history('btts', 0)
+                : [];
+            $this->rows = $this->mode === 'history' ? $this->historyRows : app(DailyPickService::class)->forDate($this->date);
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
         } catch (\Throwable $e) {
             $this->rows = [];
@@ -89,6 +88,12 @@ class DailyBtts extends Page
             $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao ler Postgres Oracly')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function refresh(): void
+    {
+        OraclyCache::forgetPrefix();
+        $this->reload();
     }
 
     public function setMode(string $value): void
@@ -212,7 +217,7 @@ class DailyBtts extends Page
         return [
             Action::make('prev')->label('Dia anterior')->visible(fn (): bool => $this->mode === 'upcoming')->action('previousDay'),
             Action::make('exportCsv')->label('Exportar CSV')->visible(fn (): bool => $this->mode === 'history')->action('exportCsv'),
-            Action::make('reload')->label('Recarregar banco')->action('reload'),
+            Action::make('reload')->label('Recarregar banco')->action('refresh'),
             Action::make('next')->label('Próximo dia')->visible(fn (): bool => $this->mode === 'upcoming')->action('nextDay'),
         ];
     }

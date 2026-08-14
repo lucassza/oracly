@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Oracly\Services\DailyPickService;
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Services\PredictionService;
 use App\Oracly\Support\BrasiliaDate;
@@ -79,23 +80,27 @@ class AgainstOneGoal extends Page
 
     public function reload(): void
     {
-        OraclyCache::forgetPrefix();
         try {
             $service = app(PredictionService::class);
-            $this->historyRows = $this->withAgainstResult($service->history('over_15_ft', 0));
+            $this->historyRows = $this->mode === 'history'
+                ? $this->withAgainstResult($service->history('over_15_ft', 0))
+                : [];
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
             $this->rows = $this->mode === 'history'
                 ? $this->historyRows
-                : $this->withAgainstResult(array_values(array_filter(
-                    $service->upcoming('over_15_ft', now()->toIso8601String(), 0),
-                    fn (array $row) => ! empty($row['kickoffAt']) && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date,
-                )));
+                : $this->withAgainstResult($this->dailyRows());
         } catch (\Throwable $e) {
             $this->rows = [];
             $this->historyRows = [];
             $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao ler estratégia contra 0x1/1x0')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function refresh(): void
+    {
+        OraclyCache::forgetPrefix();
+        $this->reload();
     }
 
     public function setMode(string $value): void
@@ -282,6 +287,18 @@ class AgainstOneGoal extends Page
         }, $rows);
     }
 
+    /** @return list<array<string, mixed>> */
+    private function dailyRows(): array
+    {
+        return array_values(array_map(function (array $row): array {
+            $row['probability'] = $row['over15'];
+            $row['over25Probability'] = $row['over25'];
+            $row['bttsProbability'] = $row['btts'];
+
+            return $row;
+        }, app(DailyPickService::class)->forDate($this->date)));
+    }
+
     /** @return array{score: string, probability: float}|null */
     private function bestAgainstChoice(array $row): ?array
     {
@@ -337,7 +354,7 @@ class AgainstOneGoal extends Page
         return [
             Action::make('prev')->label('Dia anterior')->action('previousDay'),
             Action::make('exportCsv')->label('Exportar CSV')->visible(fn (): bool => $this->mode === 'history')->action('exportCsv'),
-            Action::make('reload')->label('Recarregar banco')->action('reload'),
+            Action::make('reload')->label('Recarregar banco')->action('refresh'),
             Action::make('next')->label('Próximo dia')->action('nextDay'),
         ];
     }

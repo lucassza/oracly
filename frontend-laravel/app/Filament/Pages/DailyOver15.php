@@ -2,6 +2,7 @@
 
 namespace App\Filament\Pages;
 
+use App\Oracly\Services\DailyPickService;
 use App\Oracly\Services\PredictionService;
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Support\BrasiliaDate;
@@ -77,24 +78,25 @@ class DailyOver15 extends Page
 
     public function reload(): void
     {
-        OraclyCache::forgetPrefix();
         try {
             $service = app(PredictionService::class);
-            $this->historyRows = $service->history('over_15_ft', 0);
+            $this->historyRows = $this->mode === 'history' ? $service->history('over_15_ft', 0) : [];
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
             $this->rows = $this->mode === 'history'
                 ? $this->historyRows
-                : array_values(array_filter(
-                    $service->upcoming('over_15_ft', now()->toIso8601String(), 0),
-                    fn (array $row) => ! empty($row['kickoffAt'])
-                        && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date,
-                ));
+                : $this->dailyRows();
         } catch (\Throwable $e) {
             $this->rows = [];
             $this->historyRows = [];
             $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao ler previsões Over 1.5')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function refresh(): void
+    {
+        OraclyCache::forgetPrefix();
+        $this->reload();
     }
 
     public function setMode(string $value): void
@@ -223,12 +225,30 @@ class DailyOver15 extends Page
         ], $this->filteredRows));
     }
 
+    /** @return list<array<string, mixed>> */
+    private function dailyRows(): array
+    {
+        return array_values(array_map(function (array $row): array {
+            $row['probability'] = $row['over15'];
+            $row['over25Probability'] = $row['over25'];
+            $row['bttsProbability'] = $row['btts'];
+            $row['signalScore'] = count(array_filter([
+                (float) ($row['over25'] ?? 0) >= 70,
+                (float) ($row['btts'] ?? 0) >= 65,
+                (float) ($row['combinedGoalsAverage'] ?? 0) >= 3.8,
+                (float) ($row['over05Percentage'] ?? 0) >= 90,
+            ]));
+
+            return $row;
+        }, app(DailyPickService::class)->forDate($this->date)));
+    }
+
     protected function getHeaderActions(): array
     {
         return [
             Action::make('prev')->label('Dia anterior')->action('previousDay'),
             Action::make('exportCsv')->label('Exportar CSV')->visible(fn (): bool => $this->mode === 'history')->action('exportCsv'),
-            Action::make('reload')->label('Recarregar banco')->action('reload'),
+            Action::make('reload')->label('Recarregar banco')->action('refresh'),
             Action::make('next')->label('Próximo dia')->action('nextDay'),
         ];
     }

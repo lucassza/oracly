@@ -55,6 +55,9 @@ final class DailyPickService
                 return $value;
             };
 
+            $predicted = $preKickoff[array_key_last($preKickoff)] ?? $latest;
+            $odds = $predicted['odds'] ?? null;
+
             $pick = [
                 'providerMatchId' => $providerMatchId,
                 'kickoffAt' => $kickoffAt,
@@ -71,6 +74,17 @@ final class DailyPickService
                 'awayScore' => $isFinished ? data_get($latest, 'score.away') : null,
                 'halftimeHomeScore' => $isFinished ? data_get($latest, 'score.halftimeHome') : null,
                 'halftimeAwayScore' => $isFinished ? data_get($latest, 'score.halftimeAway') : null,
+                // Estratégias diárias usam sempre os indicadores disponíveis antes do apito inicial.
+                'homeGoalsAverage' => data_get($predicted, 'statistics.homeGoalsAverage'),
+                'awayGoalsAverage' => data_get($predicted, 'statistics.awayGoalsAverage'),
+                'combinedGoalsAverage' => data_get($predicted, 'statistics.combinedGoalsAverage'),
+                'over05Percentage' => data_get($predicted, 'statistics.over05Percentage'),
+                'bttsPercentage' => data_get($predicted, 'statistics.bttsPercentage'),
+                'homeOdd' => is_numeric($odds['home'] ?? null) ? (float) $odds['home'] : null,
+                'drawOdd' => is_numeric($odds['draw'] ?? null) ? (float) $odds['draw'] : null,
+                'awayOdd' => is_numeric($odds['away'] ?? null) ? (float) $odds['away'] : null,
+                'oddsBookmaker' => is_string($odds['bookmaker'] ?? null) ? $odds['bookmaker'] : null,
+                'over05Ht' => $lastPred('gols_1t_05_over'),
                 'over05' => $lastPred('over_05_ft_over'),
                 'under35' => $lastPred('over_35_ft_under'),
                 'over15' => $lastPred('over_15_ft_over'),
@@ -78,7 +92,7 @@ final class DailyPickService
                 'btts' => $lastPred('btts_sim'),
             ];
 
-            if ($pick['over05'] === null && $pick['over15'] === null && $pick['over25'] === null && $pick['under35'] === null && $pick['btts'] === null) {
+            if ($pick['over05Ht'] === null && $pick['over05'] === null && $pick['over15'] === null && $pick['over25'] === null && $pick['under35'] === null && $pick['btts'] === null) {
                 continue;
             }
 

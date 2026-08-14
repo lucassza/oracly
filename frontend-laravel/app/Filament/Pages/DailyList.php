@@ -65,7 +65,6 @@ class DailyList extends Page
 
     public function reload(): void
     {
-        OraclyCache::forgetPrefix();
         try {
             $this->rows = app(DailyPickService::class)->forDate($this->date);
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
@@ -75,6 +74,12 @@ class DailyList extends Page
             $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao ler Postgres Oracly')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function refresh(): void
+    {
+        OraclyCache::forgetPrefix();
+        $this->reload();
     }
 
     public function toggleLeague(string $country, string $competition): void
@@ -156,7 +161,7 @@ class DailyList extends Page
     {
         return [
             Action::make('prev')->label('Dia anterior')->action('previousDay'),
-            Action::make('reload')->label('Recarregar banco')->action('reload'),
+            Action::make('reload')->label('Recarregar banco')->action('refresh'),
             Action::make('next')->label('Próximo dia')->action('nextDay'),
         ];
     }

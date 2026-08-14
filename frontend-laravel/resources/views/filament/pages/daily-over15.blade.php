@@ -13,22 +13,24 @@
 
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
 
-    @if ($this->bestCutoff)
+    @if ($mode === 'history' && $this->bestCutoff)
         <x-oracly.stat-tile hero accent :value="number_format($this->bestCutoff['hitRate'], 0).'%'" :label="'Melhor corte: ≥ '.$this->bestCutoff['threshold'].'/4 sinais'">
             <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">{{ $this->bestCutoff['wins'] }} greens · {{ $this->bestCutoff['reds'] }} reds em {{ $this->bestCutoff['entries'] }} jogos.</p>
         </x-oracly.stat-tile>
     @endif
 
-    <div>
-        <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por força do sinal</h2>
-        <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
+    @if ($mode === 'history')
+        <div>
+            <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por força do sinal</h2>
+            <div class="grid grid-cols-2 gap-3 sm:grid-cols-5">
             @foreach ($this->cutoffStats as $threshold => $stat)
                 <x-oracly.stat-tile :active="$minSignalScore === $threshold" :value="$stat['hitRate'] !== null ? number_format($stat['hitRate'], 0).'%' : '—'" :label="'≥ '.$threshold.'/4 sinais'">
                     <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">{{ $stat['wins'] }}G · {{ $stat['reds'] }}R / {{ $stat['entries'] }}</p>
                 </x-oracly.stat-tile>
             @endforeach
+            </div>
         </div>
-    </div>
+    @endif
 
     <x-oracly.chip-group :options="$this::SIGNAL_THRESHOLDS" :active="$minSignalScore" method="setMinSignalScore" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />

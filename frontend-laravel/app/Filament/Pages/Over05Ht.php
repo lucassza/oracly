@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Oracly\Services\FavoritesService;
+use App\Oracly\Services\DailyPickService;
 use App\Oracly\Services\PredictionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\HistoryCsv;
@@ -79,24 +80,25 @@ class Over05Ht extends Page
 
     public function reload(): void
     {
-        OraclyCache::forgetPrefix();
         try {
             $service = app(PredictionService::class);
-            $this->historyRows = $service->history('over_05_ht', 0);
+            $this->historyRows = $this->mode === 'history' ? $service->history('over_05_ht', 0) : [];
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
             $this->rows = $this->mode === 'history'
                 ? $this->historyRows
-                : array_values(array_filter(
-                    $service->upcoming('over_05_ht', now()->toIso8601String(), 0),
-                    fn (array $row): bool => ! empty($row['kickoffAt'])
-                        && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date,
-                ));
+                : $this->dailyRows();
         } catch (\Throwable $e) {
             $this->rows = [];
             $this->historyRows = [];
             $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao ler previsões O0.5 HT')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function refresh(): void
+    {
+        OraclyCache::forgetPrefix();
+        $this->reload();
     }
 
     public function setMode(string $value): void
@@ -208,6 +210,16 @@ class Over05Ht extends Page
         ], $this->filteredRows));
     }
 
+    /** @return list<array<string, mixed>> */
+    private function dailyRows(): array
+    {
+        return array_values(array_map(function (array $row): array {
+            $row['probability'] = $row['over05Ht'];
+
+            return $row;
+        }, app(DailyPickService::class)->forDate($this->date)));
+    }
+
     /** @param array<string, mixed> $row */
     private function scoreKey(array $row): ?string
     {
@@ -233,7 +245,7 @@ class Over05Ht extends Page
         return [
             Action::make('prev')->label('Dia anterior')->action('previousDay'),
             Action::make('exportCsv')->label('Exportar CSV')->visible(fn (): bool => $this->mode === 'history')->action('exportCsv'),
-            Action::make('reload')->label('Recarregar banco')->action('reload'),
+            Action::make('reload')->label('Recarregar banco')->action('refresh'),
             Action::make('next')->label('Próximo dia')->action('nextDay'),
         ];
     }

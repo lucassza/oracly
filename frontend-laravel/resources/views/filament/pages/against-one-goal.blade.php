@@ -11,13 +11,14 @@
     <x-oracly.chip-group :options="$this::THRESHOLDS" :active="$minProbability" method="setMinProbability" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
 
-    @if ($this->bestCutoff)
+    @if ($mode === 'history' && $this->bestCutoff)
         <p class="text-sm text-gray-600 dark:text-gray-300">
             Melhor corte global: <span class="font-semibold text-emerald-700 dark:text-emerald-300">O1.5 ≥ {{ $this->bestCutoff['threshold'] }}% · {{ number_format($this->bestCutoff['hitRate'], 0) }}%</span>
             <span class="text-gray-500 dark:text-gray-400">({{ $this->bestCutoff['wins'] }} greens · {{ $this->bestCutoff['reds'] }} reds / {{ $this->bestCutoff['entries'] }} jogos)</span>
         </p>
     @endif
 
+    @if ($mode === 'history')
     <div>
         <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por corte O1.5</h2>
         <div class="max-w-7xl space-y-4">
@@ -103,6 +104,7 @@
             </table>
         </div>
     </div>
+    @endif
 
     @if ($mode === 'history')
         <div class="max-w-xs">

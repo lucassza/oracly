@@ -66,7 +66,6 @@ class FinalScoreExclusion extends Page
 
     public function reload(): void
     {
-        OraclyCache::forgetPrefix();
         try {
             $service = app(FinalScoreExclusionService::class);
             $this->rows = $this->mode === 'history'
@@ -78,6 +77,12 @@ class FinalScoreExclusion extends Page
             $this->favoriteLeagues = [];
             Notification::make()->title('Erro ao calcular exclusões FT')->body($e->getMessage())->danger()->send();
         }
+    }
+
+    public function refresh(): void
+    {
+        OraclyCache::forgetPrefix();
+        $this->reload();
     }
 
     /** @return array{entries: int, wins: ?int, hitRate: ?float} */
@@ -139,7 +144,7 @@ class FinalScoreExclusion extends Page
     {
         return [
             Action::make('exportCsv')->label('Exportar CSV')->visible(fn (): bool => $this->mode === 'history')->action('exportCsv'),
-            Action::make('reload')->label('Recarregar banco')->action('reload'),
+            Action::make('reload')->label('Recarregar banco')->action('refresh'),
         ];
     }
 }
