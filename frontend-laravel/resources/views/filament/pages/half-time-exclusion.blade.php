@@ -9,6 +9,7 @@
 
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+    @if ($mode === 'upcoming')<x-oracly.chip-group :options="$this::BEST_PER_HOUR_OPTIONS" :active="$bestPerHourFilter" method="setBestPerHourFilter" />@endif
     <div class="oracly-chip-group">
         <button
             type="button"
@@ -117,7 +118,7 @@
                             @endif
                         </td>
                         <td class="font-semibold uppercase">{{ $row['excluded'] }}</td>
-                        <td>{{ $row['agreementKey'] }}</td>
+                        <td>{{ $row['agreementKey'] }} @if ($mode === 'upcoming')<x-oracly.opportunity-rank-badge :rank="$row['opportunityRank'] ?? null" />@endif</td>
                         @if ($mode === 'history')
                             <td class="uppercase">{{ $row['actual'] }}</td>
                             <td><x-oracly.result-badge :hit="$row['hit']" /></td>

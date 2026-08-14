@@ -8,6 +8,7 @@ use App\Oracly\Services\PredictionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\HistoryCsv;
 use App\Oracly\Support\OraclyCache;
+use App\Oracly\Support\RanksHourlyOpportunities;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -17,6 +18,7 @@ use UnitEnum;
 
 class Over05Ht extends Page
 {
+    use RanksHourlyOpportunities;
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
 
     protected static ?string $navigationLabel = 'O0.5 HT';
@@ -152,9 +154,12 @@ class Over05Ht extends Page
     /** @return list<array<string, mixed>> */
     public function getFilteredRowsProperty(): array
     {
-        return array_values(array_filter($this->rows, fn (array $row): bool => (float) ($row['probability'] ?? 0) >= $this->minProbability
+        $rows = array_values(array_filter($this->rows, fn (array $row): bool => (float) ($row['probability'] ?? 0) >= $this->minProbability
             && ($this->mode !== 'history' || $this->scoreFilter === 'all' || $this->scoreKey($row) === $this->scoreFilter)
             && $this->matchesFavorite($row)));
+        return $this->mode === 'upcoming'
+            ? $this->rankUpcomingRowsByHour($rows, fn (array $a, array $b): int => (float) ($b['probability'] ?? 0) <=> (float) ($a['probability'] ?? 0))
+            : $rows;
     }
 
     /** @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float}> */

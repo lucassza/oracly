@@ -6,6 +6,7 @@ use App\Oracly\Services\FinalScoreExclusionService;
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Support\OraclyCache;
 use App\Oracly\Support\HistoryCsv;
+use App\Oracly\Support\RanksHourlyOpportunities;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -15,6 +16,7 @@ use UnitEnum;
 
 class FinalScoreExclusion extends Page
 {
+    use RanksHourlyOpportunities;
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
 
     protected static ?string $navigationLabel = 'Excluir placares FT';
@@ -101,12 +103,15 @@ class FinalScoreExclusion extends Page
     /** @return list<array<string, mixed>> */
     public function getFilteredRowsProperty(): array
     {
-        return array_values(array_filter($this->rows, fn (array $row) => ($this->mode !== 'history' || $this->scoreFilter === 'all' || ($row['actual'] ?? null) === $this->scoreFilter)
+        $rows = array_values(array_filter($this->rows, fn (array $row) => ($this->mode !== 'history' || $this->scoreFilter === 'all' || ($row['actual'] ?? null) === $this->scoreFilter)
             && ($this->favoriteFilter === 0 || in_array(
                 ($row['country'] ?? '').'::'.($row['competition'] ?? ''),
                 $this->favoriteLeagues,
                 true,
             ))));
+        return $this->mode === 'upcoming'
+            ? $this->rankUpcomingRowsByHour($rows, fn (array $a, array $b): int => (float) ($a['combinedProbability'] ?? INF) <=> (float) ($b['combinedProbability'] ?? INF))
+            : $rows;
     }
 
     public function setFavoriteFilter(int $value): void

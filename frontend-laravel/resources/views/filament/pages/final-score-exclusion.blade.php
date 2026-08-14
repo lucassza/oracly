@@ -9,6 +9,7 @@
 
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+    @if ($mode === 'upcoming')<x-oracly.chip-group :options="$this::BEST_PER_HOUR_OPTIONS" :active="$bestPerHourFilter" method="setBestPerHourFilter" />@endif
 
     <div class="grid grid-cols-2 gap-3 sm:grid-cols-3">
         <x-oracly.stat-tile :value="$this->stats['entries']" :label="$mode === 'history' ? 'Jogos analisados' : 'Próximos jogos'" />
@@ -57,7 +58,7 @@
                             </button>
                         </td>
                         <td class="font-semibold">{{ implode(' e ', $row['excluded']) }}</td>
-                        <td>{{ number_format($row['combinedProbability'] * 100, 1) }}%</td>
+                        <td>{{ number_format($row['combinedProbability'] * 100, 1) }}% @if ($mode === 'upcoming')<x-oracly.opportunity-rank-badge :rank="$row['opportunityRank'] ?? null" />@endif</td>
                         @if ($mode === 'history')
                             <td>{{ $row['actual'] ?? '—' }}</td>
                             <td><x-oracly.result-badge :hit="$row['hit']" /></td>

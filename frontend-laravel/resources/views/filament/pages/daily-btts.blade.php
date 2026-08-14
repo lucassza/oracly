@@ -23,6 +23,7 @@
         :active="$favoriteFilter"
         method="setFavoriteFilter"
     />
+    @if ($mode === 'upcoming')<x-oracly.chip-group :options="$this::BEST_PER_HOUR_OPTIONS" :active="$bestPerHourFilter" method="setBestPerHourFilter" />@endif
 
     @if ($mode === 'history')
         <div>
@@ -107,6 +108,7 @@
                             @else
                                 {{ number_format($probability, 0) }}%
                             @endif
+                            @if ($mode === 'upcoming')<x-oracly.opportunity-rank-badge :rank="$row['opportunityRank'] ?? null" />@endif
                         </td>
                         @if ($mode === 'history')
                             <td>{{ $row['halftimeHomeScore'] !== null && $row['halftimeAwayScore'] !== null ? $row['halftimeHomeScore'].'-'.$row['halftimeAwayScore'] : '—' }}</td>

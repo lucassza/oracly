@@ -10,6 +10,7 @@
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
     <x-oracly.chip-group :options="$this::THRESHOLDS" :active="$minProbability" method="setMinProbability" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+    @if ($mode === 'upcoming')<x-oracly.chip-group :options="$this::BEST_PER_HOUR_OPTIONS" :active="$bestPerHourFilter" method="setBestPerHourFilter" />@endif
 
     @if ($mode === 'history' && $this->bestCutoff)
         <p class="text-sm text-gray-600 dark:text-gray-300">
@@ -84,7 +85,7 @@
                                 <span class="text-base leading-none {{ in_array($leagueKey, $favoriteLeagues, true) ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500' }}" aria-hidden="true">{{ in_array($leagueKey, $favoriteLeagues, true) ? '★' : '☆' }}</span>
                             </button>
                         </td>
-                        <td class="font-semibold">{{ number_format($row['probability'], 0) }}%</td>
+                        <td class="font-semibold">{{ number_format($row['probability'], 0) }}% @if ($mode === 'upcoming')<x-oracly.opportunity-rank-badge :rank="$row['opportunityRank'] ?? null" />@endif</td>
                         @if ($mode === 'history')
                             <td>{{ $row['halftimeHomeScore'] !== null && $row['halftimeAwayScore'] !== null ? $row['halftimeHomeScore'].'-'.$row['halftimeAwayScore'] : '—' }}</td>
                             <td>{{ $row['homeScore'] }}-{{ $row['awayScore'] }}</td>

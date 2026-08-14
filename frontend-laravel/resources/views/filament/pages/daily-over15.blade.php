@@ -34,6 +34,7 @@
 
     <x-oracly.chip-group :options="$this::SIGNAL_THRESHOLDS" :active="$minSignalScore" method="setMinSignalScore" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+    @if ($mode === 'upcoming')<x-oracly.chip-group :options="$this::BEST_PER_HOUR_OPTIONS" :active="$bestPerHourFilter" method="setBestPerHourFilter" />@endif
 
     @if ($mode === 'history')
         <div class="max-w-xs">
@@ -75,7 +76,7 @@
                             </button>
                         </td>
                         <td class="font-semibold">{{ number_format($row['probability'], 0) }}%</td>
-                        <td class="font-semibold">{{ $row['signalScore'] ?? 0 }}/4</td>
+                        <td class="font-semibold">{{ $row['signalScore'] ?? 0 }}/4 @if ($mode === 'upcoming')<x-oracly.opportunity-rank-badge :rank="$row['opportunityRank'] ?? null" />@endif</td>
                         @if ($mode === 'history')
                             <td>{{ $row['halftimeHomeScore'] !== null && $row['halftimeAwayScore'] !== null ? 'HT '.$row['halftimeHomeScore'].'-'.$row['halftimeAwayScore'] : '—' }}</td>
                             <td>FT {{ $row['homeScore'] }}-{{ $row['awayScore'] }}</td>

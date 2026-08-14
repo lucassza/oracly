@@ -6,6 +6,7 @@ use App\Oracly\Services\FavoritesService;
 use App\Oracly\Services\HalfTimeExclusionService;
 use App\Oracly\Support\OraclyCache;
 use App\Oracly\Support\HistoryCsv;
+use App\Oracly\Support\RanksHourlyOpportunities;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -15,6 +16,7 @@ use UnitEnum;
 
 class HalfTimeExclusion extends Page
 {
+    use RanksHourlyOpportunities;
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedFlag;
 
     protected static ?string $navigationLabel = 'Excluir resultado HT';
@@ -132,7 +134,11 @@ class HalfTimeExclusion extends Page
         );
         usort($rows, fn (array $a, array $b) => strcmp($a['kickoffAt'] ?? '', $b['kickoffAt'] ?? ''));
 
-        return $rows;
+        return $this->mode === 'upcoming'
+            ? $this->rankUpcomingRowsByHour($rows, fn (array $a, array $b): int => (int) ($b['agreement'] ?? 0) <=> (int) ($a['agreement'] ?? 0)
+                ?: (int) ($b['sourcesAvailable'] ?? 0) <=> (int) ($a['sourcesAvailable'] ?? 0)
+                ?: (float) ($a['probExcluded'] ?? INF) <=> (float) ($b['probExcluded'] ?? INF))
+            : $rows;
     }
 
     /** @return array<string, string> */

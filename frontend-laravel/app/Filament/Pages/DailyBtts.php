@@ -8,6 +8,7 @@ use App\Oracly\Services\PredictionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\HistoryCsv;
 use App\Oracly\Support\OraclyCache;
+use App\Oracly\Support\RanksHourlyOpportunities;
 use BackedEnum;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
@@ -17,6 +18,7 @@ use UnitEnum;
 
 class DailyBtts extends Page
 {
+    use RanksHourlyOpportunities;
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
 
     protected static ?string $navigationLabel = 'BTTS';
@@ -153,12 +155,13 @@ class DailyBtts extends Page
                 && $this->matchesFavorite($row)));
         }
 
-        return array_values(array_filter(
+        $rows = array_values(array_filter(
             $this->rows,
             fn (array $row) => ($row['btts'] ?? null) !== null
                 && (float) $row['btts'] >= $this->minProbability
                 && $this->matchesFavorite($row),
         ));
+        return $this->rankUpcomingRowsByHour($rows, fn (array $a, array $b): int => (float) ($b['btts'] ?? 0) <=> (float) ($a['btts'] ?? 0));
     }
 
     /** @return array<int, array{entries: int, wins: int, reds: int, hitRate: ?float}> */
