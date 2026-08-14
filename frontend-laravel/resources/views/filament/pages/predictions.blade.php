@@ -107,7 +107,11 @@
                         <td class="whitespace-nowrap">{{ $row['kickoffAt'] ? \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('d/m H:i') : '—' }}</td>
                         <td>
                             <div class="font-medium text-gray-950 dark:text-white">{{ $row['homeTeam'] }} x {{ $row['awayTeam'] }}</div>
-                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $row['country'] }} · {{ $row['competition'] }}</div>
+                            @php $leagueKey = ($row['country'] ?? '').'::'.($row['competition'] ?? ''); @endphp
+                            <button type="button" wire:click="toggleLeague({{ json_encode($row['country']) }}, {{ json_encode($row['competition']) }})" wire:loading.attr="disabled" wire:target="toggleLeague" class="flex items-center gap-2 text-left text-xs text-gray-500 hover:text-amber-500 dark:text-gray-400" title="{{ in_array($leagueKey, $favoriteLeagues, true) ? 'Remover liga dos favoritos' : 'Adicionar liga aos favoritos' }}">
+                                {{ $row['country'] }} · {{ $row['competition'] }}
+                                <span class="text-base leading-none {{ in_array($leagueKey, $favoriteLeagues, true) ? 'text-amber-500' : 'text-gray-400 dark:text-gray-500' }}" aria-hidden="true">{{ in_array($leagueKey, $favoriteLeagues, true) ? '★' : '☆' }}</span>
+                            </button>
                         </td>
                         <td class="font-semibold">{{ number_format($row['probability'], 0) }}%</td>
                         @if ($market === 'btts')

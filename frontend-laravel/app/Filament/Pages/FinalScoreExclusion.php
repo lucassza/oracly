@@ -116,6 +116,16 @@ class FinalScoreExclusion extends Page
         }
     }
 
+    public function toggleLeague(string $country, string $competition): void
+    {
+        try {
+            app(FavoritesService::class)->toggleLeague($country, $competition);
+            $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
+        } catch (\Throwable $e) {
+            Notification::make()->title('Erro ao salvar favorito')->body($e->getMessage())->danger()->send();
+        }
+    }
+
     /** @return array<string, string> */
     public function getScoreOptionsProperty(): array
     {

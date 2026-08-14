@@ -83,7 +83,7 @@
                         <td class="whitespace-nowrap">{{ $row['kickoffAt'] ? \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format($mode === 'history' ? 'd/m H:i' : 'H:i') : '—' }}</td>
                         <td class="font-medium text-gray-950 dark:text-white">{{ $row['homeTeam'] }} x {{ $row['awayTeam'] }}</td>
                         <td class="text-gray-500 dark:text-gray-400">
-                            @if ($mode === 'upcoming' && $row['country'] && $row['competition'])
+                            @if ($row['country'] && $row['competition'])
                                 @php $leagueKey = $row['country'].'::'.$row['competition']; @endphp
                                 <button
                                     type="button"
