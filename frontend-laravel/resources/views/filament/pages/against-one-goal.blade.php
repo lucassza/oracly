@@ -1,28 +1,61 @@
 <x-filament-panels::page>
     <x-oracly.page-header eyebrow="Estratégia FT + HT · somente ligas principais">
-        Escolha única: contra 0x1 ou 1x0.
+        Escolha única: contra {{ $this->strategyScoresLabel }}.
 
         <x-slot name="description">
-            Para cada jogo, escolhemos o menos provável entre 0x1 e 1x0 pelas médias de gols pré-jogo. Os cards medem separadamente o resultado no FT e no HT.
+            {{ $this->strategyDescription }}
         </x-slot>
     </x-oracly.page-header>
 
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
     <x-oracly.chip-group :options="$this::THRESHOLDS" :active="$minProbability" method="setMinProbability" />
+    <x-oracly.chip-group :options="$this::SIGNAL_PROFILES" :active="$signalProfile" method="setSignalProfile" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+
+    <p class="text-xs text-gray-500 dark:text-gray-400">
+        @if ($signalProfile === 'baseline')
+            Base atual: apenas o corte O1.5 selecionado.
+        @elseif ($signalProfile === 'balanced')
+            Ataque dos dois lados: exige O2.5, BTTS, média combinada e média ofensiva do time que invalida o placar escolhido.
+        @else
+            Sinal forte: versão mais seletiva, com confirmação adicional e escolha não ambígua entre {{ $this->strategyScoresLabel }}.
+        @endif
+    </p>
 
     @if ($mode === 'history' && $this->bestCutoff)
         <p class="text-sm text-gray-600 dark:text-gray-300">
-            Melhor corte global: <span class="font-semibold text-emerald-700 dark:text-emerald-300">O1.5 ≥ {{ $this->bestCutoff['threshold'] }}% · {{ number_format($this->bestCutoff['hitRate'], 0) }}%</span>
+            Maior acerto no histórico do perfil: <span class="font-semibold text-emerald-700 dark:text-emerald-300">O1.5 ≥ {{ $this->bestCutoff['threshold'] }}% · {{ number_format($this->bestCutoff['hitRate'], 0) }}%</span>
             <span class="text-gray-500 dark:text-gray-400">({{ $this->bestCutoff['wins'] }} greens · {{ $this->bestCutoff['reds'] }} reds / {{ $this->bestCutoff['entries'] }} jogos)</span>
         </p>
     @endif
 
     @if ($mode === 'history')
+    @if ($this->temporalValidation)
+        <div>
+            <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Validação temporal · regra e corte selecionados</h2>
+            <div class="max-w-xl overflow-x-auto">
+                <table class="oracly-table min-w-[30rem] table-fixed">
+                    <thead><tr><th>Período</th><th>Acerto</th><th>Amostra</th></tr></thead>
+                    <tbody>
+                        @foreach (['development' => 'Desenvolvimento · 70% mais antigo', 'validation' => 'Teste · 30% mais recente'] as $key => $label)
+                            @php($stat = $this->temporalValidation[$key])
+                            <tr>
+                                <td>{{ $label }}</td>
+                                <td class="font-semibold">{{ $stat['hitRate'] !== null ? number_format($stat['hitRate'], 1).'%' : '—' }}</td>
+                                <td>{{ $stat['wins'] }} greens · {{ $stat['entries'] }} jogos</td>
+                            </tr>
+                        @endforeach
+                    </tbody>
+                </table>
+            </div>
+            <p class="mt-1 text-xs text-gray-500 dark:text-gray-400">Julgue a regra pelo período de teste; não escolha uma regra apenas pelo resultado de desenvolvimento.</p>
+        </div>
+    @endif
+
     <div>
         <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade por corte O1.5</h2>
         <div class="max-w-7xl space-y-4">
-            @foreach (['1-0' => 'Contra 1x0', '0-1' => 'Contra 0x1'] as $method => $methodLabel)
+            @foreach ($this->methodLabels as $method => $methodLabel)
                 <div>
                     <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $methodLabel }}</h3>
                     <div class="overflow-x-auto">
@@ -54,7 +87,7 @@
     <div>
         <h2 class="mb-2 text-sm font-semibold text-gray-500 dark:text-gray-400">Assertividade no HT por corte O1.5</h2>
         <div class="max-w-7xl space-y-4">
-            @foreach (['1-0' => 'Contra 1x0', '0-1' => 'Contra 0x1'] as $method => $methodLabel)
+            @foreach ($this->methodLabels as $method => $methodLabel)
                 <div>
                     <h3 class="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500 dark:text-gray-400">{{ $methodLabel }}</h3>
                     <div class="overflow-x-auto">
@@ -88,15 +121,15 @@
         <div class="max-w-5xl overflow-x-auto">
             <table class="oracly-table min-w-[42rem] table-fixed">
                 <thead><tr>
-                    @foreach (['1-0' => 'Contra 1x0', '0-1' => 'Contra 0x1'] as $method => $methodLabel)
-                        @foreach (['1-0' => 'HT 1x0', '0-1' => 'HT 0x1', '0-0' => 'HT 0x0'] as $score => $label)
+                    @foreach ($this->methodLabels as $method => $methodLabel)
+                        @foreach ($this->halftimeScoreLabels as $score => $label)
                             <th class="text-center">{{ $methodLabel }} · {{ $label }}</th>
                         @endforeach
                     @endforeach
                 </tr></thead>
                 <tbody><tr>
-                    @foreach (['1-0', '0-1'] as $method)
-                        @foreach (['1-0', '0-1', '0-0'] as $score)
+                    @foreach (array_keys($this->methodLabels) as $method)
+                        @foreach (array_keys($this->halftimeScoreLabels) as $score)
                             <td class="text-center font-semibold">{{ $this->htResultsByMethod[$method][$score] }}</td>
                         @endforeach
                     @endforeach
