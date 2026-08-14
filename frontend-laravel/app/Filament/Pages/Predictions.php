@@ -135,14 +135,7 @@ class Predictions extends Page
     /** @return list<array<string, mixed>> */
     public function getRowsProperty(): array
     {
-        $rows = $this->filterByProbability($this->allRows, $this->minProbability);
-        if ($this->favoriteFilter === 1) {
-            $rows = array_values(array_filter($rows, fn (array $row) => in_array(
-                ($row['country'] ?? '').'::'.($row['competition'] ?? ''),
-                $this->favoriteLeagues,
-                true,
-            )));
-        }
+        $rows = $this->filterByProbability($this->filterByFavorite($this->allRows), $this->minProbability);
 
         return $this->mode === 'history' && $this->scoreFilter !== 'all'
             ? array_values(array_filter($rows, fn (array $row) => $this->scoreKey($row) === $this->scoreFilter))
@@ -171,7 +164,7 @@ class Predictions extends Page
     /** @return array{sampleSize: int, entries: int, wins: ?int, coverage: float, hitRate: ?float} */
     public function getStatsProperty(): array
     {
-        $sampleSize = count($this->allRows);
+        $sampleSize = count($this->filterByFavorite($this->allRows));
         $entries = count($this->rows);
         $wins = $this->mode === 'history' ? count(array_filter($this->rows, fn ($r) => ! empty($r['hit']))) : null;
 
@@ -187,11 +180,12 @@ class Predictions extends Page
     /** @return array<int, array{entries: int, coverage: float, hitRate: ?float}> */
     public function getConfidenceLineProperty(): array
     {
-        $sampleSize = count($this->allRows);
+        $favoriteRows = $this->filterByFavorite($this->allRows);
+        $sampleSize = count($favoriteRows);
         $line = [];
 
         foreach (self::CONFIDENCE_THRESHOLDS as $threshold) {
-            $filtered = $this->filterByProbability($this->allRows, $threshold);
+            $filtered = $this->filterByProbability($favoriteRows, $threshold);
             $entries = count($filtered);
             $wins = $this->mode === 'history' ? count(array_filter($filtered, fn ($r) => ! empty($r['hit']))) : null;
 
@@ -227,7 +221,7 @@ class Predictions extends Page
             }
 
             try {
-                $rows = $service->history($key, (float) $this->minProbability);
+                $rows = $this->filterByFavorite($service->history($key, (float) $this->minProbability));
                 $hits = count(array_filter($rows, fn ($r) => ! empty($r['hit'])));
                 $hitRate = count($rows) > 0 ? ($hits / count($rows)) * 100 : null;
             } catch (\Throwable) {
@@ -254,6 +248,22 @@ class Predictions extends Page
             ($row['halftimeHomeScore'] ?? '—').'-'.($row['halftimeAwayScore'] ?? '—'),
             ($row['homeScore'] ?? '—').'-'.($row['awayScore'] ?? '—'), ! empty($row['hit']) ? 'Green' : 'Red',
         ], $this->rows));
+    }
+
+    /** @param list<array<string, mixed>> $rows
+     * @return list<array<string, mixed>>
+     */
+    private function filterByFavorite(array $rows): array
+    {
+        if ($this->favoriteFilter === 0) {
+            return $rows;
+        }
+
+        return array_values(array_filter($rows, fn (array $row) => in_array(
+            ($row['country'] ?? '').'::'.($row['competition'] ?? ''),
+            $this->favoriteLeagues,
+            true,
+        )));
     }
 
     protected function getHeaderActions(): array

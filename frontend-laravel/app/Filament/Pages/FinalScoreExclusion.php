@@ -88,8 +88,8 @@ class FinalScoreExclusion extends Page
     /** @return array{entries: int, wins: ?int, hitRate: ?float} */
     public function getStatsProperty(): array
     {
-        $entries = count($this->rows);
-        $wins = $this->mode === 'history' ? count(array_filter($this->rows, fn (array $row) => ! empty($row['hit']))) : null;
+        $entries = count($this->filteredRows);
+        $wins = $this->mode === 'history' ? count(array_filter($this->filteredRows, fn (array $row) => ! empty($row['hit']))) : null;
 
         return [
             'entries' => $entries,

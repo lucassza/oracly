@@ -191,7 +191,8 @@ class DailyOver15 extends Page
     {
         $stats = [];
         foreach (array_keys(self::SIGNAL_THRESHOLDS) as $threshold) {
-            $entries = array_filter($this->historyRows, fn (array $row) => (int) ($row['signalScore'] ?? 0) >= $threshold);
+            $entries = array_filter($this->historyRows, fn (array $row) => (int) ($row['signalScore'] ?? 0) >= $threshold
+                && $this->matchesFavorite($row));
             $count = count($entries);
             $wins = count(array_filter($entries, fn (array $row) => ! empty($row['hit'])));
             $reds = $count - $wins;
@@ -251,6 +252,16 @@ class DailyOver15 extends Page
 
             return $row;
         }, app(DailyPickService::class)->forDate($this->date)));
+    }
+
+    /** @param array<string, mixed> $row */
+    private function matchesFavorite(array $row): bool
+    {
+        return $this->favoriteFilter === 0 || in_array(
+            ($row['country'] ?? '').'::'.($row['competition'] ?? ''),
+            $this->favoriteLeagues,
+            true,
+        );
     }
 
     protected function getHeaderActions(): array
