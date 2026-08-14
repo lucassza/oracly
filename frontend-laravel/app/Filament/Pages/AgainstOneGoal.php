@@ -22,9 +22,9 @@ class AgainstOneGoal extends Page
 
     protected static ?string $title = 'Contra 0x1 ou 1x0';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Estratégias';
 
-    protected static ?int $navigationSort = 8;
+    protected static ?int $navigationSort = 4;
 
     protected string $view = 'filament.pages.against-one-goal';
 

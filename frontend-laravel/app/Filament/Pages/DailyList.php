@@ -21,7 +21,7 @@ class DailyList extends Page
 
     protected static ?string $title = 'Lista diária';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação diária';
 
     protected static ?int $navigationSort = 1;
 

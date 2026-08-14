@@ -21,9 +21,9 @@ class FinalScoreExclusion extends Page
 
     protected static ?string $title = 'Excluir dois placares FT';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Estratégias';
 
-    protected static ?int $navigationSort = 6;
+    protected static ?int $navigationSort = 5;
 
     protected string $view = 'filament.pages.final-score-exclusion';
 

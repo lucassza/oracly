@@ -22,9 +22,9 @@ class Over05Ht extends Page
 
     protected static ?string $title = 'Over 0.5 HT';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Estratégias';
 
-    protected static ?int $navigationSort = 9;
+    protected static ?int $navigationSort = 2;
 
     protected string $view = 'filament.pages.over-05-ht';
 

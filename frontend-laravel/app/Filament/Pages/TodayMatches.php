@@ -21,7 +21,7 @@ class TodayMatches extends Page
 
     protected static ?string $title = 'Hoje';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Operação diária';
 
     protected static ?int $navigationSort = 2;
 

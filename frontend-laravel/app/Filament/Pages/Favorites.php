@@ -18,9 +18,9 @@ class Favorites extends Page
 
     protected static ?string $title = 'Favoritos';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Configuração';
 
-    protected static ?int $navigationSort = 5;
+    protected static ?int $navigationSort = 1;
 
     protected string $view = 'filament.pages.favorites';
 

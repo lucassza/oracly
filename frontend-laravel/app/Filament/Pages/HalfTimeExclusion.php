@@ -17,13 +17,13 @@ class HalfTimeExclusion extends Page
 {
     protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedFlag;
 
-    protected static ?string $navigationLabel = '1º Tempo';
+    protected static ?string $navigationLabel = 'Excluir resultado HT';
 
     protected static ?string $title = '1º Tempo';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Estratégias';
 
-    protected static ?int $navigationSort = 4;
+    protected static ?int $navigationSort = 6;
 
     protected string $view = 'filament.pages.half-time-exclusion';
 

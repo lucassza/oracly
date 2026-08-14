@@ -22,9 +22,9 @@ class DailyOver15 extends Page
 
     protected static ?string $title = 'Melhores entradas Over 1.5 FT';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Estratégias';
 
-    protected static ?int $navigationSort = 7;
+    protected static ?int $navigationSort = 3;
 
     protected string $view = 'filament.pages.daily-over15';
 

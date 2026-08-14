@@ -21,7 +21,7 @@ class Predictions extends Page
 
     protected static ?string $title = 'Previsões';
 
-    protected static string | UnitEnum | null $navigationGroup = 'Dashboard';
+    protected static string | UnitEnum | null $navigationGroup = 'Mercados';
 
     protected static ?int $navigationSort = 3;
 
