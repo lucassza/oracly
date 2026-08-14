@@ -6,6 +6,8 @@ use App\Oracly\Services\AgainstOneGoalStrategy;
 use App\Oracly\Services\AgainstThreeOneStrategy;
 use App\Oracly\Services\AgainstTwoGoalsStrategy;
 use App\Oracly\Services\DailyPickService;
+use App\Oracly\Services\FinalScoreExclusionService;
+use App\Oracly\Services\HalfTimeExclusionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\OraclyCache;
 use BackedEnum;
@@ -71,12 +73,15 @@ class DailyDecision extends Page
         $one = app(AgainstOneGoalStrategy::class);
         $two = app(AgainstTwoGoalsStrategy::class);
         $three = app(AgainstThreeOneStrategy::class);
-        $cards = [];
+        $fixtures = [];
+        $byStrategy = [];
         foreach ($rows as $row) {
             if (($row['status'] ?? null) !== 'not_started') {
                 continue;
             }
-            $actions = [];
+            $id = (string) ($row['providerMatchId'] ?? '');
+            if ($id === '') continue;
+            $fixtures[$id] = $row;
             $signalScore = count(array_filter([
                 (float) ($row['over25'] ?? 0) >= 70,
                 (float) ($row['btts'] ?? 0) >= 65,
@@ -84,27 +89,70 @@ class DailyDecision extends Page
                 (float) ($row['over05Percentage'] ?? 0) >= 90,
             ]));
             if ($signalScore >= 2 && is_numeric($row['over15'] ?? null)) {
-                $actions[] = ['label' => 'Over 1.5 FT', 'detail' => $signalScore.'/4 sinais · '.round((float) $row['over15']).'%', 'priority' => (float) $row['over15'] + ($signalScore * 5), 'tone' => 'amber'];
+                $byStrategy['over15'][] = ['fixtureId' => $id, 'label' => 'Over 1.5 FT', 'detail' => $signalScore.'/4 sinais · '.round((float) $row['over15']).'%', 'signalScore' => $signalScore, 'value' => (float) $row['over15'], 'btts' => (float) ($row['btts'] ?? 0), 'kickoffAt' => $row['kickoffAt']];
             }
             if (is_numeric($row['btts'] ?? null) && (float) $row['btts'] >= 55) {
-                $actions[] = ['label' => 'Ambas marcam', 'detail' => round((float) $row['btts']).'%', 'priority' => (float) $row['btts'], 'tone' => 'sky'];
+                $byStrategy['btts'][] = ['fixtureId' => $id, 'label' => 'Ambas marcam', 'detail' => round((float) $row['btts']).'%', 'value' => (float) $row['btts'], 'kickoffAt' => $row['kickoffAt']];
             }
             if (is_numeric($row['over05Ht'] ?? null) && (float) $row['over05Ht'] >= 80) {
-                $actions[] = ['label' => 'Over 0.5 HT', 'detail' => round((float) $row['over05Ht']).'%', 'priority' => (float) $row['over05Ht'], 'tone' => 'emerald'];
+                $byStrategy['over05ht'][] = ['fixtureId' => $id, 'label' => 'Over 0.5 HT', 'detail' => round((float) $row['over05Ht']).'%', 'value' => (float) $row['over05Ht'], 'kickoffAt' => $row['kickoffAt']];
             }
             foreach ([['strategy' => $one, 'name' => 'Contra 0x1/1x0'], ['strategy' => $two, 'name' => 'Contra 0x2/2x0'], ['strategy' => $three, 'name' => 'Contra 3x1/1x3']] as $exact) {
                 $choice = $exact['strategy']->choice($row);
-                if ($choice !== null) {
-                    $actions[] = ['label' => $exact['name'], 'detail' => 'Contra '.str_replace('-', 'x', $choice['score']).' · '.number_format($choice['probability'] * 100, 1).'%', 'priority' => 0.0, 'tone' => 'violet'];
+                if ($choice !== null && (float) ($row['over15'] ?? 0) >= 75) {
+                    $key = match ($exact['name']) { 'Contra 0x1/1x0' => 'against1', 'Contra 0x2/2x0' => 'against2', default => 'against31' };
+                    $byStrategy[$key][] = ['fixtureId' => $id, 'label' => $exact['name'], 'detail' => 'Contra '.str_replace('-', 'x', $choice['score']).' · '.number_format($choice['probability'] * 100, 1).'%', 'exactProbability' => $choice['probability'], 'kickoffAt' => $row['kickoffAt']];
                 }
             }
-            if ($actions === []) continue;
-            usort($actions, fn (array $a, array $b): int => $b['priority'] <=> $a['priority']);
-            $cards[] = [...$row, 'actions' => $actions, 'priority' => $actions[0]['priority'], 'signalScore' => $signalScore];
         }
-        usort($cards, fn (array $a, array $b): int => $b['priority'] <=> $a['priority'] ?: strcmp($a['kickoffAt'] ?? '', $b['kickoffAt'] ?? ''));
+        foreach (app(FinalScoreExclusionService::class)->upcoming(now()->toIso8601String()) as $row) {
+            $id = (string) ($row['providerMatchId'] ?? '');
+            if (isset($fixtures[$id]) && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date) {
+                $byStrategy['final'][] = ['fixtureId' => $id, 'label' => 'Excluir placares FT', 'detail' => implode(' e ', $row['excluded']).' · '.number_format(((float) $row['combinedProbability']) * 100, 1).'%', 'exactProbability' => $row['combinedProbability'], 'kickoffAt' => $row['kickoffAt']];
+            }
+        }
+        foreach (app(HalfTimeExclusionService::class)->upcoming(now()->toIso8601String()) as $row) {
+            $id = (string) ($row['providerMatchId'] ?? '');
+            if (isset($fixtures[$id]) && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date) {
+                $byStrategy['half'][] = ['fixtureId' => $id, 'label' => 'Excluir resultado HT', 'detail' => 'Contra '.strtoupper((string) $row['excluded']).' · acordo '.$row['agreementKey'], 'agreement' => (int) $row['agreement'], 'available' => (int) $row['sourcesAvailable'], 'exactProbability' => (float) ($row['probExcluded'] ?? INF), 'kickoffAt' => $row['kickoffAt']];
+            }
+        }
 
-        return array_slice($cards, 0, 3);
+        $selected = [];
+        foreach ($byStrategy as $key => $actions) {
+            $compare = match ($key) {
+                'over15' => fn (array $a, array $b): int => $b['signalScore'] <=> $a['signalScore'] ?: $b['value'] <=> $a['value'] ?: $b['btts'] <=> $a['btts'],
+                'btts', 'over05ht' => fn (array $a, array $b): int => $b['value'] <=> $a['value'],
+                'half' => fn (array $a, array $b): int => $b['agreement'] <=> $a['agreement'] ?: $b['available'] <=> $a['available'] ?: $a['exactProbability'] <=> $b['exactProbability'],
+                default => fn (array $a, array $b): int => $a['exactProbability'] <=> $b['exactProbability'],
+            };
+            foreach ($this->topThreeByHour($actions, $compare) as $action) {
+                $selected[$action['fixtureId']][] = $action;
+            }
+        }
+        $cards = [];
+        foreach ($selected as $id => $actions) {
+            usort($actions, fn (array $a, array $b): int => $a['rank'] <=> $b['rank'] ?: strcmp($a['label'], $b['label']));
+            $cards[] = [...$fixtures[$id], 'actions' => $actions];
+        }
+        usort($cards, fn (array $a, array $b): int => strcmp($a['kickoffAt'] ?? '', $b['kickoffAt'] ?? ''));
+        return $cards;
+    }
+
+    /** @param list<array<string, mixed>> $actions
+     * @param callable(array<string, mixed>, array<string, mixed>): int $compare
+     * @return list<array<string, mixed>>
+     */
+    private function topThreeByHour(array $actions, callable $compare): array
+    {
+        $groups = [];
+        foreach ($actions as $action) $groups[\Carbon\Carbon::parse($action['kickoffAt'])->timezone('America/Sao_Paulo')->format('Y-m-d H')][] = $action;
+        $selected = [];
+        foreach ($groups as $group) {
+            usort($group, $compare);
+            foreach (array_slice($group, 0, 3) as $rank => $action) $selected[] = [...$action, 'rank' => $rank + 1];
+        }
+        return $selected;
     }
 
     protected function getHeaderActions(): array
