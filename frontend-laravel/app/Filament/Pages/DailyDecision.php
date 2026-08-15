@@ -9,6 +9,7 @@ use App\Oracly\Services\AgainstTwoGoalsStrategy;
 use App\Oracly\Services\DailyPickService;
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Services\HalfTimeExclusionService;
+use App\Oracly\Services\PredictionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\OraclyCache;
 use BackedEnum;
@@ -44,6 +45,9 @@ class DailyDecision extends Page
     /** @var list<array<string, mixed>> */
     public array $cards = [];
 
+    /** @var array<string, float> */
+    public array $historicalHitRates = [];
+
     public function mount(): void
     {
         $this->date = BrasiliaDate::today();
@@ -54,10 +58,12 @@ class DailyDecision extends Page
     {
         try {
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
+            $this->historicalHitRates = $this->historicalHitRates();
             $this->cards = $this->buildCards(app(DailyPickService::class)->forDate($this->date));
         } catch (\Throwable $e) {
             $this->cards = [];
             $this->favoriteLeagues = [];
+            $this->historicalHitRates = [];
             Notification::make()->title('Erro ao montar radar diário')->body($e->getMessage())->danger()->send();
         }
     }
@@ -107,13 +113,13 @@ class DailyDecision extends Page
                 (float) ($row['over05Percentage'] ?? 0) >= 90,
             ]));
             if ($signalScore >= 2 && is_numeric($row['over15'] ?? null)) {
-                $byStrategy['over15'][] = ['fixtureId' => $id, 'label' => 'Radar de gols', 'bet' => 'Over 1.5 FT', 'detail' => $signalScore.'/4 sinais · '.round((float) $row['over15']).'%', 'signalScore' => $signalScore, 'value' => (float) $row['over15'], 'btts' => (float) ($row['btts'] ?? 0), 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['over15'][] = ['fixtureId' => $id, 'label' => 'Radar de gols', 'bet' => 'Over 1.5 FT', 'detail' => $signalScore.'/4 sinais · '.round((float) $row['over15']).'%', 'historyKey' => 'over15', 'signalScore' => $signalScore, 'value' => (float) $row['over15'], 'btts' => (float) ($row['btts'] ?? 0), 'kickoffAt' => $row['kickoffAt']];
             }
             if (is_numeric($row['btts'] ?? null) && (float) $row['btts'] >= 55) {
-                $byStrategy['btts'][] = ['fixtureId' => $id, 'label' => 'Radar BTTS', 'bet' => 'Ambas marcam', 'detail' => round((float) $row['btts']).'%', 'value' => (float) $row['btts'], 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['btts'][] = ['fixtureId' => $id, 'label' => 'Radar BTTS', 'bet' => 'Ambas marcam', 'detail' => round((float) $row['btts']).'%', 'historyKey' => 'btts', 'value' => (float) $row['btts'], 'kickoffAt' => $row['kickoffAt']];
             }
             if (is_numeric($row['over05Ht'] ?? null) && (float) $row['over05Ht'] >= 80) {
-                $byStrategy['over05ht'][] = ['fixtureId' => $id, 'label' => 'Radar 1º tempo', 'bet' => 'Over 0.5 HT', 'detail' => round((float) $row['over05Ht']).'%', 'value' => (float) $row['over05Ht'], 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['over05ht'][] = ['fixtureId' => $id, 'label' => 'Radar 1º tempo', 'bet' => 'Over 0.5 HT', 'detail' => round((float) $row['over05Ht']).'%', 'historyKey' => 'over05ht', 'value' => (float) $row['over05Ht'], 'kickoffAt' => $row['kickoffAt']];
             }
             foreach ([['strategy' => $one, 'name' => 'Contra 0x1/1x0'], ['strategy' => $two, 'name' => 'Contra 0x2/2x0'], ['strategy' => $three, 'name' => 'Contra 3x1/1x3'], ['strategy' => $threeGoals, 'name' => 'Contra 0x3/3x0']] as $exact) {
                 $choice = $exact['strategy']->choice($row);
@@ -124,14 +130,14 @@ class DailyDecision extends Page
                         'Contra 3x1/1x3' => 'against31',
                         default => 'against3',
                     };
-                    $byStrategy[$key][] = ['fixtureId' => $id, 'label' => $exact['name'], 'bet' => 'Contra '.str_replace('-', 'x', $choice['score']), 'detail' => number_format($choice['probability'] * 100, 1).'%', 'exactProbability' => $choice['probability'], 'kickoffAt' => $row['kickoffAt']];
+                    $byStrategy[$key][] = ['fixtureId' => $id, 'label' => $exact['name'], 'bet' => 'Contra '.str_replace('-', 'x', $choice['score']), 'detail' => number_format($choice['probability'] * 100, 1).'%', 'historyKey' => $key.':'.$choice['score'], 'exactProbability' => $choice['probability'], 'kickoffAt' => $row['kickoffAt']];
                 }
             }
         }
         foreach (app(HalfTimeExclusionService::class)->upcoming(now()->toIso8601String()) as $row) {
             $id = (string) ($row['providerMatchId'] ?? '');
             if (isset($fixtures[$id]) && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date) {
-                $byStrategy['half'][] = ['fixtureId' => $id, 'label' => 'Excluir resultado HT', 'bet' => 'Contra '.strtoupper((string) $row['excluded']), 'detail' => 'Acordo '.$row['agreementKey'], 'agreement' => (int) $row['agreement'], 'available' => (int) $row['sourcesAvailable'], 'exactProbability' => (float) ($row['probExcluded'] ?? INF), 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['half'][] = ['fixtureId' => $id, 'label' => 'Excluir resultado HT', 'bet' => 'Contra '.strtoupper((string) $row['excluded']), 'detail' => 'Acordo '.$row['agreementKey'], 'historyKey' => 'half:'.$row['agreementKey'], 'agreement' => (int) $row['agreement'], 'available' => (int) $row['sourcesAvailable'], 'exactProbability' => (float) ($row['probExcluded'] ?? INF), 'kickoffAt' => $row['kickoffAt']];
             }
         }
 
@@ -144,7 +150,7 @@ class DailyDecision extends Page
                 default => fn (array $a, array $b): int => $a['exactProbability'] <=> $b['exactProbability'],
             };
             foreach ($this->topThreeByHour($actions, $compare) as $action) {
-                $selected[$action['fixtureId']][] = $action;
+                $selected[$action['fixtureId']][] = [...$action, 'historicalHitRate' => $this->historicalHitRates[$action['historyKey']] ?? null];
             }
         }
         $cards = [];
@@ -202,6 +208,59 @@ class DailyDecision extends Page
         }
 
         return $selected;
+    }
+
+    /** @return array<string, float> */
+    private function historicalHitRates(): array
+    {
+        $favorites = $this->favoriteLeagues;
+        sort($favorites);
+
+        return OraclyCache::remember(OraclyCache::key('daily-decision:hit-rates:'.md5(implode('|', $favorites))), function () use ($favorites): array {
+            $isFavorite = fn (array $row): bool => in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $favorites, true);
+            $rate = static function (array $rows, callable $isHit): ?float {
+                $entries = count($rows);
+
+                return $entries > 0 ? count(array_filter($rows, $isHit)) / $entries * 100 : null;
+            };
+            $predictions = app(PredictionService::class);
+            $over15History = array_values(array_filter($predictions->history('over_15_ft'), $isFavorite));
+            $rates = [
+                'over15' => $rate(array_values(array_filter($over15History, fn (array $row): bool => (int) ($row['signalScore'] ?? 0) >= 2)), fn (array $row): bool => ! empty($row['hit'])),
+                'btts' => $rate(array_values(array_filter($predictions->history('btts'), fn (array $row): bool => $isFavorite($row) && (float) ($row['probability'] ?? 0) >= 55)), fn (array $row): bool => ! empty($row['hit'])),
+                'over05ht' => $rate(array_values(array_filter($predictions->history('over_05_ht'), fn (array $row): bool => $isFavorite($row) && (float) ($row['probability'] ?? 0) >= 80)), fn (array $row): bool => ! empty($row['hit'])),
+            ];
+
+            foreach ([
+                'against1' => app(AgainstOneGoalStrategy::class),
+                'against2' => app(AgainstTwoGoalsStrategy::class),
+                'against31' => app(AgainstThreeOneStrategy::class),
+                'against3' => app(AgainstThreeGoalsStrategy::class),
+            ] as $key => $strategy) {
+                $byScore = [];
+                foreach ($over15History as $row) {
+                    $choice = $strategy->choice($row);
+                    if ($choice === null || (float) ($row['probability'] ?? 0) < 75 || ! is_numeric($row['homeScore'] ?? null) || ! is_numeric($row['awayScore'] ?? null)) {
+                        continue;
+                    }
+                    $byScore[$choice['score']][] = $row;
+                }
+                foreach ($byScore as $score => $rows) {
+                    $rates[$key.':'.$score] = $rate($rows, fn (array $row): bool => sprintf('%d-%d', $row['homeScore'], $row['awayScore']) !== $score);
+                }
+            }
+
+            foreach (app(HalfTimeExclusionService::class)->history() as $row) {
+                if ($isFavorite($row)) {
+                    $halfRows[$row['agreementKey']][] = $row;
+                }
+            }
+            foreach ($halfRows ?? [] as $agreementKey => $rows) {
+                $rates['half:'.$agreementKey] = $rate($rows, fn (array $row): bool => ! empty($row['hit']));
+            }
+
+            return array_filter($rates, fn (?float $rate): bool => $rate !== null);
+        }, 300);
     }
 
     protected function getHeaderActions(): array

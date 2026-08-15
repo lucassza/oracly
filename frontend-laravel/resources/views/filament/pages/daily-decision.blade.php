@@ -69,7 +69,34 @@
                                                 <span class="rounded-full bg-amber-100 px-2 py-1 dark:bg-amber-400/10">★ Favorita</span>
                                                 <span>{{ count($card['actions']) }} {{ count($card['actions']) === 1 ? 'sinal' : 'sinais' }}</span>
                                             </div>
-                                            <h3 class="text-xl font-bold leading-snug text-gray-950 dark:text-white">{{ $card['homeTeam'] }} <span class="font-medium text-gray-400 dark:text-gray-500">×</span> {{ $card['awayTeam'] }}</h3>
+                                            <div
+                                                x-data="{ copied: '', copy(text, type) { navigator.clipboard.writeText(text).then(() => { this.copied = type; setTimeout(() => this.copied = '', 2000) }) } }"
+                                                class="flex items-start gap-2"
+                                            >
+                                                <h3 class="flex flex-wrap items-center gap-x-1.5 text-xl font-bold leading-snug text-gray-950 dark:text-white">
+                                                    <span class="inline-flex items-center gap-1">
+                                                        {{ $card['homeTeam'] }}
+                                                        <button type="button" x-on:click="copy(@js($card['homeTeam']), 'home')" x-bind:aria-label="copied === 'home' ? 'Time da casa copiado' : 'Copiar time da casa'" x-bind:title="copied === 'home' ? 'Copiado!' : 'Copiar time da casa'" class="inline-flex size-5 items-center justify-center rounded text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200">
+                                                            <x-filament::icon icon="heroicon-m-check" class="size-3.5 text-emerald-500" x-cloak x-show="copied === 'home'" />
+                                                            <x-filament::icon icon="heroicon-m-clipboard-document" class="size-3.5" x-show="copied !== 'home'" />
+                                                        </button>
+                                                    </span>
+                                                    <span class="font-medium text-gray-400 dark:text-gray-500">×</span>
+                                                    <span class="inline-flex items-center gap-1">
+                                                        {{ $card['awayTeam'] }}
+                                                        <button type="button" x-on:click="copy(@js($card['awayTeam']), 'away')" x-bind:aria-label="copied === 'away' ? 'Time visitante copiado' : 'Copiar time visitante'" x-bind:title="copied === 'away' ? 'Copiado!' : 'Copiar time visitante'" class="inline-flex size-5 items-center justify-center rounded text-gray-400 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200">
+                                                            <x-filament::icon icon="heroicon-m-check" class="size-3.5 text-emerald-500" x-cloak x-show="copied === 'away'" />
+                                                            <x-filament::icon icon="heroicon-m-clipboard-document" class="size-3.5" x-show="copied !== 'away'" />
+                                                        </button>
+                                                    </span>
+                                                </h3>
+                                                <div class="mt-0.5 flex shrink-0 items-center gap-1">
+                                                    <button type="button" x-on:click="copy(@js($card['homeTeam'].' × '.$card['awayTeam']), 'match')" x-bind:aria-label="copied === 'match' ? 'Partida copiada' : 'Copiar partida'" x-bind:title="copied === 'match' ? 'Copiado!' : 'Copiar partida'" class="inline-flex items-center gap-1 rounded-md px-1.5 py-1 text-[10px] font-bold text-gray-500 transition hover:bg-gray-100 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:text-gray-400 dark:hover:bg-white/10 dark:hover:text-gray-200">
+                                                        <x-filament::icon icon="heroicon-m-clipboard-document" class="size-3" />
+                                                        <span x-text="copied === 'match' ? 'Copiado!' : 'Partida'"></span>
+                                                    </button>
+                                                </div>
+                                            </div>
                                             <p class="mt-1 truncate text-sm text-gray-500 dark:text-gray-400">{{ $card['country'] }} <span aria-hidden="true">·</span> {{ $card['competition'] }}</p>
                                         </div>
                                         @if ($group['key'] === 'past' && $card['homeScore'] !== null && $card['awayScore'] !== null)
@@ -85,11 +112,14 @@
                                     </div>
                                     <div class="space-y-2 border-t border-gray-100 pt-3 dark:border-white/10">
                                         @foreach ($card['actions'] as $action)
-                                            <div class="{{ $loop->first ? 'border-amber-300 bg-amber-50/80 dark:border-amber-400/40 dark:bg-amber-400/10' : 'border-gray-100 bg-gray-50/70 dark:border-white/[0.08] dark:bg-white/[0.03]' }} flex gap-3 rounded-xl border p-3">
-                                                <span class="flex size-6 shrink-0 items-center justify-center rounded-full text-xs font-bold {{ $loop->first ? 'bg-amber-500 text-white' : 'bg-gray-200 text-gray-600 dark:bg-white/10 dark:text-gray-300' }}">{{ $action['rank'] }}</span>
+                                            <div class="{{ $loop->first ? 'border-amber-300 bg-amber-50/80 dark:border-amber-400/40 dark:bg-amber-400/10' : 'border-gray-100 bg-gray-50/70 dark:border-white/[0.08] dark:bg-white/[0.03]' }} rounded-xl border p-3">
                                                 <div class="min-w-0">
-                                                    <div class="text-base font-bold text-gray-950 dark:text-white">{{ $action['bet'] }}</div>
+                                                    <div class="flex flex-wrap items-center gap-1 text-base font-bold text-gray-950 dark:text-white">
+                                                        <span>{{ $action['bet'] }}</span>
+                                                        <x-oracly.opportunity-rank-badge :rank="$action['rank']" />
+                                                    </div>
                                                     <div class="mt-1 text-xs leading-relaxed text-gray-500 dark:text-gray-400">Estratégia: {{ $action['label'] }} <span aria-hidden="true">·</span> {{ $action['detail'] }}</div>
+                                                    <div class="mt-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">Assertividade histórica: {{ $action['historicalHitRate'] !== null ? number_format($action['historicalHitRate'], 1).'%' : '—' }}</div>
                                                 </div>
                                             </div>
                                         @endforeach
