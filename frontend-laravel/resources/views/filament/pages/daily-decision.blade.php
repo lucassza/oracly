@@ -94,7 +94,6 @@
                                             </div>
                                         @endforeach
                                     </div>
-                                    <p class="mt-4 border-t border-gray-100 pt-3 text-xs text-gray-500 dark:border-white/10 dark:text-gray-400">Confirme escalações, mercado e cotação antes de entrar.</p>
                                 </article>
                             @endforeach
                         </div>
