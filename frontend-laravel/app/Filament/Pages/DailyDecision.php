@@ -6,12 +6,12 @@ use App\Oracly\Services\AgainstOneGoalStrategy;
 use App\Oracly\Services\AgainstThreeOneStrategy;
 use App\Oracly\Services\AgainstTwoGoalsStrategy;
 use App\Oracly\Services\DailyPickService;
-use App\Oracly\Services\FinalScoreExclusionService;
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Services\HalfTimeExclusionService;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\OraclyCache;
 use BackedEnum;
+use Carbon\Carbon;
 use Filament\Actions\Action;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -20,25 +20,25 @@ use UnitEnum;
 
 class DailyDecision extends Page
 {
-    protected static string | BackedEnum | null $navigationIcon = Heroicon::OutlinedChartBar;
+    protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
+
     protected static ?string $navigationLabel = '3 melhores do dia';
+
     protected static ?string $title = 'Radar de decisão diária';
-    protected static string | UnitEnum | null $navigationGroup = 'Operação diária';
+
+    protected static string|UnitEnum|null $navigationGroup = 'Operação diária';
+
     protected static ?int $navigationSort = 0;
+
     protected string $view = 'filament.pages.daily-decision';
 
     public string $date = '';
 
-    public int $favoriteFilter = 0;
-
     /** @var list<string> */
     public array $favoriteLeagues = [];
 
-    /** @var array<int, string> */
-    public const FAVORITE_OPTIONS = [
-        0 => 'Todas as ligas',
-        1 => 'Somente favoritas',
-    ];
+    /** @var list<string> */
+    public const OPEN_STATUSES = ['1st', '2nd', 'et', 'half_time', 'live'];
 
     /** @var list<array<string, mixed>> */
     public array $cards = [];
@@ -79,14 +79,6 @@ class DailyDecision extends Page
         $this->reload();
     }
 
-    public function setFavoriteFilter(int $value): void
-    {
-        if (array_key_exists($value, self::FAVORITE_OPTIONS)) {
-            $this->favoriteFilter = $value;
-            $this->reload();
-        }
-    }
-
     /** @param list<array<string, mixed>> $rows
      * @return list<array<string, mixed>>
      */
@@ -98,14 +90,13 @@ class DailyDecision extends Page
         $fixtures = [];
         $byStrategy = [];
         foreach ($rows as $row) {
-            if (($row['status'] ?? null) !== 'not_started') {
-                continue;
-            }
-            if ($this->favoriteFilter === 1 && ! in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true)) {
+            if (! in_array(($row['country'] ?? '').'::'.($row['competition'] ?? ''), $this->favoriteLeagues, true)) {
                 continue;
             }
             $id = (string) ($row['providerMatchId'] ?? '');
-            if ($id === '') continue;
+            if ($id === '') {
+                continue;
+            }
             $fixtures[$id] = $row;
             $signalScore = count(array_filter([
                 (float) ($row['over25'] ?? 0) >= 70,
@@ -114,32 +105,28 @@ class DailyDecision extends Page
                 (float) ($row['over05Percentage'] ?? 0) >= 90,
             ]));
             if ($signalScore >= 2 && is_numeric($row['over15'] ?? null)) {
-                $byStrategy['over15'][] = ['fixtureId' => $id, 'label' => 'Over 1.5 FT', 'detail' => $signalScore.'/4 sinais · '.round((float) $row['over15']).'%', 'signalScore' => $signalScore, 'value' => (float) $row['over15'], 'btts' => (float) ($row['btts'] ?? 0), 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['over15'][] = ['fixtureId' => $id, 'label' => 'Radar de gols', 'bet' => 'Over 1.5 FT', 'detail' => $signalScore.'/4 sinais · '.round((float) $row['over15']).'%', 'signalScore' => $signalScore, 'value' => (float) $row['over15'], 'btts' => (float) ($row['btts'] ?? 0), 'kickoffAt' => $row['kickoffAt']];
             }
             if (is_numeric($row['btts'] ?? null) && (float) $row['btts'] >= 55) {
-                $byStrategy['btts'][] = ['fixtureId' => $id, 'label' => 'Ambas marcam', 'detail' => round((float) $row['btts']).'%', 'value' => (float) $row['btts'], 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['btts'][] = ['fixtureId' => $id, 'label' => 'Radar BTTS', 'bet' => 'Ambas marcam', 'detail' => round((float) $row['btts']).'%', 'value' => (float) $row['btts'], 'kickoffAt' => $row['kickoffAt']];
             }
             if (is_numeric($row['over05Ht'] ?? null) && (float) $row['over05Ht'] >= 80) {
-                $byStrategy['over05ht'][] = ['fixtureId' => $id, 'label' => 'Over 0.5 HT', 'detail' => round((float) $row['over05Ht']).'%', 'value' => (float) $row['over05Ht'], 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['over05ht'][] = ['fixtureId' => $id, 'label' => 'Radar 1º tempo', 'bet' => 'Over 0.5 HT', 'detail' => round((float) $row['over05Ht']).'%', 'value' => (float) $row['over05Ht'], 'kickoffAt' => $row['kickoffAt']];
             }
             foreach ([['strategy' => $one, 'name' => 'Contra 0x1/1x0'], ['strategy' => $two, 'name' => 'Contra 0x2/2x0'], ['strategy' => $three, 'name' => 'Contra 3x1/1x3']] as $exact) {
                 $choice = $exact['strategy']->choice($row);
                 if ($choice !== null && (float) ($row['over15'] ?? 0) >= 75) {
-                    $key = match ($exact['name']) { 'Contra 0x1/1x0' => 'against1', 'Contra 0x2/2x0' => 'against2', default => 'against31' };
-                    $byStrategy[$key][] = ['fixtureId' => $id, 'label' => $exact['name'], 'detail' => 'Contra '.str_replace('-', 'x', $choice['score']).' · '.number_format($choice['probability'] * 100, 1).'%', 'exactProbability' => $choice['probability'], 'kickoffAt' => $row['kickoffAt']];
+                    $key = match ($exact['name']) {
+                        'Contra 0x1/1x0' => 'against1', 'Contra 0x2/2x0' => 'against2', default => 'against31'
+                    };
+                    $byStrategy[$key][] = ['fixtureId' => $id, 'label' => $exact['name'], 'bet' => 'Contra '.str_replace('-', 'x', $choice['score']), 'detail' => number_format($choice['probability'] * 100, 1).'%', 'exactProbability' => $choice['probability'], 'kickoffAt' => $row['kickoffAt']];
                 }
-            }
-        }
-        foreach (app(FinalScoreExclusionService::class)->upcoming(now()->toIso8601String()) as $row) {
-            $id = (string) ($row['providerMatchId'] ?? '');
-            if (isset($fixtures[$id]) && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date) {
-                $byStrategy['final'][] = ['fixtureId' => $id, 'label' => 'Excluir placares FT', 'detail' => implode(' e ', $row['excluded']).' · '.number_format(((float) $row['combinedProbability']) * 100, 1).'%', 'exactProbability' => $row['combinedProbability'], 'kickoffAt' => $row['kickoffAt']];
             }
         }
         foreach (app(HalfTimeExclusionService::class)->upcoming(now()->toIso8601String()) as $row) {
             $id = (string) ($row['providerMatchId'] ?? '');
             if (isset($fixtures[$id]) && BrasiliaDate::fromKickoff($row['kickoffAt']) === $this->date) {
-                $byStrategy['half'][] = ['fixtureId' => $id, 'label' => 'Excluir resultado HT', 'detail' => 'Contra '.strtoupper((string) $row['excluded']).' · acordo '.$row['agreementKey'], 'agreement' => (int) $row['agreement'], 'available' => (int) $row['sourcesAvailable'], 'exactProbability' => (float) ($row['probExcluded'] ?? INF), 'kickoffAt' => $row['kickoffAt']];
+                $byStrategy['half'][] = ['fixtureId' => $id, 'label' => 'Excluir resultado HT', 'bet' => 'Contra '.strtoupper((string) $row['excluded']), 'detail' => 'Acordo '.$row['agreementKey'], 'agreement' => (int) $row['agreement'], 'available' => (int) $row['sourcesAvailable'], 'exactProbability' => (float) ($row['probExcluded'] ?? INF), 'kickoffAt' => $row['kickoffAt']];
             }
         }
 
@@ -161,22 +148,54 @@ class DailyDecision extends Page
             $cards[] = [...$fixtures[$id], 'actions' => $actions];
         }
         usort($cards, fn (array $a, array $b): int => strcmp($a['kickoffAt'] ?? '', $b['kickoffAt'] ?? ''));
+
         return $cards;
     }
 
+    /** @return list<array<string, mixed>> */
+    public function getCardGroupsProperty(): array
+    {
+        $upcoming = [];
+        $live = [];
+        $past = [];
+
+        foreach ($this->cards as $card) {
+            $status = $card['status'] ?? null;
+
+            if (in_array($status, self::OPEN_STATUSES, true)) {
+                $live[] = $card;
+            } elseif ($status === 'not_started') {
+                $upcoming[] = $card;
+            } else {
+                $past[] = $card;
+            }
+        }
+
+        return [
+            ['key' => 'upcoming', 'title' => 'Próximas', 'description' => 'Partidas que ainda não começaram.', 'cards' => $upcoming],
+            ['key' => 'live', 'title' => 'Em andamento', 'description' => 'Partidas com jogo em curso.', 'cards' => $live],
+            ['key' => 'past', 'title' => 'Finalizadas', 'description' => 'Partidas encerradas.', 'cards' => $past],
+        ];
+    }
+
     /** @param list<array<string, mixed>> $actions
-     * @param callable(array<string, mixed>, array<string, mixed>): int $compare
+     * @param  callable(array<string, mixed>, array<string, mixed>): int  $compare
      * @return list<array<string, mixed>>
      */
     private function topThreeByHour(array $actions, callable $compare): array
     {
         $groups = [];
-        foreach ($actions as $action) $groups[\Carbon\Carbon::parse($action['kickoffAt'])->timezone('America/Sao_Paulo')->format('Y-m-d H')][] = $action;
+        foreach ($actions as $action) {
+            $groups[Carbon::parse($action['kickoffAt'])->timezone('America/Sao_Paulo')->format('Y-m-d H')][] = $action;
+        }
         $selected = [];
         foreach ($groups as $group) {
             usort($group, $compare);
-            foreach (array_slice($group, 0, 3) as $rank => $action) $selected[] = [...$action, 'rank' => $rank + 1];
+            foreach (array_slice($group, 0, 3) as $rank => $action) {
+                $selected[] = [...$action, 'rank' => $rank + 1];
+            }
         }
+
         return $selected;
     }
 
