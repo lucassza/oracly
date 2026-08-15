@@ -5,6 +5,7 @@ namespace Tests\Unit;
 use App\Oracly\Services\AgainstOneGoalStrategy;
 use App\Oracly\Services\AgainstTwoGoalsStrategy;
 use App\Oracly\Services\AgainstThreeOneStrategy;
+use App\Oracly\Services\AgainstThreeGoalsStrategy;
 use PHPUnit\Framework\TestCase;
 
 class AgainstOneGoalStrategyTest extends TestCase
@@ -65,5 +66,15 @@ class AgainstOneGoalStrategyTest extends TestCase
         ]);
 
         $this->assertSame('3-1', $choice['score']);
+    }
+
+    public function test_it_can_choose_the_less_likely_three_goal_score(): void
+    {
+        $choice = (new AgainstThreeGoalsStrategy())->choice([
+            'homeGoalsAverage' => 1.8,
+            'awayGoalsAverage' => 0.9,
+        ]);
+
+        $this->assertSame('0-3', $choice['score']);
     }
 }

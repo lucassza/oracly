@@ -3,6 +3,7 @@
 namespace App\Filament\Pages;
 
 use App\Oracly\Services\AgainstOneGoalStrategy;
+use App\Oracly\Services\AgainstThreeGoalsStrategy;
 use App\Oracly\Services\AgainstThreeOneStrategy;
 use App\Oracly\Services\AgainstTwoGoalsStrategy;
 use App\Oracly\Services\DailyPickService;
@@ -87,6 +88,7 @@ class DailyDecision extends Page
         $one = app(AgainstOneGoalStrategy::class);
         $two = app(AgainstTwoGoalsStrategy::class);
         $three = app(AgainstThreeOneStrategy::class);
+        $threeGoals = app(AgainstThreeGoalsStrategy::class);
         $fixtures = [];
         $byStrategy = [];
         foreach ($rows as $row) {
@@ -113,11 +115,14 @@ class DailyDecision extends Page
             if (is_numeric($row['over05Ht'] ?? null) && (float) $row['over05Ht'] >= 80) {
                 $byStrategy['over05ht'][] = ['fixtureId' => $id, 'label' => 'Radar 1º tempo', 'bet' => 'Over 0.5 HT', 'detail' => round((float) $row['over05Ht']).'%', 'value' => (float) $row['over05Ht'], 'kickoffAt' => $row['kickoffAt']];
             }
-            foreach ([['strategy' => $one, 'name' => 'Contra 0x1/1x0'], ['strategy' => $two, 'name' => 'Contra 0x2/2x0'], ['strategy' => $three, 'name' => 'Contra 3x1/1x3']] as $exact) {
+            foreach ([['strategy' => $one, 'name' => 'Contra 0x1/1x0'], ['strategy' => $two, 'name' => 'Contra 0x2/2x0'], ['strategy' => $three, 'name' => 'Contra 3x1/1x3'], ['strategy' => $threeGoals, 'name' => 'Contra 0x3/3x0']] as $exact) {
                 $choice = $exact['strategy']->choice($row);
                 if ($choice !== null && (float) ($row['over15'] ?? 0) >= 75) {
                     $key = match ($exact['name']) {
-                        'Contra 0x1/1x0' => 'against1', 'Contra 0x2/2x0' => 'against2', default => 'against31'
+                        'Contra 0x1/1x0' => 'against1',
+                        'Contra 0x2/2x0' => 'against2',
+                        'Contra 3x1/1x3' => 'against31',
+                        default => 'against3',
                     };
                     $byStrategy[$key][] = ['fixtureId' => $id, 'label' => $exact['name'], 'bet' => 'Contra '.str_replace('-', 'x', $choice['score']), 'detail' => number_format($choice['probability'] * 100, 1).'%', 'exactProbability' => $choice['probability'], 'kickoffAt' => $row['kickoffAt']];
                 }
