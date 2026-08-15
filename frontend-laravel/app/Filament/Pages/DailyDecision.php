@@ -89,7 +89,7 @@ class DailyDecision extends Page
     /** @param list<array<string, mixed>> $rows
      * @return list<array<string, mixed>>
      */
-    private function buildCards(array $rows): array
+    public function buildCards(array $rows): array
     {
         $one = app(AgainstOneGoalStrategy::class);
         $two = app(AgainstTwoGoalsStrategy::class);
@@ -211,7 +211,7 @@ class DailyDecision extends Page
     }
 
     /** @return array<string, float> */
-    private function historicalHitRates(): array
+    public function historicalHitRates(): array
     {
         $favorites = $this->favoriteLeagues;
         sort($favorites);
