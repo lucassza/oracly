@@ -2,6 +2,7 @@
 
 namespace App\Providers\Filament;
 
+use Andreia\FilamentNordTheme\FilamentNordThemePlugin;
 use App\Filament\Pages\DailyList;
 use Filament\Enums\ThemeMode;
 use Filament\Http\Middleware\Authenticate;
@@ -34,6 +35,7 @@ class AdminPanelProvider extends PanelProvider
                 'primary' => Color::Amber,
             ])
             ->defaultThemeMode(ThemeMode::Dark)
+            ->plugin(FilamentNordThemePlugin::make())
             ->viteTheme('resources/css/filament/admin/theme.css')
             ->navigationGroups([
                 'Operação diária',
