@@ -130,6 +130,10 @@ class DailyDecision extends Page
                         'Contra 3x1/1x3' => 'against31',
                         default => 'against3',
                     };
+                    // O sub-caso "contra 1x0" tem assertividade histórica bem menor que o "contra 0x1" (90,7% vs 96,9%).
+                    if ($key === 'against1' && $choice['score'] === '1-0') {
+                        continue;
+                    }
                     $byStrategy[$key][] = ['fixtureId' => $id, 'label' => $exact['name'], 'bet' => 'Contra '.str_replace('-', 'x', $choice['score']), 'detail' => number_format($choice['probability'] * 100, 1).'%', 'historyKey' => $key.':'.$choice['score'], 'exactProbability' => $choice['probability'], 'kickoffAt' => $row['kickoffAt']];
                 }
             }
