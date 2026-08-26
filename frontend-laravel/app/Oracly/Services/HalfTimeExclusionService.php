@@ -134,6 +134,7 @@ final class HalfTimeExclusionService
                     'agreement' => $pick['agreement'],
                     'sourcesAvailable' => $pick['sourcesAvailable'],
                     'agreementKey' => $key,
+                    'probExcluded' => $pick['probs'][$pick['excluded']] ?? null,
                 ];
             }
 

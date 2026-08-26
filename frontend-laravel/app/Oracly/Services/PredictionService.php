@@ -78,31 +78,34 @@ final class PredictionService
     /**
      * @return list<array<string, mixed>>
      */
-    public function history(string $market, float $minProbability = 0): array
+    public function history(string $market, float $minProbability = 0, int $limit = 1500): array
     {
-        $cacheKey = OraclyCache::key("pred:hist:{$market}:{$minProbability}");
+        $cacheKey = OraclyCache::key("pred:hist:{$market}:{$minProbability}:{$limit}");
 
-        return OraclyCache::remember($cacheKey, fn () => $this->buildHistory($market, $minProbability), 300);
+        return OraclyCache::remember($cacheKey, fn () => $this->buildHistory($market, $minProbability, $limit), 300);
     }
 
     /**
      * @return list<array<string, mixed>>
      */
-    private function buildHistory(string $market, float $minProbability): array
+    private function buildHistory(string $market, float $minProbability, int $limit): array
     {
         $keys = self::MARKETS[$market] ?? self::MARKETS['over_05_ht'];
-        $ids = $this->snapshots->finishedProviderIds(1500);
-        $byFixture = [];
-        foreach ($this->snapshots->allForProviderIds($ids) as $match) {
-            $id = $match['providerMatchId'] ?? null;
-            if (! $id) {
-                continue;
-            }
-            $byFixture[$id][] = $match;
-        }
-
+        $ids = $this->snapshots->finishedProviderIds($limit);
         $rows = [];
-        foreach ($byFixture as $providerMatchId => $snapshots) {
+        foreach (array_chunk($ids, 250) as $providerIds) {
+            $byFixture = [];
+
+            foreach ($this->snapshots->allForProviderIds($providerIds) as $match) {
+                $id = $match['providerMatchId'] ?? null;
+                if (! $id) {
+                    continue;
+                }
+
+                $byFixture[$id][] = $match;
+            }
+
+            foreach ($byFixture as $providerMatchId => $snapshots) {
             usort($snapshots, fn ($a, $b) => strcmp($a['collectedAt'] ?? '', $b['collectedAt'] ?? ''));
             $settled = null;
             foreach (array_reverse($snapshots) as $snap) {
@@ -186,6 +189,7 @@ final class PredictionService
                 'combinedGoalsAverage' => data_get($predicted, 'statistics.combinedGoalsAverage'),
                 'signalScore' => $this->over15SignalScore($predicted),
             ];
+            }
         }
 
         usort($rows, fn ($a, $b) => strcmp($b['kickoffAt'] ?? '', $a['kickoffAt'] ?? ''));

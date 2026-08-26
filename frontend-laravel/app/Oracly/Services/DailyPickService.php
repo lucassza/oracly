@@ -64,6 +64,7 @@ final class DailyPickService
                 'dateBrasilia' => BrasiliaDate::fromKickoff($kickoffAt),
                 'country' => $latest['country'] ?? null,
                 'competition' => $latest['competition'] ?? null,
+                'sourceUrl' => $latest['sourceUrl'] ?? null,
                 'homeTeam' => data_get($latest, 'homeTeam.name', ''),
                 'awayTeam' => data_get($latest, 'awayTeam.name', ''),
                 'status' => $latest['status'] ?? null,

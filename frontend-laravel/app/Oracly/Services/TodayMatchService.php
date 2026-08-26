@@ -2,11 +2,12 @@
 
 namespace App\Oracly\Services;
 
+use App\Oracly\Contracts\DailyMatchesProvider;
 use App\Oracly\Repositories\MatchSnapshotRepository;
 use App\Oracly\Support\OraclyCache;
 use App\Oracly\Support\X7;
 
-final class TodayMatchService
+final class TodayMatchService implements DailyMatchesProvider
 {
     private const GOAL_MARKETS = [
         'gols_1t_05_over',
@@ -142,6 +143,7 @@ final class TodayMatchService
 
         return [
             'providerMatchId' => $match['providerMatchId'] ?? '',
+            'sokkerproUrl' => $match['sourceUrl'] ?? null,
             'kickoffAt' => $match['kickoffAt'] ?? null,
             'country' => $match['country'] ?? null,
             'competition' => $match['competition'] ?? null,
