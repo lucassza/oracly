@@ -132,23 +132,36 @@ class PunterLayListPageTest extends TestCase
      * Brasília, com rank 1/2/3. Só existe para lay_2x2_0x1 (único mercado Punter com kickoff
      * de verdade — os outros dois só têm data, sem hora).
      */
-    public function test_lay_2x2_0x1_agrupa_no_maximo_3_picks_por_hora(): void
+    /**
+     * "Melhor da hora" numera (1, 2, 3...) mas não corta mais — a lista mostra todo mundo,
+     * só o badge 👑/🔥/● é que só aparece pros 3 primeiros de cada hora.
+     */
+    public function test_lay_2x2_0x1_numera_o_rank_por_hora_sem_cortar_a_lista(): void
     {
         $this->actingAs(User::factory()->create());
+
+        $unranked = app(\App\Oracly\Services\PunterLaySignalService::class)->forDate(\App\Oracly\Support\BrasiliaDate::today());
 
         $component = Livewire::test(PunterLayList::class)
             ->call('setMarket', 'lay_2x2_0x1')
             ->call('setMode', 'upcoming');
+        $rows = $component->get('rows');
+
+        // O rank não reduz o volume: mesma quantidade de linhas que o service devolve sem filtro.
+        $this->assertCount(count($unranked), $rows);
 
         $byHour = [];
-        foreach ($component->get('rows') as $row) {
+        foreach ($rows as $row) {
             $hour = \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('Y-m-d H');
             $byHour[$hour][] = $row['rank'];
         }
 
         foreach ($byHour as $hour => $ranks) {
-            $this->assertLessThanOrEqual(3, count($ranks), "Mais de 3 picks na hora {$hour}.");
-            $this->assertSame(range(1, count($ranks)), $ranks, "Ranks fora de ordem na hora {$hour}.");
+            // A lista exibida ordena por horário exato do kickoff, não por rank — dentro de uma
+            // hora Brasília os ranks aparecem espalhados. O que importa é o CONJUNTO: cada hora
+            // tem exatamente uma vez cada rank de 1 até o total de jogos daquela hora.
+            sort($ranks);
+            $this->assertSame(range(1, count($ranks)), $ranks, "Ranks não formam 1..N na hora {$hour}.");
         }
     }
 

@@ -193,8 +193,24 @@
                             @endif
                         </td>
                         <td class="px-4 py-3 font-medium text-gray-950 dark:text-white">
-                            <div class="space-y-1">
-                                <div>{{ $card['homeTeam'] }} <span class="text-gray-400">x</span> {{ $card['awayTeam'] }}</div>
+                            <div x-data="{ copied: '', copy(text, team) { navigator.clipboard.writeText(text).then(() => { this.copied = team; setTimeout(() => this.copied = '', 2000) }) } }" class="space-y-1">
+                                <div class="flex flex-wrap items-center gap-x-1.5">
+                                    <span class="inline-flex items-center gap-1">
+                                        {{ $card['homeTeam'] }}
+                                        <button type="button" x-on:click="copy(@js($card['homeTeam']), 'home')" x-bind:aria-label="copied === 'home' ? 'Time da casa copiado' : 'Copiar time da casa'" x-bind:title="copied === 'home' ? 'Copiado!' : 'Copiar time da casa'" class="inline-flex size-5 items-center justify-center rounded text-gray-400 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200">
+                                            <x-filament::icon icon="heroicon-m-check" class="size-3.5 text-emerald-500" x-cloak x-show="copied === 'home'" />
+                                            <x-filament::icon icon="heroicon-m-clipboard-document" class="size-3.5" x-show="copied !== 'home'" />
+                                        </button>
+                                    </span>
+                                    <span class="text-gray-400">x</span>
+                                    <span class="inline-flex items-center gap-1">
+                                        {{ $card['awayTeam'] }}
+                                        <button type="button" x-on:click="copy(@js($card['awayTeam']), 'away')" x-bind:aria-label="copied === 'away' ? 'Time visitante copiado' : 'Copiar time visitante'" x-bind:title="copied === 'away' ? 'Copiado!' : 'Copiar time visitante'" class="inline-flex size-5 items-center justify-center rounded text-gray-400 transition hover:bg-gray-200 hover:text-gray-700 focus:outline-none focus:ring-2 focus:ring-amber-500 dark:text-gray-500 dark:hover:bg-white/10 dark:hover:text-gray-200">
+                                            <x-filament::icon icon="heroicon-m-check" class="size-3.5 text-emerald-500" x-cloak x-show="copied === 'away'" />
+                                            <x-filament::icon icon="heroicon-m-clipboard-document" class="size-3.5" x-show="copied !== 'away'" />
+                                        </button>
+                                    </span>
+                                </div>
                                 @if (!empty($card['competition']))
                                     <div class="text-xs text-gray-500 dark:text-gray-400">
                                         {{ !empty($card['country']) ? $card['country'].' · ' : '' }}{{ str_replace('_', ' ', $card['competition']) }}

@@ -376,16 +376,20 @@ class PunterLayList extends Page
     }
 
     /**
-     * "Melhor da hora" — mesmo padrão de `DailyLayList::topThreeByHour()` (SokkerPRO): agrupa
-     * por hora Brasília e mantém só os 3 picks mais seguros de cada hora, marcando o rank
-     * (1/2/3) para o badge 👑/🔥/●. Só faz sentido para lay_2x2_0x1 — é o único mercado Punter
-     * com horário de kickoff real; match_history/panel_fixtures só têm data.
+     * "Melhor da hora" — mesmo critério de segurança de `DailyLayList::topThreeByHour()`
+     * (SokkerPRO), mas sem cortar a lista: agrupa por hora Brasília e numera o rank (1, 2, 3...)
+     * de cada pick dentro da hora, do mais seguro pro menos seguro. Mantém TODAS as linhas — o
+     * badge 👑/🔥/● (`opportunity-rank-badge`) só aparece nos ranks 1/2/3, os demais ficam sem
+     * selo mas continuam na lista. Testamos cortar pra top-3 antes: a assertividade mudava só
+     * +0,5pp (95,5%→96,0%) cortando 37% do volume, não valia a perda de visibilidade.
+     * Só faz sentido para lay_2x2_0x1 — é o único mercado Punter com horário de kickoff real;
+     * match_history/panel_fixtures só têm data.
      *
      * @param  list<array<string, mixed>>  $rows
      * @param  callable(array<string, mixed>): float  $metric  Menor valor = pick mais seguro.
      * @return list<array<string, mixed>>
      */
-    private function topThreeByHour(array $rows, callable $metric): array
+    private function rankWithinHour(array $rows, callable $metric): array
     {
         $groups = [];
         foreach ($rows as $row) {
@@ -396,8 +400,8 @@ class PunterLayList extends Page
         $selected = [];
         foreach ($groups as $group) {
             usort($group, fn (array $a, array $b): int => $metric($a) <=> $metric($b));
-            foreach (array_slice($group, 0, 3) as $rank => $row) {
-                $row['rank'] = $rank + 1;
+            foreach ($group as $i => $row) {
+                $row['rank'] = $i + 1;
                 $selected[] = $row;
             }
         }
@@ -508,7 +512,7 @@ class PunterLayList extends Page
             }
             unset($row);
 
-            $rows = $this->topThreeByHour($rows, fn (array $r): float => self::bestOdd($r));
+            $rows = $this->rankWithinHour($rows, fn (array $r): float => self::bestOdd($r));
 
             usort($rows, fn (array $a, array $b): int => strcmp($a['kickoffAt'], $b['kickoffAt'])
                 ?: (($a['oddHome'] ?? INF) <=> ($b['oddHome'] ?? INF)));
@@ -608,7 +612,7 @@ class PunterLayList extends Page
     private function buildHistoryRows(): array
     {
         if ($this->market === 'lay_2x2_0x1') {
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_signals:v3'), function (): array {
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_signals:v4'), function (): array {
                 $rows = app(PunterLaySignalService::class)->history(5000);
                 foreach ($rows as &$row) {
                     $row['dateBrasilia'] = BrasiliaDate::fromKickoff($row['kickoffAt']);
@@ -618,7 +622,7 @@ class PunterLayList extends Page
                 }
                 unset($row);
 
-                return $this->topThreeByHour($rows, fn (array $r): float => self::bestOdd($r));
+                return $this->rankWithinHour($rows, fn (array $r): float => self::bestOdd($r));
             }, 300);
         }
 
