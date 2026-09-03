@@ -117,7 +117,7 @@
 
         @if ($market === 'lay_scores')
             <p class="text-xs text-gray-500 dark:text-gray-400">
-                Combinação automática por partida: LAY 0x2/2x0 + LAY 3x1/1x3 + LAY 0x3/3x0 (a 0x1/1x0 fica de fora — testamos incluir ela, inteira ou só metade, e a assertividade conjunta sempre piora).
+                LAY 0x1/1x0 é sempre a entrada base (91,3% sozinha). As outras (0x2/2x0, 3x1/1x3, 0x3/3x0) só entram como perna extra na mesma partida — marcadas com "extra" — quando a probabilidade daquele placar específico está no top 5% mais seguro da própria estratégia. Carteira medida: 90,8% de assertividade, ~6,6% das partidas ganham perna extra.
             </p>
             <div class="grid grid-cols-2 gap-3 xl:grid-cols-4">
                 <x-oracly.stat-tile :value="$this->jointAccuracyStats['entries']" label="Partidas (conjunto)" />
@@ -250,6 +250,9 @@
                                     <div class="flex flex-wrap items-center gap-1.5">
                                         <span class="rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200">{{ $bet['bet'] }}</span>
                                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ $bet['betMeta'] }}</span>
+                                        @if ($market === 'lay_scores' && ($bet['isExtra'] ?? false))
+                                            <span class="rounded-md bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold uppercase tracking-wide text-sky-700 dark:bg-sky-400/20 dark:text-sky-200">extra</span>
+                                        @endif
                                         <x-oracly.opportunity-rank-badge :rank="$bet['rank']" />
                                         @if ($mode === 'history')
                                             <x-oracly.result-badge :hit="$bet['hit']" />

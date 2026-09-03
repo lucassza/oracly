@@ -4,6 +4,7 @@ namespace Tests\Feature\Punter;
 
 use App\Filament\Pages\PunterLayList;
 use App\Models\User;
+use App\Oracly\Services\AgainstOneGoalStrategy;
 use App\Oracly\Services\AgainstThreeGoalsStrategy;
 use App\Oracly\Services\AgainstThreeOneStrategy;
 use App\Oracly\Services\AgainstTwoGoalsStrategy;
@@ -94,27 +95,43 @@ class PunterLayListPageTest extends TestCase
     }
 
     /**
-     * Mesma ideia acima, mas para o mercado de placar exato — reaproveita a mesma seleção
-     * padrão da página (3 das 4 estratégias Poisson: sem against1/0x1-1x0, a mais fraca —
-     * ver test_selecao_de_ate_3_estrategias_de_placar_exato abaixo).
+     * LAY 0x1/1x0 é sempre a base (1 linha por partida). As outras 3 sub-estratégias só
+     * entram como perna extra quando a probabilidade daquele placar está no top 5% mais
+     * seguro da própria estratégia — mesmos cortes de PunterLayList::EXTRA_LEG_PROBABILITY_CUTOFFS,
+     * medidos via punter:backtest sobre o histórico (ver commit que introduziu isso).
+     */
+    private const EXTRA_LEG_PROBABILITY_CUTOFFS = [
+        'against2' => 0.001824,
+        'against31' => 0.006079,
+        'against3' => 0.001316,
+    ];
+
+    /**
+     * Recalcula (base against1 sempre + extras qualificadas pelo corte) e confere que bate
+     * com o que a página mostra no histórico.
      */
     public function test_historico_lay_scores_bate_com_o_criterio(): void
     {
         $this->actingAs(User::factory()->create());
         OraclyCache::forgetPrefix();
 
-        $strategies = [
-            new AgainstTwoGoalsStrategy,
-            new AgainstThreeOneStrategy,
-            new AgainstThreeGoalsStrategy,
+        $against1 = new AgainstOneGoalStrategy;
+        $extras = [
+            'against2' => new AgainstTwoGoalsStrategy,
+            'against31' => new AgainstThreeOneStrategy,
+            'against3' => new AgainstThreeGoalsStrategy,
         ];
         $expected = 0;
         foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
             if ($row['finalScore'] === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
                 continue;
             }
-            foreach ($strategies as $strategy) {
-                if ($strategy->choice($row) !== null) {
+            if ($against1->choice($row) !== null) {
+                $expected++;
+            }
+            foreach ($extras as $key => $strategy) {
+                $choice = $strategy->choice($row);
+                if ($choice !== null && $choice['probability'] <= self::EXTRA_LEG_PROBABILITY_CUTOFFS[$key]) {
                     $expected++;
                 }
             }
@@ -218,16 +235,14 @@ class PunterLayListPageTest extends TestCase
     }
 
     /**
-     * As 4 sub-estratégias de placar exato podem gerar até 4 apostas na mesma partida — nunca
-     * mais de uma delas falha por jogo (os 4 placares são sempre distintos), então a assertividade
-     * CONJUNTA (nenhuma das apostas escolhidas erra) é sensível a QUAIS 3 entram na combinação.
-     * Testamos deixar o usuário escolher e também escolher dinamicamente a "melhor" por partida
-     * (maior probabilidade bruta, ou por percentil normalizado por estratégia) — as duas formas
-     * dinâmicas deram pior resultado (83-85%) que simplesmente travar SEMPRE a mesma combinação
-     * fixa sem against1/0x1-1x0 (88,3%), então não há seleção nenhuma: a página já indica o
-     * "melhor 3" fixo, sem configuração.
+     * LAY 0x1/1x0 nunca some da lista (é a base, sem corte) — toda partida tem pelo menos essa
+     * aposta. As outras 3 só aparecem, marcadas como perna "extra", quando muito seguras pra
+     * aquela partida específica (top 5% da própria estratégia). Testamos travar sempre as
+     * mesmas 3 (88,3%) e escolher dinamicamente a de maior risco por partida (83-85%) — as
+     * duas formas ficaram piores que ancorar em against1 e só somar extra quando muito
+     * confiante (90,8% medido).
      */
-    public function test_placar_exato_usa_sempre_a_mesma_combinacao_fixa_de_3_estrategias(): void
+    public function test_placar_exato_sempre_tem_a_base_0x1_e_so_soma_extra_quando_muito_confiante(): void
     {
         $this->actingAs(User::factory()->create());
         OraclyCache::forgetPrefix();
@@ -235,28 +250,51 @@ class PunterLayListPageTest extends TestCase
         $component = Livewire::test(PunterLayList::class)
             ->call('setMarket', 'lay_scores')
             ->call('setMode', 'history');
+        $rows = $component->get('historyRows');
 
-        $bets = array_unique(array_map(fn (array $r): string => (string) $r['bet'], $component->get('historyRows')));
-        sort($bets);
-        $this->assertSame(['LAY 0x2', 'LAY 0x3', 'LAY 1x3', 'LAY 2x0', 'LAY 3x0', 'LAY 3x1'], $bets, 'A combinação fixa deve cobrir só against2/against31/against3 — nunca 0x1/1x0.');
+        $byFixtureBets = [];
+        foreach ($rows as $row) {
+            $byFixtureBets[$row['fixtureKey']][] = $row;
+        }
+        $this->assertNotEmpty($byFixtureBets);
 
-        // A assertividade conjunta bate com o critério puro sobre exatamente essas 3 estratégias.
-        $strategies = [
-            new AgainstTwoGoalsStrategy,
-            new AgainstThreeOneStrategy,
-            new AgainstThreeGoalsStrategy,
+        foreach ($byFixtureBets as $fixtureKey => $bets) {
+            $baseBets = array_filter($bets, fn (array $b): bool => ! $b['isExtra']);
+            $this->assertCount(1, $baseBets, "Partida {$fixtureKey} deveria ter exatamente 1 aposta base (0x1/1x0).");
+            foreach ($baseBets as $base) {
+                $this->assertContains($base['bet'], ['LAY 0x1', 'LAY 1x0'], "Base inesperada na partida {$fixtureKey}: {$base['bet']}.");
+            }
+            foreach (array_filter($bets, fn (array $b): bool => $b['isExtra']) as $extra) {
+                $this->assertLessThanOrEqual(self::EXTRA_LEG_PROBABILITY_CUTOFFS[match (true) {
+                    str_contains((string) $extra['bet'], '0x2') || str_contains((string) $extra['bet'], '2x0') => 'against2',
+                    str_contains((string) $extra['bet'], '3x1') || str_contains((string) $extra['bet'], '1x3') => 'against31',
+                    default => 'against3',
+                }], $extra['probability'], "Perna extra na partida {$fixtureKey} ({$extra['bet']}) passou do corte de confiança.");
+            }
+        }
+
+        // A assertividade conjunta bate com o critério puro (base sempre + extras qualificadas).
+        $against1 = new AgainstOneGoalStrategy;
+        $extras = [
+            'against2' => new AgainstTwoGoalsStrategy,
+            'against31' => new AgainstThreeOneStrategy,
+            'against3' => new AgainstThreeGoalsStrategy,
         ];
         $byFixture = [];
         foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
             if ($row['finalScore'] === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
                 continue;
             }
-            foreach ($strategies as $strategy) {
+            $baseChoice = $against1->choice($row);
+            if ($baseChoice === null) {
+                continue;
+            }
+            $byFixture[$row['matchKey']][] = $baseChoice['score'] !== $row['finalScore'];
+            foreach ($extras as $key => $strategy) {
                 $choice = $strategy->choice($row);
-                if ($choice === null) {
-                    continue;
+                if ($choice !== null && $choice['probability'] <= self::EXTRA_LEG_PROBABILITY_CUTOFFS[$key]) {
+                    $byFixture[$row['matchKey']][] = $choice['score'] !== $row['finalScore'];
                 }
-                $byFixture[$row['matchKey']][] = $choice['score'] !== $row['finalScore'];
             }
         }
         $expectedWins = 0;
@@ -269,6 +307,6 @@ class PunterLayListPageTest extends TestCase
 
         $joint = $component->get('jointAccuracyStats');
         $this->assertEqualsWithDelta(count($byFixture), $joint['entries'], 20);
-        $this->assertEqualsWithDelta($expectedHitRate, $joint['hitRate'], 1.0, 'Assertividade conjunta divergiu do critério puro pra essa combinação fixa.');
+        $this->assertEqualsWithDelta($expectedHitRate, $joint['hitRate'], 1.0, 'Assertividade conjunta divergiu do critério puro (base + extras qualificadas).');
     }
 }

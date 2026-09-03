@@ -127,16 +127,23 @@ class PunterLayList extends Page
     public bool $onlyTopOfHour = false;
 
     /**
-     * As 4 sub-estratégias do LAY Placar Exato juntas dão só 79,65% de assertividade
-     * conjunta por partida (uma das 4 errar já derruba a partida inteira). `against1`
-     * (0x1/1x0) é sempre a excluída — é a mais fraca (79,7%→88,3% ao tirar ela), e
-     * testamos alternativas (tirar dinamicamente a de maior risco por partida, tirar só
-     * metade do against1) que sempre deram pior resultado que essa combinação fixa, então
-     * não é configurável pelo usuário — o "melhor 3" já vem indicado.
+     * LAY Placar Exato: `against1` (0x1/1x0) é sempre a base (91,3% sozinha — a mais forte
+     * das 4 isoladamente é against3, mas against1 é quem ancora a carteira aqui por decisão
+     * do usuário). As outras 3 só entram como perna extra na MESMA partida quando a
+     * probabilidade daquele placar específico está no top 5% mais seguro (mais baixo) da
+     * própria estratégia — testamos travar sempre as mesmas 3 juntas (88,3%) e também tirar
+     * dinamicamente a de maior risco por partida (83-85%): ambas piores que essa combinação
+     * seletiva. Medido: carteira final com 90,8% de assertividade, ~6,6% das partidas ganham
+     * perna extra, e essas extras acertam 96,4% isoladas. Cortes calculados 1x sobre o
+     * histórico (ver punter:backtest-lay-scores) e travados aqui — não são configuráveis.
      *
-     * @var list<string>
+     * @var array<string, float>
      */
-    private const EXACT_SCORE_STRATEGY_KEYS = ['against2', 'against31', 'against3'];
+    private const EXTRA_LEG_PROBABILITY_CUTOFFS = [
+        'against2' => 0.001824,
+        'against31' => 0.006079,
+        'against3' => 0.001316,
+    ];
 
     public function mount(): void
     {
@@ -404,6 +411,7 @@ class PunterLayList extends Page
                 'betMeta' => $row['betMeta'],
                 'hit' => $row['hit'] ?? null,
                 'rank' => $row['rank'] ?? null,
+                'isExtra' => $row['isExtra'] ?? false,
             ];
         }
 
@@ -600,9 +608,9 @@ class PunterLayList extends Page
                 }
                 $featureRow = ['homeGoalsAverage' => $form['home'], 'awayGoalsAverage' => $form['away']];
 
-                foreach (self::exactScoreStrategies() as $strategy) {
+                foreach (self::allExactScoreStrategies() as $key => $strategy) {
                     $choice = $strategy->choice($featureRow);
-                    if ($choice === null) {
+                    if ($choice === null || ! self::extraLegQualifies($key, $choice['probability'])) {
                         continue;
                     }
 
@@ -617,6 +625,7 @@ class PunterLayList extends Page
                         'bet' => 'LAY '.str_replace('-', 'x', (string) $choice['score']),
                         'probability' => $choice['probability'],
                         'betMeta' => 'prob. '.number_format($choice['probability'] * 100, 1).'%',
+                        'isExtra' => $key !== 'against1',
                     ];
                 }
             }
@@ -666,21 +675,21 @@ class PunterLayList extends Page
         return 'odd '.number_format($favoriteOdd, 2).($punterAgrees ? ' · Punter concorda' : '');
     }
 
-    /**
-     * As 3 sub-estratégias fixas do LAY Placar Exato — ver EXACT_SCORE_STRATEGY_KEYS.
-     *
-     * @return array<string, AgainstOneGoalStrategy>
-     */
-    private static function exactScoreStrategies(): array
+    /** @return array<string, AgainstOneGoalStrategy> */
+    private static function allExactScoreStrategies(): array
     {
-        $all = [
+        return [
             'against1' => new AgainstOneGoalStrategy,
             'against2' => new AgainstTwoGoalsStrategy,
             'against31' => new AgainstThreeOneStrategy,
             'against3' => new AgainstThreeGoalsStrategy,
         ];
+    }
 
-        return array_intersect_key($all, array_flip(self::EXACT_SCORE_STRATEGY_KEYS));
+    /** against1 (base) sempre qualifica; as outras só entram abaixo do corte — ver EXTRA_LEG_PROBABILITY_CUTOFFS. */
+    private static function extraLegQualifies(string $key, float $probability): bool
+    {
+        return $key === 'against1' || $probability <= (self::EXTRA_LEG_PROBABILITY_CUTOFFS[$key] ?? -1.0);
     }
 
     /** @return list<array<string, mixed>> */
@@ -702,7 +711,7 @@ class PunterLayList extends Page
         }
 
         if ($this->market === 'lay_scores') {
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v5:'.$this->periodFilter), function (): array {
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v6:'.$this->periodFilter), function (): array {
                 $rows = [];
 
                 foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
@@ -711,9 +720,9 @@ class PunterLayList extends Page
                         continue;
                     }
 
-                    foreach (self::exactScoreStrategies() as $strategy) {
+                    foreach (self::allExactScoreStrategies() as $key => $strategy) {
                         $choice = $strategy->choice($row);
-                        if ($choice === null) {
+                        if ($choice === null || ! self::extraLegQualifies($key, $choice['probability'])) {
                             continue;
                         }
 
@@ -729,6 +738,7 @@ class PunterLayList extends Page
                             'probability' => $choice['probability'],
                             'betMeta' => 'prob. '.number_format($choice['probability'] * 100, 1).'%',
                             'hit' => $targetScore !== $choice['score'],
+                            'isExtra' => $key !== 'against1',
                         ];
                     }
                 }
