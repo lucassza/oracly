@@ -32,6 +32,7 @@ final class PunterMatchPickService
                 'gour_lay_fora', 'gour_lay_casa', 'gour_ht_lay_fora', 'gour_ht_lay_casa',
                 'media_gols_total_casa', 'media_gols_total_visitante', 'resultado_ft',
                 'ht_goals_team_a', 'ht_goals_team_b',
+                'odds_1st_half_over05', 'tendencia_over_ht', 'gour_over_05_ht',
             ])
             ->whereNotNull('data_hora_jogo')
             ->orderBy('data_hora_jogo')
@@ -59,6 +60,9 @@ final class PunterMatchPickService
             'htScore' => $row->ht_goals_team_a !== null && $row->ht_goals_team_b !== null
                 ? ((int) $row->ht_goals_team_a).'-'.((int) $row->ht_goals_team_b)
                 : null,
+            'oddOver05Ht' => $row->odds_1st_half_over05 !== null ? (float) $row->odds_1st_half_over05 : null,
+            'punterFlagsOver05Ht' => ! empty($row->tendencia_over_ht),
+            'resultOver05Ht' => $row->gour_over_05_ht !== null ? strtolower($row->gour_over_05_ht) : null,
         ])->all();
     }
 
@@ -115,6 +119,7 @@ final class PunterMatchPickService
             ->select([
                 'match_date', 'match_label', 'home_team', 'away_team', 'league',
                 'opening_odd_home', 'opening_odd_draw', 'opening_odd_away', 'match_odds_tendency',
+                'ht_tendency',
             ])
             ->whereDate('match_date', $dateBrasilia)
             ->orderBy('match_label')
@@ -134,6 +139,9 @@ final class PunterMatchPickService
             'punterFlagsLayCasa' => str_contains((string) $row->match_odds_tendency, 'Lay Casa'),
             'resultLayFora' => null,
             'resultLayCasa' => null,
+            'oddOver05Ht' => null,
+            'punterFlagsOver05Ht' => ! empty($row->ht_tendency),
+            'resultOver05Ht' => null,
         ])->all();
     }
 }
