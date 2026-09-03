@@ -34,6 +34,8 @@ class PunterLayListPageTest extends TestCase
             ['lay_2x2_0x1', 'history'],
             ['lay_casa_fora', 'upcoming'],
             ['lay_casa_fora', 'history'],
+            ['lay_scores', 'upcoming'],
+            ['lay_scores', 'history'],
         ];
     }
 
@@ -62,5 +64,18 @@ class PunterLayListPageTest extends TestCase
 
         // Medido via `php artisan punter:backtest-lay-casa-fora`: balanced fora (2221) + casa (506).
         $this->assertCount(2727, $component->get('historyRows'));
+    }
+
+    public function test_historico_lay_scores_bate_com_o_backtest(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        $component = Livewire::test(PunterLayList::class)
+            ->call('setMarket', 'lay_scores')
+            ->call('setMode', 'history');
+
+        // Medido via `php artisan punter:backtest-lay-scores`: 17617 partidas válidas x 4 estratégias
+        // (cada uma sempre produz um pick, então toda partida válida gera exatamente 4 linhas).
+        $this->assertCount(17617 * 4, $component->get('historyRows'));
     }
 }

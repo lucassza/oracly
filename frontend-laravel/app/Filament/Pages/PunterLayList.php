@@ -2,6 +2,10 @@
 
 namespace App\Filament\Pages;
 
+use App\Oracly\Services\AgainstOneGoalStrategy;
+use App\Oracly\Services\AgainstThreeGoalsStrategy;
+use App\Oracly\Services\AgainstThreeOneStrategy;
+use App\Oracly\Services\AgainstTwoGoalsStrategy;
 use App\Oracly\Services\PunterLayCasaForaStrategy;
 use App\Oracly\Services\PunterLaySignalService;
 use App\Oracly\Services\PunterMatchPickService;
@@ -19,11 +23,16 @@ use UnitEnum;
  * Picks LAY a partir dos dados Punter (schema Postgres `punter`), em paralelo à Lista LAY
  * do SokkerPRO (`DailyLayList`) — não a substitui, os universos de jogos se sobrepõem pouco.
  *
- * Dois mercados, cada um com dois modos (lista do dia / histórico apurado):
+ * Três mercados, cada um com dois modos (lista do dia / histórico apurado):
  *  - LAY 2x2 / LAY 0x1: punter.lay_signals já vem apurado pelo próprio Punter (check_result),
  *    sem Strategy nossa — a linha inteira já é o pick.
  *  - LAY Casa / LAY Fora: critério próprio (PunterLayCasaForaStrategy, odd do favorito) sobre
  *    punter.match_history (apurado) / punter.panel_fixtures (futuro, sem resultado ainda).
+ *  - LAY Placar Exato (0x1..3x0): reaproveita as 4 estratégias Poisson que já existiam para o
+ *    SokkerPRO (AgainstOneGoalStrategy e subclasses, sem alteração), alimentadas com médias de
+ *    gols do Punter — media_gols_total_casa/visitante no histórico, e uma média móvel dos
+ *    últimos 10 jogos (mesma competição) calculada por PunterMatchPickService::teamAverageGoals()
+ *    para os jogos futuros, já que panel_fixtures não traz essa média pronta.
  */
 class PunterLayList extends Page
 {
@@ -71,6 +80,7 @@ class PunterLayList extends Page
     public const MARKET_OPTIONS = [
         'lay_2x2_0x1' => 'LAY 2x2 / LAY 0x1',
         'lay_casa_fora' => 'LAY Casa / LAY Fora',
+        'lay_scores' => 'LAY Placar Exato',
     ];
 
     /** @var array<string, string> */
@@ -367,6 +377,41 @@ class PunterLayList extends Page
             return $rows;
         }
 
+        if ($this->market === 'lay_scores') {
+            $picks = app(PunterMatchPickService::class);
+            $rows = [];
+
+            foreach ($picks->upcoming($this->date) as $row) {
+                $form = $picks->formGoalsAverage($row['homeTeam'], $row['awayTeam'], $row['competition'], $row['matchDate']);
+                if ($form['home'] === null || $form['away'] === null) {
+                    continue;
+                }
+                $featureRow = ['homeGoalsAverage' => $form['home'], 'awayGoalsAverage' => $form['away']];
+
+                foreach (self::exactScoreStrategies() as $strategy) {
+                    $choice = $strategy->choice($featureRow);
+                    if ($choice === null) {
+                        continue;
+                    }
+
+                    $rows[] = [
+                        'matchKey' => $row['matchKey'].'|'.$choice['score'],
+                        'matchLabel' => $row['matchLabel'],
+                        'dateBrasilia' => $row['matchDate'],
+                        'homeTeam' => $row['homeTeam'],
+                        'awayTeam' => $row['awayTeam'],
+                        'competition' => $row['competition'],
+                        'bet' => 'LAY '.str_replace('-', 'x', (string) $choice['score']),
+                        'probability' => $choice['probability'],
+                    ];
+                }
+            }
+
+            usort($rows, fn (array $a, array $b): int => $a['probability'] <=> $b['probability']);
+
+            return $rows;
+        }
+
         $strategy = app(PunterLayCasaForaStrategy::class);
         $rows = [];
 
@@ -395,6 +440,17 @@ class PunterLayList extends Page
         return $rows;
     }
 
+    /** @return array<string, AgainstOneGoalStrategy> */
+    private static function exactScoreStrategies(): array
+    {
+        return [
+            'against1' => new AgainstOneGoalStrategy,
+            'against2' => new AgainstTwoGoalsStrategy,
+            'against31' => new AgainstThreeOneStrategy,
+            'against3' => new AgainstThreeGoalsStrategy,
+        ];
+    }
+
     /** @return list<array<string, mixed>> */
     private function buildHistoryRows(): array
     {
@@ -404,6 +460,39 @@ class PunterLayList extends Page
                 foreach ($rows as &$row) {
                     $row['dateBrasilia'] = BrasiliaDate::fromKickoff($row['kickoffAt']);
                     $row['competitionLabel'] = trim(($row['country'] ?? '').' · '.($row['competition'] ?? ''), ' ·');
+                }
+
+                return $rows;
+            }, 300);
+        }
+
+        if ($this->market === 'lay_scores') {
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores'), function (): array {
+                $rows = [];
+
+                foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
+                    if ($row['finalScore'] === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
+                        continue;
+                    }
+
+                    foreach (self::exactScoreStrategies() as $strategy) {
+                        $choice = $strategy->choice($row);
+                        if ($choice === null) {
+                            continue;
+                        }
+
+                        $rows[] = [
+                            'matchKey' => $row['matchKey'].'|'.$choice['score'],
+                            'dateBrasilia' => $row['matchDate'],
+                            'homeTeam' => $row['homeTeam'],
+                            'awayTeam' => $row['awayTeam'],
+                            'competition' => $row['competition'],
+                            'competitionLabel' => str_replace('_', ' ', (string) $row['competition']),
+                            'bet' => 'LAY '.str_replace('-', 'x', (string) $choice['score']),
+                            'probability' => $choice['probability'],
+                            'hit' => $row['finalScore'] !== $choice['score'],
+                        ];
+                    }
                 }
 
                 return $rows;

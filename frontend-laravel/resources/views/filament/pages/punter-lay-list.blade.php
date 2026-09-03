@@ -34,7 +34,13 @@
         <x-slot name="description">
             @if ($mode === 'upcoming')
                 {{ \Carbon\Carbon::parse($date)->format('d/m/Y') }} ·
-                {{ $market === 'lay_2x2_0x1' ? 'placar exato apurado pelo próprio Punter' : 'critério próprio por odd do favorito' }}.
+                @if ($market === 'lay_2x2_0x1')
+                    placar exato apurado pelo próprio Punter.
+                @elseif ($market === 'lay_scores')
+                    placar exato via Poisson (AgainstOneGoalStrategy e subclasses), médias de gols do Punter.
+                @else
+                    critério próprio por odd do favorito.
+                @endif
             @else
                 Histórico apurado direto do schema <code>punter</code> — sem sobreposição relevante com o SokkerPRO.
             @endif
@@ -46,7 +52,7 @@
 
     @if ($market === 'lay_2x2_0x1')
         <x-oracly.chip-group :options="$this::RADAR_OPTIONS" :active="$radarFilter" method="setRadarFilter" />
-    @else
+    @elseif ($market === 'lay_casa_fora')
         <x-oracly.chip-group :options="$this::PROFILE_OPTIONS" :active="$profileFilter" method="setProfileFilter" />
     @endif
 
@@ -204,6 +210,8 @@
                                     <span class="rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200">{{ $row['bet'] }}</span>
                                     @if ($market === 'lay_2x2_0x1')
                                         <span class="text-xs text-gray-500 dark:text-gray-400">{{ $row['oddHome'] ?? '—' }} / {{ $row['oddAway'] ?? '—' }}</span>
+                                    @elseif ($market === 'lay_scores')
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">prob. {{ number_format($row['probability'] * 100, 1) }}%</span>
                                     @else
                                         <span class="text-xs text-gray-500 dark:text-gray-400">odd {{ number_format($row['favoriteOdd'], 2) }}</span>
                                         @if ($row['punterAgrees'])
