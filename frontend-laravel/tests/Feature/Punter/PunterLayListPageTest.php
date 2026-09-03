@@ -94,14 +94,17 @@ class PunterLayListPageTest extends TestCase
         $this->assertEqualsWithDelta($expected, $actual, 5, "Esperado ~{$expected}, veio {$actual} — diferença grande demais pra ser só sync do cron.");
     }
 
-    /** Mesma ideia acima, mas para o mercado de placar exato (as 4 estratégias Poisson). */
+    /**
+     * Mesma ideia acima, mas para o mercado de placar exato — reaproveita a mesma seleção
+     * padrão da página (3 das 4 estratégias Poisson: sem against1/0x1-1x0, a mais fraca —
+     * ver test_selecao_de_ate_3_estrategias_de_placar_exato abaixo).
+     */
     public function test_historico_lay_scores_bate_com_o_criterio(): void
     {
         $this->actingAs(User::factory()->create());
         OraclyCache::forgetPrefix();
 
         $strategies = [
-            new AgainstOneGoalStrategy,
             new AgainstTwoGoalsStrategy,
             new AgainstThreeOneStrategy,
             new AgainstThreeGoalsStrategy,
@@ -213,5 +216,62 @@ class PunterLayListPageTest extends TestCase
         foreach ($on->get('filteredHistoryRows') as $row) {
             $this->assertLessThanOrEqual(3, $row['rank'], 'Achei uma linha com rank > 3 com o filtro ligado.');
         }
+    }
+
+    /**
+     * As 4 sub-estratégias de placar exato podem gerar até 4 apostas na mesma partida — nunca
+     * mais de uma delas falha por jogo (os 4 placares são sempre distintos), então a assertividade
+     * CONJUNTA (nenhuma das apostas escolhidas erra) é sensível a QUAIS 3 entram na combinação.
+     * O usuário optou por travar em no máximo 3 das 4, com a 0x1/1x0 fora por padrão (a mais fraca).
+     */
+    public function test_selecao_de_ate_3_estrategias_de_placar_exato(): void
+    {
+        $this->actingAs(User::factory()->create());
+        OraclyCache::forgetPrefix();
+
+        $default = Livewire::test(PunterLayList::class)
+            ->call('setMarket', 'lay_scores')
+            ->call('setMode', 'history');
+        $default->assertSet('selectedScoreStrategies', ['against2', 'against31', 'against3']);
+
+        // Tentar uma 4ª com as 3 padrão já selecionadas: fica bloqueado em 3.
+        $blocked = $default->call('toggleScoreStrategy', 'against1');
+        $this->assertCount(3, $blocked->get('selectedScoreStrategies'));
+        $this->assertNotContains('against1', $blocked->get('selectedScoreStrategies'));
+
+        // Tirar uma e então adicionar against1: troca livre enquanto <= 3.
+        $swapped = $default->call('toggleScoreStrategy', 'against2')->call('toggleScoreStrategy', 'against1');
+        $swapped->assertSet('selectedScoreStrategies', ['against31', 'against3', 'against1']);
+
+        // A assertividade conjunta recalcula pra bater com o critério puro sobre as mesmas 3 estratégias.
+        $strategies = [
+            'against31' => new AgainstThreeOneStrategy,
+            'against3' => new AgainstThreeGoalsStrategy,
+            'against1' => new AgainstOneGoalStrategy,
+        ];
+        $byFixture = [];
+        foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
+            if ($row['finalScore'] === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
+                continue;
+            }
+            foreach ($strategies as $strategy) {
+                $choice = $strategy->choice($row);
+                if ($choice === null) {
+                    continue;
+                }
+                $byFixture[$row['matchKey']][] = $choice['score'] !== $row['finalScore'];
+            }
+        }
+        $expectedWins = 0;
+        foreach ($byFixture as $hits) {
+            if (! in_array(false, $hits, true)) {
+                $expectedWins++;
+            }
+        }
+        $expectedHitRate = count($byFixture) > 0 ? round($expectedWins / count($byFixture) * 100, 4) : null;
+
+        $joint = $swapped->get('jointAccuracyStats');
+        $this->assertEqualsWithDelta(count($byFixture), $joint['entries'], 20);
+        $this->assertEqualsWithDelta($expectedHitRate, $joint['hitRate'], 1.0, 'Assertividade conjunta divergiu do critério puro pra essa combinação de 3 estratégias.');
     }
 }

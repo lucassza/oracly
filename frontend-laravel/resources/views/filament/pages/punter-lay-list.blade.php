@@ -68,6 +68,22 @@
         </label>
     @endif
 
+    @if ($market === 'lay_scores')
+        <div class="rounded-xl border border-gray-200 bg-white p-3 shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <p class="mb-2 text-xs font-semibold text-gray-500 dark:text-gray-400">
+                Sub-estratégias combinadas nesta partida (máx. 3 — as 4 juntas dão só 79,7% de assertividade conjunta; tirando a 0x1/1x0 sobe pra 88,3%):
+            </p>
+            <div class="flex flex-wrap gap-3">
+                @foreach ($this::SCORE_STRATEGY_OPTIONS as $key => $label)
+                    <label class="inline-flex items-center gap-1.5 text-sm">
+                        <input type="checkbox" wire:click="toggleScoreStrategy('{{ $key }}')" @checked(in_array($key, $selectedScoreStrategies, true)) class="rounded border-gray-300 text-amber-500 focus:ring-amber-500 dark:border-white/20 dark:bg-white/10" />
+                        <span class="text-gray-700 dark:text-gray-200">{{ $label }}</span>
+                    </label>
+                @endforeach
+            </div>
+        </div>
+    @endif
+
     @if ($mode === 'upcoming')
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
@@ -114,6 +130,15 @@
             <x-oracly.stat-tile :value="$this->historyStats['reds']" label="Reds" />
             <x-oracly.stat-tile :value="$this->historyStats['hitRate'] !== null ? number_format($this->historyStats['hitRate'], 1).'%' : '—'" label="Assertividade" accent />
         </div>
+
+        @if ($market === 'lay_scores')
+            <div class="grid grid-cols-2 gap-3 xl:grid-cols-4">
+                <x-oracly.stat-tile :value="$this->jointAccuracyStats['entries']" label="Partidas (conjunto)" />
+                <x-oracly.stat-tile :value="$this->jointAccuracyStats['wins']" label="Todas as apostas acertaram" />
+                <x-oracly.stat-tile :value="$this->jointAccuracyStats['reds']" label="Pelo menos 1 errou" />
+                <x-oracly.stat-tile :value="$this->jointAccuracyStats['hitRate'] !== null ? number_format($this->jointAccuracyStats['hitRate'], 1).'%' : '—'" label="Assertividade conjunta" accent />
+            </div>
+        @endif
 
         @if (count($this->historyStrategyStats))
             <section>

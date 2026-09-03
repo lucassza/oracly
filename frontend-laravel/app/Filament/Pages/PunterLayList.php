@@ -126,6 +126,25 @@ class PunterLayList extends Page
      */
     public bool $onlyTopOfHour = false;
 
+    /**
+     * As 4 sub-estratégias do LAY Placar Exato juntas dão só 79,65% de assertividade
+     * conjunta por partida (uma das 4 errar já derruba a partida inteira). Por isso o
+     * padrão já vem sem `against1` (0x1/1x0, a mais fraca) — sobe pra 88,3%.
+     *
+     * @var array<string, string>
+     */
+    public const SCORE_STRATEGY_OPTIONS = [
+        'against1' => 'LAY 0x1/1x0',
+        'against2' => 'LAY 0x2/2x0',
+        'against31' => 'LAY 3x1/1x3',
+        'against3' => 'LAY 0x3/3x0',
+    ];
+
+    private const MAX_SCORE_STRATEGIES = 3;
+
+    /** @var list<string> */
+    public array $selectedScoreStrategies = ['against2', 'against31', 'against3'];
+
     public function mount(): void
     {
         $this->date = BrasiliaDate::today();
@@ -215,6 +234,26 @@ class PunterLayList extends Page
     {
         $this->onlyTopOfHour = ! $this->onlyTopOfHour;
         $this->resetHistoryPage();
+    }
+
+    public function toggleScoreStrategy(string $key): void
+    {
+        if (! array_key_exists($key, self::SCORE_STRATEGY_OPTIONS)) {
+            return;
+        }
+
+        if (in_array($key, $this->selectedScoreStrategies, true)) {
+            $this->selectedScoreStrategies = array_values(array_diff($this->selectedScoreStrategies, [$key]));
+        } elseif (count($this->selectedScoreStrategies) < self::MAX_SCORE_STRATEGIES) {
+            $this->selectedScoreStrategies[] = $key;
+        } else {
+            Notification::make()->title('Máximo de 3 estratégias')->body('Desmarque uma antes de marcar outra — juntar as 4 derruba a assertividade conjunta (79,65% vs 88,3% com 3).')->warning()->send();
+
+            return;
+        }
+
+        $this->resetHistoryPage();
+        $this->reload();
     }
 
     public function updatedHistoryFrom(): void
@@ -468,6 +507,40 @@ class PunterLayList extends Page
         ];
     }
 
+    /**
+     * Só pro LAY Placar Exato: agrupa por partida e mede quantas partidas tiveram TODAS as
+     * apostas selecionadas acertando ao mesmo tempo — a métrica que interessa quando se
+     * combina várias sub-estratégias na mesma partida (uma errar já derruba o conjunto).
+     *
+     * @return array{entries: int, wins: int, reds: int, hitRate: ?float}
+     */
+    public function getJointAccuracyStatsProperty(): array
+    {
+        if ($this->market !== 'lay_scores') {
+            return ['entries' => 0, 'wins' => 0, 'reds' => 0, 'hitRate' => null];
+        }
+
+        $byFixture = [];
+        foreach ($this->filteredHistoryRows as $row) {
+            $byFixture[$row['fixtureKey']][] = $row['hit'];
+        }
+
+        $entries = count($byFixture);
+        $wins = 0;
+        foreach ($byFixture as $hits) {
+            if (! in_array(false, $hits, true)) {
+                $wins++;
+            }
+        }
+
+        return [
+            'entries' => $entries,
+            'wins' => $wins,
+            'reds' => $entries - $wins,
+            'hitRate' => $entries > 0 ? ($wins / $entries) * 100 : null,
+        ];
+    }
+
     /** @return list<array{strategy: string, entries: int, wins: int, reds: int, hitRate: ?float}> */
     public function getHistoryStrategyStatsProperty(): array
     {
@@ -554,7 +627,7 @@ class PunterLayList extends Page
                 }
                 $featureRow = ['homeGoalsAverage' => $form['home'], 'awayGoalsAverage' => $form['away']];
 
-                foreach (self::exactScoreStrategies() as $strategy) {
+                foreach ($this->exactScoreStrategies() as $strategy) {
                     $choice = $strategy->choice($featureRow);
                     if ($choice === null) {
                         continue;
@@ -621,7 +694,7 @@ class PunterLayList extends Page
     }
 
     /** @return array<string, AgainstOneGoalStrategy> */
-    private static function exactScoreStrategies(): array
+    private static function allExactScoreStrategies(): array
     {
         return [
             'against1' => new AgainstOneGoalStrategy,
@@ -629,6 +702,18 @@ class PunterLayList extends Page
             'against31' => new AgainstThreeOneStrategy,
             'against3' => new AgainstThreeGoalsStrategy,
         ];
+    }
+
+    /**
+     * Só as estratégias marcadas em `$selectedScoreStrategies` — usar todas as 4 ao mesmo
+     * tempo dá só 79,65% de assertividade conjunta por partida (basta UMA das 4 errar pra
+     * derrubar a partida inteira). Tirando a mais fraca (against1, 0x1/1x0) sobe pra 88,3%.
+     *
+     * @return array<string, AgainstOneGoalStrategy>
+     */
+    private function exactScoreStrategies(): array
+    {
+        return array_intersect_key(self::allExactScoreStrategies(), array_flip($this->selectedScoreStrategies));
     }
 
     /** @return list<array<string, mixed>> */
@@ -650,7 +735,9 @@ class PunterLayList extends Page
         }
 
         if ($this->market === 'lay_scores') {
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v3:'.$this->periodFilter), function (): array {
+            $strategyKey = implode(',', $this->selectedScoreStrategies);
+
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v4:'.$this->periodFilter.':'.$strategyKey), function (): array {
                 $rows = [];
 
                 foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
@@ -659,7 +746,7 @@ class PunterLayList extends Page
                         continue;
                     }
 
-                    foreach (self::exactScoreStrategies() as $strategy) {
+                    foreach ($this->exactScoreStrategies() as $strategy) {
                         $choice = $strategy->choice($row);
                         if ($choice === null) {
                             continue;
