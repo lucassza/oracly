@@ -77,7 +77,7 @@
             </div>
         </div>
 
-        @if ($market === 'lay_2x2_0x1')
+        @if (count($this->hours) > 0)
             <div class="oracly-hour-filter -mx-4 overflow-x-auto px-4 sm:mx-0 sm:px-0">
                 <div class="flex w-max gap-2 pb-1">
                     <button type="button" wire:click="setHourFilter('all')" class="oracly-hour-filter__button {{ $hourFilter === 'all' ? 'is-active' : '' }} rounded-full px-3 py-1.5 text-sm font-semibold transition hover:opacity-85">Todos</button>

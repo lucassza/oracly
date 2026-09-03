@@ -96,7 +96,9 @@ class PunterMatchPickServiceTest extends TestCase
         $match = collect($upcoming)->firstWhere('matchKey', $row->match_date.'|'.$row->home_team.'|'.$row->away_team);
 
         $this->assertNotNull($match, 'Pré-condição: a linha usada no teste precisa aparecer em upcoming() pra mesma data.');
-        $this->assertSame($row->match_date.' '.$m[3].':'.$m[4].':00', $match['kickoffAt']);
+        // kickoffAt vem em UTC (label é horário de Brasília, -03:00) — reconvertendo pra
+        // America/Sao_Paulo tem que devolver exatamente a hora crua do label.
+        $this->assertSame($m[3].':'.$m[4], \Carbon\Carbon::parse($match['kickoffAt'])->timezone('America/Sao_Paulo')->format('H:i'));
     }
 
     public function test_upcoming_devolve_kickoff_null_quando_o_label_nao_tem_horario_reconhecivel(): void
@@ -108,6 +110,10 @@ class PunterMatchPickServiceTest extends TestCase
 
         $this->assertNull($reflection->invoke($service, '2026-08-30', 'Time A x Time B sem horário'));
         $this->assertNull($reflection->invoke($service, '', '30/08 22:20 Time A x Time B'));
-        $this->assertSame('2026-08-30 22:20:00', $reflection->invoke($service, '2026-08-30', '30/08 22:20 Time A x Time B'));
+        $this->assertNull($reflection->invoke($service, '2026-08-30', '30/08 99:99 Time A x Time B'));
+
+        // Devolve em UTC (Brasília é UTC-03:00) — reconvertendo pra America/Sao_Paulo bate com o label.
+        $kickoffAt = $reflection->invoke($service, '2026-08-30', '30/08 22:20 Time A x Time B');
+        $this->assertSame('22:20', \Carbon\Carbon::parse($kickoffAt)->timezone('America/Sao_Paulo')->format('H:i'));
     }
 }

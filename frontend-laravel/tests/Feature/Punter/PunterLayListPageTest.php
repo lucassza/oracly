@@ -57,6 +57,37 @@ class PunterLayListPageTest extends TestCase
         }
     }
 
+    /**
+     * As tabs de hora (antes só em lay_2x2_0x1) agora existem pros 3 mercados na lista
+     * diária, já que os 3 têm kickoffAt real. Filtrar por uma hora tem que sobrar só jogos
+     * daquela hora Brasília — nunca mais linhas do que sem filtro.
+     */
+    public function test_tabs_de_hora_filtram_a_lista_diaria_nos_3_mercados(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        foreach (['lay_2x2_0x1', 'lay_casa_fora', 'lay_scores'] as $market) {
+            $component = Livewire::test(PunterLayList::class)
+                ->call('setMarket', $market)
+                ->call('setMode', 'upcoming');
+
+            $hours = $component->get('hours');
+            if (count($hours) === 0) {
+                continue;
+            }
+
+            $totalUnfiltered = count($component->get('filteredRows'));
+            $filtered = $component->call('setHourFilter', $hours[0]);
+            $rows = $filtered->get('filteredRows');
+
+            $this->assertNotEmpty($rows, "Filtrar {$market} pela hora {$hours[0]} não deveria zerar a lista.");
+            $this->assertLessThanOrEqual($totalUnfiltered, count($rows));
+            foreach ($rows as $row) {
+                $this->assertSame($hours[0], \App\Oracly\Support\BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']), "Linha fora da hora {$hours[0]} em {$market}.");
+            }
+        }
+    }
+
     /** @return list<list<string>> */
     public static function marketModeCombos(): array
     {

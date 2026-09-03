@@ -277,16 +277,19 @@ class PunterLayList extends Page
         }
     }
 
-    /** @return list<string> */
+    /**
+     * lay_casa_fora e lay_scores também têm kickoffAt real na lista diária desde que
+     * PunterMatchPickService::upcoming() passou a extrair a hora de match_label — por isso
+     * as tabs de hora valem pros 3 mercados agora, não só lay_2x2_0x1. Linhas sem kickoffAt
+     * (label malformado) ficam de fora do filtro em vez de quebrar o parse.
+     *
+     * @return list<string>
+     */
     public function getHoursProperty(): array
     {
-        if ($this->market !== 'lay_2x2_0x1') {
-            return [];
-        }
-
         $hours = array_values(array_unique(array_map(
             fn (array $row): string => BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']),
-            $this->rows,
+            array_filter($this->rows, fn (array $row): bool => ! empty($row['kickoffAt'])),
         )));
         sort($hours);
 
@@ -298,10 +301,10 @@ class PunterLayList extends Page
     {
         $rows = $this->rows;
 
-        if ($this->market === 'lay_2x2_0x1' && $this->hourFilter !== 'all') {
+        if ($this->hourFilter !== 'all') {
             $rows = array_values(array_filter(
                 $rows,
-                fn (array $row): bool => BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']) === $this->hourFilter,
+                fn (array $row): bool => ! empty($row['kickoffAt']) && BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']) === $this->hourFilter,
             ));
         }
 

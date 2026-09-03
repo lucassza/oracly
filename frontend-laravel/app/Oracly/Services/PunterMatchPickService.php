@@ -3,6 +3,8 @@
 namespace App\Oracly\Services;
 
 use App\Oracly\Support\PunterDb;
+use Carbon\Carbon;
+use Carbon\Exceptions\InvalidFormatException;
 
 /**
  * Normaliza punter.match_history (apurado) e punter.panel_fixtures (futuro) para o
@@ -152,14 +154,32 @@ final class PunterMatchPickService
      * horário embutido no texto (ex.: "30/08 22:20 Deportivo Cali x Atlético Bucaramanga",
      * já em horário de Brasília, mesma convenção do resto do painel Punter). `match_date`
      * garante o ano correto (o label só tem DD/MM). Linhas malformadas (label vazio, sem
-     * horário reconhecível) voltam null — o chamador cai de volta pra exibir só a data.
+     * horário reconhecível, data inválida) voltam null — o chamador cai de volta pra exibir
+     * só a data.
+     *
+     * Devolve em UTC (não em horário local "cru") porque todo o resto do painel — inclusive
+     * BrasiliaDate::hourLabelFromKickoff() e a própria view Blade — assume que `kickoffAt`
+     * é um instante absoluto e sempre reconverte pra America/Sao_Paulo na exibição (mesma
+     * convenção de lay_signals.kickoff_at, que já vem em UTC do Postgres). Guardar a hora
+     * "crua" aqui faria esse -03:00 ser aplicado de novo, atrasando o horário exibido em 3h.
      */
     private function parseKickoffAt(string $matchDate, string $matchLabel): ?string
     {
-        if ($matchDate === '' || preg_match('/^(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/', $matchLabel, $m) !== 1) {
+        if (preg_match('/^\d{4}-\d{2}-\d{2}$/', $matchDate) !== 1) {
+            return null;
+        }
+        // Hora/minuto validados (00-23 / 00-59) porque Carbon::createFromFormat não rejeita
+        // valores fora de faixa — ele só "estoura" pro dia seguinte silenciosamente.
+        if (preg_match('#^(\d{2})/(\d{2})\s+([01]\d|2[0-3]):([0-5]\d)#', $matchLabel, $m) !== 1) {
             return null;
         }
 
-        return $matchDate.' '.$m[3].':'.$m[4].':00';
+        try {
+            return Carbon::createFromFormat('Y-m-d H:i', $matchDate.' '.$m[3].':'.$m[4], 'America/Sao_Paulo')
+                ->utc()
+                ->toDateTimeString();
+        } catch (InvalidFormatException) {
+            return null;
+        }
     }
 }
