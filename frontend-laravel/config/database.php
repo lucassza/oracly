@@ -114,6 +114,21 @@ return [
             'sslmode' => env('ORACLY_DB_SSLMODE', 'prefer'),
         ],
 
+        // Postgres Oracly (Punter — planilhas Google Sheets importadas); mesmo host/credenciais da oracly, schema próprio.
+        'punter' => [
+            'driver' => 'pgsql',
+            'host' => env('ORACLY_DB_HOST', '127.0.0.1'),
+            'port' => env('ORACLY_DB_PORT', '5432'),
+            'database' => env('ORACLY_DB_DATABASE', 'oracly'),
+            'username' => env('ORACLY_DB_USERNAME', 'oracly_user'),
+            'password' => env('ORACLY_DB_PASSWORD', ''),
+            'charset' => env('ORACLY_DB_CHARSET', 'utf8'),
+            'prefix' => '',
+            'prefix_indexes' => true,
+            'search_path' => env('PUNTER_DB_SCHEMA', 'punter'),
+            'sslmode' => env('ORACLY_DB_SSLMODE', 'prefer'),
+        ],
+
         'sqlsrv' => [
             'driver' => 'sqlsrv',
             'url' => env('DB_URL'),
