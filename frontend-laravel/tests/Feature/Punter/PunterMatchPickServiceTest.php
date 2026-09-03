@@ -72,4 +72,42 @@ class PunterMatchPickServiceTest extends TestCase
 
         $this->assertNull($average);
     }
+
+    /**
+     * panel_fixtures não tem coluna de horário — o horário vem embutido no texto de
+     * match_label (ex.: "30/08 22:20 Time A x Time B", já em horário de Brasília). Confere
+     * que upcoming() extrai isso pra kickoffAt sempre que o label tem esse formato.
+     */
+    public function test_upcoming_extrai_o_horario_do_match_label_quando_reconhecivel(): void
+    {
+        $row = PunterDb::connection()->table('panel_fixtures')
+            ->whereNotNull('match_date')
+            ->where('match_label', '~', '^\d{2}/\d{2}\s+\d{2}:\d{2}')
+            ->first();
+
+        if ($row === null) {
+            $this->markTestSkipped('Nenhuma linha de panel_fixtures com match_label no formato esperado no momento.');
+        }
+
+        preg_match('/^(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/', (string) $row->match_label, $m);
+
+        $service = app(PunterMatchPickService::class);
+        $upcoming = $service->upcoming((string) $row->match_date);
+        $match = collect($upcoming)->firstWhere('matchKey', $row->match_date.'|'.$row->home_team.'|'.$row->away_team);
+
+        $this->assertNotNull($match, 'Pré-condição: a linha usada no teste precisa aparecer em upcoming() pra mesma data.');
+        $this->assertSame($row->match_date.' '.$m[3].':'.$m[4].':00', $match['kickoffAt']);
+    }
+
+    public function test_upcoming_devolve_kickoff_null_quando_o_label_nao_tem_horario_reconhecivel(): void
+    {
+        $service = app(PunterMatchPickService::class);
+
+        $reflection = new \ReflectionMethod($service, 'parseKickoffAt');
+        $reflection->setAccessible(true);
+
+        $this->assertNull($reflection->invoke($service, '2026-08-30', 'Time A x Time B sem horário'));
+        $this->assertNull($reflection->invoke($service, '', '30/08 22:20 Time A x Time B'));
+        $this->assertSame('2026-08-30 22:20:00', $reflection->invoke($service, '2026-08-30', '30/08 22:20 Time A x Time B'));
+    }
 }

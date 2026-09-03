@@ -196,7 +196,7 @@
         <table class="w-full text-left text-sm">
             <thead class="bg-gray-50 text-xs font-semibold tracking-wide text-gray-500 uppercase dark:bg-white/[0.03] dark:text-gray-400">
                 <tr>
-                    <th class="w-24 px-4 py-2">{{ $mode === 'history' || $market !== 'lay_2x2_0x1' ? 'Data' : 'Hora' }}</th>
+                    <th class="w-24 px-4 py-2">{{ $mode === 'history' && $market !== 'lay_2x2_0x1' ? 'Data' : 'Hora' }}</th>
                     <th class="px-4 py-2">Partida</th>
                     <th class="w-56 px-4 py-2">Aposta</th>
                 </tr>

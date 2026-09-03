@@ -8,9 +8,10 @@ use App\Oracly\Support\PunterDb;
  * Normaliza punter.match_history (apurado) e punter.panel_fixtures (futuro) para o
  * mesmo formato de linha, consumido por PunterLayCasaForaStrategy e pelas 4 estratégias
  * Poisson (AgainstOneGoalStrategy e subclasses) que já existiam para o SokkerPRO — essas
- * não mudam nada, só passam a ser alimentadas com médias de gols calculadas aqui. As duas
- * tabelas não têm horário de kickoff estruturado — só data — por isso não há agrupamento
- * por hora aqui como existe para o SokkerPRO/lay_signals.
+ * não mudam nada, só passam a ser alimentadas com médias de gols calculadas aqui.
+ * match_history (apurado) não tem horário estruturado — só data — mas panel_fixtures
+ * (futuro) traz o horário embutido no texto de `match_label`, exposto aqui como
+ * `kickoffAt` (ver parseKickoffAt()).
  */
 final class PunterMatchPickService
 {
@@ -129,6 +130,7 @@ final class PunterMatchPickService
             'matchKey' => (string) $row->match_date.'|'.$row->home_team.'|'.$row->away_team,
             'matchDate' => (string) $row->match_date,
             'matchLabel' => (string) $row->match_label,
+            'kickoffAt' => $this->parseKickoffAt((string) $row->match_date, (string) $row->match_label),
             'homeTeam' => (string) $row->home_team,
             'awayTeam' => (string) $row->away_team,
             'competition' => (string) $row->league,
@@ -143,5 +145,21 @@ final class PunterMatchPickService
             'punterFlagsOver05Ht' => ! empty($row->ht_tendency),
             'resultOver05Ht' => null,
         ])->all();
+    }
+
+    /**
+     * panel_fixtures não tem coluna de horário estruturada, mas `match_label` traz o
+     * horário embutido no texto (ex.: "30/08 22:20 Deportivo Cali x Atlético Bucaramanga",
+     * já em horário de Brasília, mesma convenção do resto do painel Punter). `match_date`
+     * garante o ano correto (o label só tem DD/MM). Linhas malformadas (label vazio, sem
+     * horário reconhecível) voltam null — o chamador cai de volta pra exibir só a data.
+     */
+    private function parseKickoffAt(string $matchDate, string $matchLabel): ?string
+    {
+        if ($matchDate === '' || preg_match('/^(\d{2})\/(\d{2})\s+(\d{2}):(\d{2})/', $matchLabel, $m) !== 1) {
+            return null;
+        }
+
+        return $matchDate.' '.$m[3].':'.$m[4].':00';
     }
 }

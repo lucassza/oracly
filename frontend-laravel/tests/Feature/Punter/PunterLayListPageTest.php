@@ -33,6 +33,30 @@ class PunterLayListPageTest extends TestCase
             ->assertSee('Lista LAY');
     }
 
+    /**
+     * panel_fixtures não tem coluna de horário, mas match_label traz o horário embutido
+     * (ver PunterMatchPickService::parseKickoffAt) — a lista diária de lay_casa_fora e
+     * lay_scores agora mostra a hora real de cada jogo, igual já acontecia pro lay_2x2_0x1.
+     */
+    public function test_lista_diaria_mostra_horario_real_para_lay_casa_fora_e_lay_scores(): void
+    {
+        $this->actingAs(User::factory()->create());
+
+        foreach (['lay_casa_fora', 'lay_scores'] as $market) {
+            $component = Livewire::test(PunterLayList::class)
+                ->call('setMarket', $market)
+                ->call('setMode', 'upcoming');
+
+            $rows = $component->get('rows');
+            if (count($rows) === 0) {
+                continue;
+            }
+            foreach ($rows as $row) {
+                $this->assertArrayHasKey('kickoffAt', $row, "Linha de {$market} sem kickoffAt.");
+            }
+        }
+    }
+
     /** @return list<list<string>> */
     public static function marketModeCombos(): array
     {
