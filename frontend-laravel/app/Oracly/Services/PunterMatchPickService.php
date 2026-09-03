@@ -29,8 +29,9 @@ final class PunterMatchPickService
             ->select([
                 'match_key', 'data_hora_jogo', 'home_name', 'away_name', 'campeonato',
                 'odds_ft_1', 'odds_ft_x', 'odds_ft_2', 'lay_fora', 'lay_casa',
-                'gour_lay_fora', 'gour_lay_casa',
+                'gour_lay_fora', 'gour_lay_casa', 'gour_ht_lay_fora', 'gour_ht_lay_casa',
                 'media_gols_total_casa', 'media_gols_total_visitante', 'resultado_ft',
+                'ht_goals_team_a', 'ht_goals_team_b',
             ])
             ->whereNotNull('data_hora_jogo')
             ->orderBy('data_hora_jogo')
@@ -50,9 +51,14 @@ final class PunterMatchPickService
             'punterFlagsLayCasa' => $row->lay_casa === 'Lay Casa',
             'resultLayFora' => $row->gour_lay_fora !== null ? strtolower($row->gour_lay_fora) : null,
             'resultLayCasa' => $row->gour_lay_casa !== null ? strtolower($row->gour_lay_casa) : null,
+            'resultHtLayFora' => $row->gour_ht_lay_fora !== null ? strtolower($row->gour_ht_lay_fora) : null,
+            'resultHtLayCasa' => $row->gour_ht_lay_casa !== null ? strtolower($row->gour_ht_lay_casa) : null,
             'homeGoalsAverage' => $row->media_gols_total_casa !== null ? (float) $row->media_gols_total_casa : null,
             'awayGoalsAverage' => $row->media_gols_total_visitante !== null ? (float) $row->media_gols_total_visitante : null,
             'finalScore' => $this->cleanScore($row->resultado_ft),
+            'htScore' => $row->ht_goals_team_a !== null && $row->ht_goals_team_b !== null
+                ? ((int) $row->ht_goals_team_a).'-'.((int) $row->ht_goals_team_b)
+                : null,
         ])->all();
     }
 

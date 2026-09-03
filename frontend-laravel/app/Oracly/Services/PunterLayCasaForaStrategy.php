@@ -52,10 +52,23 @@ final class PunterLayCasaForaStrategy
         return $choice['favoriteOdd'] < self::PROFILES[$profile];
     }
 
-    /** @return 'green'|'red'|null */
-    public function result(array $row, string $side): ?string
+    /**
+     * @param  'ft'|'ht'  $period  Apuração no fim de jogo (padrão) ou no intervalo — a mesma
+     *                             escolha de lado (favorito/azarão) vale para os dois, só muda
+     *                             em que momento o resultado é conferido.
+     * @return 'green'|'red'|null
+     */
+    public function result(array $row, string $side, string $period = 'ft'): ?string
     {
-        return $side === 'fora' ? ($row['resultLayFora'] ?? null) : ($row['resultLayCasa'] ?? null);
+        $key = match ([$period, $side]) {
+            ['ft', 'fora'] => 'resultLayFora',
+            ['ft', 'casa'] => 'resultLayCasa',
+            ['ht', 'fora'] => 'resultHtLayFora',
+            ['ht', 'casa'] => 'resultHtLayCasa',
+            default => null,
+        };
+
+        return $key !== null ? ($row[$key] ?? null) : null;
     }
 
     private function validOdd(mixed $value): ?float

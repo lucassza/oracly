@@ -74,4 +74,28 @@ class PunterLayCasaForaStrategyTest extends TestCase
         $this->assertSame('green', $strategy->result($row, 'fora'));
         $this->assertSame('red', $strategy->result($row, 'casa'));
     }
+
+    public function test_result_reads_the_ht_column_when_period_is_ht(): void
+    {
+        $strategy = new PunterLayCasaForaStrategy;
+        $row = [
+            'resultLayFora' => 'green', 'resultLayCasa' => 'red',
+            'resultHtLayFora' => 'red', 'resultHtLayCasa' => 'green',
+        ];
+
+        // FT (padrão) e HT são colunas independentes — o mesmo lado pode acertar num período
+        // e errar no outro (green no FT não implica green no HT, nem o contrário).
+        $this->assertSame('green', $strategy->result($row, 'fora', 'ft'));
+        $this->assertSame('red', $strategy->result($row, 'fora', 'ht'));
+        $this->assertSame('red', $strategy->result($row, 'casa', 'ft'));
+        $this->assertSame('green', $strategy->result($row, 'casa', 'ht'));
+    }
+
+    public function test_result_is_null_when_the_column_is_missing(): void
+    {
+        $strategy = new PunterLayCasaForaStrategy;
+
+        $this->assertNull($strategy->result([], 'fora', 'ht'));
+        $this->assertNull($strategy->result(['resultLayFora' => 'green'], 'fora', 'ht'));
+    }
 }

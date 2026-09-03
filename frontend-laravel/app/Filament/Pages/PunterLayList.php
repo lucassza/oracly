@@ -103,6 +103,21 @@ class PunterLayList extends Page
         'strong' => 'Strong (odd favorito < 1,30)',
     ];
 
+    /**
+     * Só se aplica ao histórico de LAY Casa/Fora e LAY Placar Exato — a escolha do lado/placar
+     * não muda, só o momento em que o resultado é conferido (mesmos dados: GouR HT vs GouR FT,
+     * ht_goals_team_a/b vs resultado_ft). lay_2x2/lay_0x1 não tem essa distinção — o Punter já
+     * apura check_result num único momento (FT), sem HT correspondente para essas duas apostas.
+     *
+     * @var array<string, string>
+     */
+    public const PERIOD_OPTIONS = [
+        'ft' => 'Apurar no FT',
+        'ht' => 'Apurar no HT',
+    ];
+
+    public string $periodFilter = 'ft';
+
     public function mount(): void
     {
         $this->date = BrasiliaDate::today();
@@ -169,6 +184,16 @@ class PunterLayList extends Page
             return;
         }
         $this->profileFilter = $value;
+        $this->resetHistoryPage();
+        $this->reload();
+    }
+
+    public function setPeriodFilter(string $value): void
+    {
+        if (! array_key_exists($value, self::PERIOD_OPTIONS)) {
+            return;
+        }
+        $this->periodFilter = $value;
         $this->resetHistoryPage();
         $this->reload();
     }
@@ -248,6 +273,20 @@ class PunterLayList extends Page
         ));
     }
 
+    /** Cards agrupados por partida, como a Lista LAY do SokkerPRO — uma ou mais apostas por jogo.
+     * @return list<array<string, mixed>> */
+    public function getGroupedRowsProperty(): array
+    {
+        $groups = $this->groupByFixture($this->filteredRows);
+
+        usort($groups, fn (array $a, array $b): int => strcmp(
+            (string) ($a['kickoffAt'] ?? $a['dateBrasilia']),
+            (string) ($b['kickoffAt'] ?? $b['dateBrasilia']),
+        ) ?: strcmp($a['homeTeam'], $b['homeTeam']));
+
+        return $groups;
+    }
+
     /** @return list<array<string, mixed>> */
     public function getFilteredHistoryRowsProperty(): array
     {
@@ -260,10 +299,24 @@ class PunterLayList extends Page
         }));
     }
 
+    /** Cards agrupados por partida (histórico) — mesma lógica da lista do dia.
+     * @return list<array<string, mixed>> */
+    public function getGroupedHistoryRowsProperty(): array
+    {
+        $groups = $this->groupByFixture($this->filteredHistoryRows);
+
+        usort($groups, fn (array $a, array $b): int => strcmp(
+            (string) ($b['kickoffAt'] ?? $b['dateBrasilia']),
+            (string) ($a['kickoffAt'] ?? $a['dateBrasilia']),
+        ));
+
+        return $groups;
+    }
+
     /** @return array{page: int, lastPage: int, total: int, from: int, to: int} */
     public function getHistoryPaginationProperty(): array
     {
-        $total = count($this->filteredHistoryRows);
+        $total = count($this->groupedHistoryRows);
         $lastPage = max(1, (int) ceil($total / self::HISTORY_PER_PAGE));
         $page = min(max(1, $this->historyPage), $lastPage);
 
@@ -279,10 +332,87 @@ class PunterLayList extends Page
     /** @return list<array<string, mixed>> */
     public function getPagedHistoryRowsProperty(): array
     {
-        $rows = $this->filteredHistoryRows;
-        usort($rows, fn (array $a, array $b): int => strcmp($b['dateBrasilia'], $a['dateBrasilia']));
+        return array_slice($this->groupedHistoryRows, ($this->historyPagination['page'] - 1) * self::HISTORY_PER_PAGE, self::HISTORY_PER_PAGE);
+    }
 
-        return array_slice($rows, ($this->historyPagination['page'] - 1) * self::HISTORY_PER_PAGE, self::HISTORY_PER_PAGE);
+    /**
+     * Agrupa linhas (uma por aposta) em cards por partida — mesmo padrão da DailyLayList
+     * do SokkerPRO. `fixtureKey` identifica a partida (independe de qual aposta/radar);
+     * cada aposta some dentro de `bets` com seu texto de apoio (`betMeta`) já formatado.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
+    private function groupByFixture(array $rows): array
+    {
+        $groups = [];
+
+        foreach ($rows as $row) {
+            $key = $row['fixtureKey'];
+            $groups[$key] ??= [
+                'fixtureKey' => $key,
+                'dateBrasilia' => $row['dateBrasilia'],
+                'kickoffAt' => $row['kickoffAt'] ?? null,
+                'matchLabel' => $row['matchLabel'] ?? null,
+                'homeTeam' => $row['homeTeam'],
+                'awayTeam' => $row['awayTeam'],
+                'country' => $row['country'] ?? null,
+                'competition' => $row['competition'] ?? null,
+                'ftHome' => $row['ftHome'] ?? null,
+                'ftAway' => $row['ftAway'] ?? null,
+                'htHome' => $row['htHome'] ?? null,
+                'htAway' => $row['htAway'] ?? null,
+                'bets' => [],
+            ];
+            $groups[$key]['bets'][] = [
+                'bet' => $row['bet'],
+                'betMeta' => $row['betMeta'],
+                'hit' => $row['hit'] ?? null,
+                'rank' => $row['rank'] ?? null,
+            ];
+        }
+
+        return array_values($groups);
+    }
+
+    /**
+     * "Melhor da hora" — mesmo padrão de `DailyLayList::topThreeByHour()` (SokkerPRO): agrupa
+     * por hora Brasília e mantém só os 3 picks mais seguros de cada hora, marcando o rank
+     * (1/2/3) para o badge 👑/🔥/●. Só faz sentido para lay_2x2_0x1 — é o único mercado Punter
+     * com horário de kickoff real; match_history/panel_fixtures só têm data.
+     *
+     * @param  list<array<string, mixed>>  $rows
+     * @param  callable(array<string, mixed>): float  $metric  Menor valor = pick mais seguro.
+     * @return list<array<string, mixed>>
+     */
+    private function topThreeByHour(array $rows, callable $metric): array
+    {
+        $groups = [];
+        foreach ($rows as $row) {
+            $bucket = Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('Y-m-d H');
+            $groups[$bucket][] = $row;
+        }
+
+        $selected = [];
+        foreach ($groups as $group) {
+            usort($group, fn (array $a, array $b): int => $metric($a) <=> $metric($b));
+            foreach (array_slice($group, 0, 3) as $rank => $row) {
+                $row['rank'] = $rank + 1;
+                $selected[] = $row;
+            }
+        }
+
+        return $selected;
+    }
+
+    private static function bestOdd(array $row): float
+    {
+        $odds = array_values(array_filter(
+            [$row['oddHome'] ?? null, $row['oddAway'] ?? null],
+            fn (?float $v): bool => $v !== null,
+        ));
+
+        return $odds === [] ? INF : min($odds);
     }
 
     /** @return array<string, string> */
@@ -371,6 +501,15 @@ class PunterLayList extends Page
                 $rows = array_values(array_filter($rows, fn (array $r): bool => $r['radar'] === $this->radarFilter));
             }
 
+            foreach ($rows as &$row) {
+                $row['fixtureKey'] = $row['matchKey'];
+                $row['dateBrasilia'] = BrasiliaDate::fromKickoff($row['kickoffAt']);
+                $row['betMeta'] = self::formatOddPair($row['oddHome'], $row['oddAway']);
+            }
+            unset($row);
+
+            $rows = $this->topThreeByHour($rows, fn (array $r): float => self::bestOdd($r));
+
             usort($rows, fn (array $a, array $b): int => strcmp($a['kickoffAt'], $b['kickoffAt'])
                 ?: (($a['oddHome'] ?? INF) <=> ($b['oddHome'] ?? INF)));
 
@@ -396,6 +535,7 @@ class PunterLayList extends Page
 
                     $rows[] = [
                         'matchKey' => $row['matchKey'].'|'.$choice['score'],
+                        'fixtureKey' => $row['matchKey'],
                         'matchLabel' => $row['matchLabel'],
                         'dateBrasilia' => $row['matchDate'],
                         'homeTeam' => $row['homeTeam'],
@@ -403,6 +543,7 @@ class PunterLayList extends Page
                         'competition' => $row['competition'],
                         'bet' => 'LAY '.str_replace('-', 'x', (string) $choice['score']),
                         'probability' => $choice['probability'],
+                        'betMeta' => 'prob. '.number_format($choice['probability'] * 100, 1).'%',
                     ];
                 }
             }
@@ -423,6 +564,7 @@ class PunterLayList extends Page
 
             $rows[] = [
                 'matchKey' => $row['matchKey'],
+                'fixtureKey' => $row['matchKey'],
                 'matchLabel' => $row['matchLabel'],
                 'dateBrasilia' => $row['matchDate'],
                 'homeTeam' => $row['homeTeam'],
@@ -432,12 +574,23 @@ class PunterLayList extends Page
                 'favoriteOdd' => $choice['favoriteOdd'],
                 'underdogOdd' => $choice['underdogOdd'],
                 'punterAgrees' => $choice['punterAgrees'],
+                'betMeta' => self::formatFavoriteOdd($choice['favoriteOdd'], $choice['punterAgrees']),
             ];
         }
 
         usort($rows, fn (array $a, array $b): int => $a['favoriteOdd'] <=> $b['favoriteOdd']);
 
         return $rows;
+    }
+
+    private static function formatOddPair(?float $home, ?float $away): string
+    {
+        return ($home !== null ? number_format($home, 2) : '—').' / '.($away !== null ? number_format($away, 2) : '—');
+    }
+
+    private static function formatFavoriteOdd(float $favoriteOdd, bool $punterAgrees): string
+    {
+        return 'odd '.number_format($favoriteOdd, 2).($punterAgrees ? ' · Punter concorda' : '');
     }
 
     /** @return array<string, AgainstOneGoalStrategy> */
@@ -455,23 +608,27 @@ class PunterLayList extends Page
     private function buildHistoryRows(): array
     {
         if ($this->market === 'lay_2x2_0x1') {
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_signals'), function (): array {
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_signals:v3'), function (): array {
                 $rows = app(PunterLaySignalService::class)->history(5000);
                 foreach ($rows as &$row) {
                     $row['dateBrasilia'] = BrasiliaDate::fromKickoff($row['kickoffAt']);
                     $row['competitionLabel'] = trim(($row['country'] ?? '').' · '.($row['competition'] ?? ''), ' ·');
+                    $row['fixtureKey'] = $row['matchKey'];
+                    $row['betMeta'] = self::formatOddPair($row['oddHome'], $row['oddAway']);
                 }
+                unset($row);
 
-                return $rows;
+                return $this->topThreeByHour($rows, fn (array $r): float => self::bestOdd($r));
             }, 300);
         }
 
         if ($this->market === 'lay_scores') {
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores'), function (): array {
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v3:'.$this->periodFilter), function (): array {
                 $rows = [];
 
                 foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
-                    if ($row['finalScore'] === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
+                    $targetScore = $this->periodFilter === 'ht' ? $row['htScore'] : $row['finalScore'];
+                    if ($targetScore === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
                         continue;
                     }
 
@@ -483,6 +640,7 @@ class PunterLayList extends Page
 
                         $rows[] = [
                             'matchKey' => $row['matchKey'].'|'.$choice['score'],
+                            'fixtureKey' => $row['matchKey'],
                             'dateBrasilia' => $row['matchDate'],
                             'homeTeam' => $row['homeTeam'],
                             'awayTeam' => $row['awayTeam'],
@@ -490,7 +648,8 @@ class PunterLayList extends Page
                             'competitionLabel' => str_replace('_', ' ', (string) $row['competition']),
                             'bet' => 'LAY '.str_replace('-', 'x', (string) $choice['score']),
                             'probability' => $choice['probability'],
-                            'hit' => $row['finalScore'] !== $choice['score'],
+                            'betMeta' => 'prob. '.number_format($choice['probability'] * 100, 1).'%',
+                            'hit' => $targetScore !== $choice['score'],
                         ];
                     }
                 }
@@ -499,7 +658,7 @@ class PunterLayList extends Page
             }, 300);
         }
 
-        return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_casa_fora:'.$this->profileFilter), function (): array {
+        return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_casa_fora:v3:'.$this->profileFilter.':'.$this->periodFilter), function (): array {
             $strategy = app(PunterLayCasaForaStrategy::class);
             $rows = [];
 
@@ -508,13 +667,14 @@ class PunterLayList extends Page
                 if ($choice === null || ! $strategy->matchesProfile($row, $this->profileFilter)) {
                     continue;
                 }
-                $result = $strategy->result($row, $choice['side']);
+                $result = $strategy->result($row, $choice['side'], $this->periodFilter);
                 if ($result === null) {
                     continue;
                 }
 
                 $rows[] = [
                     'matchKey' => $row['matchKey'],
+                    'fixtureKey' => $row['matchKey'],
                     'dateBrasilia' => $row['matchDate'],
                     'homeTeam' => $row['homeTeam'],
                     'awayTeam' => $row['awayTeam'],
@@ -523,6 +683,7 @@ class PunterLayList extends Page
                     'bet' => $choice['side'] === 'fora' ? 'LAY FORA' : 'LAY CASA',
                     'favoriteOdd' => $choice['favoriteOdd'],
                     'punterAgrees' => $choice['punterAgrees'],
+                    'betMeta' => self::formatFavoriteOdd($choice['favoriteOdd'], $choice['punterAgrees']),
                     'hit' => $result === 'green',
                 ];
             }

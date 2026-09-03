@@ -56,6 +56,10 @@
         <x-oracly.chip-group :options="$this::PROFILE_OPTIONS" :active="$profileFilter" method="setProfileFilter" />
     @endif
 
+    @if ($mode === 'history' && in_array($market, ['lay_casa_fora', 'lay_scores'], true))
+        <x-oracly.chip-group :options="$this::PERIOD_OPTIONS" :active="$periodFilter" method="setPeriodFilter" />
+    @endif
+
     @if ($mode === 'upcoming')
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
@@ -178,50 +182,44 @@
                 </tr>
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-white/[0.08]">
-                @php $tableRows = $mode === 'upcoming' ? $this->filteredRows : $this->pagedHistoryRows; @endphp
-                @forelse ($tableRows as $row)
+                @php $cards = $mode === 'upcoming' ? $this->groupedRows : $this->pagedHistoryRows; @endphp
+                @forelse ($cards as $card)
                     <tr class="odd:bg-gray-100 dark:odd:bg-white/[0.06]">
                         <td class="whitespace-nowrap px-4 py-3 font-bold text-amber-700 dark:text-amber-300">
-                            @if ($market === 'lay_2x2_0x1')
-                                {{ \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format($mode === 'history' ? 'd/m H:i' : 'H:i') }}
+                            @if ($card['kickoffAt'])
+                                {{ \Carbon\Carbon::parse($card['kickoffAt'])->timezone('America/Sao_Paulo')->format($mode === 'history' ? 'd/m H:i' : 'H:i') }}
                             @else
-                                {{ \Carbon\Carbon::parse($row['dateBrasilia'])->format('d/m') }}
+                                {{ \Carbon\Carbon::parse($card['dateBrasilia'])->format('d/m') }}
                             @endif
                         </td>
                         <td class="px-4 py-3 font-medium text-gray-950 dark:text-white">
                             <div class="space-y-1">
-                                <div>{{ $row['homeTeam'] }} <span class="text-gray-400">x</span> {{ $row['awayTeam'] }}</div>
-                                @if (!empty($row['competition']))
+                                <div>{{ $card['homeTeam'] }} <span class="text-gray-400">x</span> {{ $card['awayTeam'] }}</div>
+                                @if (!empty($card['competition']))
                                     <div class="text-xs text-gray-500 dark:text-gray-400">
-                                        {{ !empty($row['country']) ? $row['country'].' · ' : '' }}{{ str_replace('_', ' ', $row['competition']) }}
+                                        {{ !empty($card['country']) ? $card['country'].' · ' : '' }}{{ str_replace('_', ' ', $card['competition']) }}
                                     </div>
                                 @endif
-                                @if ($market === 'lay_2x2_0x1' && $mode === 'history' && $row['ftHome'] !== null && $row['ftAway'] !== null)
+                                @if ($mode === 'history' && $card['ftHome'] !== null && $card['ftAway'] !== null)
                                     <div class="flex flex-wrap items-center gap-2 text-xs text-gray-600 dark:text-gray-300">
-                                        <span>{{ $row['htHome'] !== null ? 'HT '.$row['htHome'].'-'.$row['htAway'] : 'HT —' }}</span>
-                                        <span>FT {{ $row['ftHome'] }}-{{ $row['ftAway'] }}</span>
+                                        <span>{{ $card['htHome'] !== null ? 'HT '.$card['htHome'].'-'.$card['htAway'] : 'HT —' }}</span>
+                                        <span>FT {{ $card['ftHome'] }}-{{ $card['ftAway'] }}</span>
                                     </div>
                                 @endif
                             </div>
                         </td>
                         <td class="px-4 py-3">
                             <div class="flex flex-col gap-1.5">
-                                <div class="flex flex-wrap items-center gap-1.5">
-                                    <span class="rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200">{{ $row['bet'] }}</span>
-                                    @if ($market === 'lay_2x2_0x1')
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $row['oddHome'] ?? '—' }} / {{ $row['oddAway'] ?? '—' }}</span>
-                                    @elseif ($market === 'lay_scores')
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">prob. {{ number_format($row['probability'] * 100, 1) }}%</span>
-                                    @else
-                                        <span class="text-xs text-gray-500 dark:text-gray-400">odd {{ number_format($row['favoriteOdd'], 2) }}</span>
-                                        @if ($row['punterAgrees'])
-                                            <span class="rounded-full bg-sky-100 px-2 py-0.5 text-[11px] font-semibold text-sky-800 dark:bg-sky-400/15 dark:text-sky-200">Punter concorda</span>
+                                @foreach ($card['bets'] as $bet)
+                                    <div class="flex flex-wrap items-center gap-1.5">
+                                        <span class="rounded-md bg-amber-100 px-2 py-1 text-xs font-bold text-amber-800 dark:bg-amber-400/20 dark:text-amber-200">{{ $bet['bet'] }}</span>
+                                        <span class="text-xs text-gray-500 dark:text-gray-400">{{ $bet['betMeta'] }}</span>
+                                        <x-oracly.opportunity-rank-badge :rank="$bet['rank']" />
+                                        @if ($mode === 'history')
+                                            <x-oracly.result-badge :hit="$bet['hit']" />
                                         @endif
-                                    @endif
-                                    @if ($mode === 'history')
-                                        <x-oracly.result-badge :hit="$row['hit']" />
-                                    @endif
-                                </div>
+                                    </div>
+                                @endforeach
                             </div>
                         </td>
                     </tr>
@@ -239,7 +237,7 @@
     @if ($mode === 'history' && $this->historyPagination['total'] > 0)
         <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
             <p class="text-sm text-gray-500 dark:text-gray-400">
-                Exibindo {{ $this->historyPagination['from'] }}–{{ $this->historyPagination['to'] }} de {{ $this->historyPagination['total'] }} entradas
+                Exibindo {{ $this->historyPagination['from'] }}–{{ $this->historyPagination['to'] }} de {{ $this->historyPagination['total'] }} partidas
             </p>
             <div class="flex items-center gap-2">
                 <button type="button" wire:click="previousHistoryPage" @disabled($this->historyPagination['page'] === 1) class="rounded-lg border border-gray-300 px-3 py-2 text-sm font-semibold text-gray-700 transition hover:bg-gray-100 disabled:cursor-not-allowed disabled:opacity-50 dark:border-white/10 dark:text-gray-200 dark:hover:bg-white/10">Anterior</button>
