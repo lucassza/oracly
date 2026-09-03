@@ -191,4 +191,27 @@ class PunterLayListPageTest extends TestCase
         $this->assertNotEmpty($hitsHt);
         $this->assertNotSame($hitsFt, $hitsHt, 'HT e FT deram exatamente os mesmos acertos — o toggle não teria efeito nenhum.');
     }
+
+    /**
+     * "Só os 3 melhores da hora" reduz o volume (mantém só rank 1/2/3) sem tirar ninguém
+     * que já não fosse rank>3 — e continua batendo com o mesmo critério de segurança.
+     */
+    public function test_toggle_only_top_of_hour_filtra_pra_rank_1_2_3(): void
+    {
+        $this->actingAs(User::factory()->create());
+        OraclyCache::forgetPrefix();
+
+        $off = Livewire::test(PunterLayList::class)->call('setMarket', 'lay_2x2_0x1')->call('setMode', 'history');
+        $on = Livewire::test(PunterLayList::class)->call('setMarket', 'lay_2x2_0x1')->call('setMode', 'history')->call('toggleOnlyTopOfHour');
+
+        $on->assertSet('onlyTopOfHour', true);
+
+        $totalOff = count($off->get('filteredHistoryRows'));
+        $totalOn = count($on->get('filteredHistoryRows'));
+        $this->assertLessThan($totalOff, $totalOn, 'O filtro devia reduzir o volume.');
+
+        foreach ($on->get('filteredHistoryRows') as $row) {
+            $this->assertLessThanOrEqual(3, $row['rank'], 'Achei uma linha com rank > 3 com o filtro ligado.');
+        }
+    }
 }

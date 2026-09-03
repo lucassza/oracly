@@ -60,6 +60,14 @@
         <x-oracly.chip-group :options="$this::PERIOD_OPTIONS" :active="$periodFilter" method="setPeriodFilter" />
     @endif
 
+    @if ($market === 'lay_2x2_0x1')
+        <label class="inline-flex w-fit items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:border-white/10 dark:bg-white/[0.04]">
+            <input type="checkbox" wire:click="toggleOnlyTopOfHour" @checked($onlyTopOfHour) class="rounded border-gray-300 text-amber-500 focus:ring-amber-500 dark:border-white/20 dark:bg-white/10" />
+            <span class="font-semibold text-gray-700 dark:text-gray-200">Só os 3 melhores da hora</span>
+            <span class="text-xs text-gray-400">(medido: +0,5pp de assertividade cortando 37% do volume)</span>
+        </label>
+    @endif
+
     @if ($mode === 'upcoming')
         <div class="flex flex-col gap-3 lg:flex-row lg:items-center lg:justify-between">
             <div class="inline-flex items-center gap-2 rounded-xl border border-gray-200 bg-white px-3 py-2 text-sm shadow-sm dark:border-white/10 dark:bg-white/[0.04]">

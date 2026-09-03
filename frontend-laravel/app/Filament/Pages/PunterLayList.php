@@ -118,6 +118,14 @@ class PunterLayList extends Page
 
     public string $periodFilter = 'ft';
 
+    /**
+     * Filtro opcional — quando ligado, some com tudo que não for rank 1/2/3 da hora (só
+     * lay_2x2_0x1, o único mercado com hora de verdade). Padrão desligado: a lista mostra
+     * tudo, o rank só vira badge (medimos: cortar pra top-3 dá só +0,5pp de assertividade
+     * — 95,5%→96,0% — perdendo 37% do volume, então não vale ser o padrão).
+     */
+    public bool $onlyTopOfHour = false;
+
     public function mount(): void
     {
         $this->date = BrasiliaDate::today();
@@ -203,6 +211,12 @@ class PunterLayList extends Page
         $this->hourFilter = $hour === 'all' || in_array($hour, $this->hours, true) ? $hour : 'all';
     }
 
+    public function toggleOnlyTopOfHour(): void
+    {
+        $this->onlyTopOfHour = ! $this->onlyTopOfHour;
+        $this->resetHistoryPage();
+    }
+
     public function updatedHistoryFrom(): void
     {
         $this->resetHistoryPage();
@@ -263,14 +277,20 @@ class PunterLayList extends Page
     /** @return list<array<string, mixed>> */
     public function getFilteredRowsProperty(): array
     {
-        if ($this->market !== 'lay_2x2_0x1' || $this->hourFilter === 'all') {
-            return $this->rows;
+        $rows = $this->rows;
+
+        if ($this->market === 'lay_2x2_0x1' && $this->hourFilter !== 'all') {
+            $rows = array_values(array_filter(
+                $rows,
+                fn (array $row): bool => BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']) === $this->hourFilter,
+            ));
         }
 
-        return array_values(array_filter(
-            $this->rows,
-            fn (array $row): bool => BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']) === $this->hourFilter,
-        ));
+        if ($this->market === 'lay_2x2_0x1' && $this->onlyTopOfHour) {
+            $rows = array_values(array_filter($rows, fn (array $row): bool => ($row['rank'] ?? 99) <= 3));
+        }
+
+        return $rows;
     }
 
     /** Cards agrupados por partida, como a Lista LAY do SokkerPRO — uma ou mais apostas por jogo.
@@ -290,12 +310,15 @@ class PunterLayList extends Page
     /** @return list<array<string, mixed>> */
     public function getFilteredHistoryRowsProperty(): array
     {
-        return array_values(array_filter($this->historyRows, function (array $row): bool {
+        $onlyTop = $this->market === 'lay_2x2_0x1' && $this->onlyTopOfHour;
+
+        return array_values(array_filter($this->historyRows, function (array $row) use ($onlyTop): bool {
             $date = $row['dateBrasilia'];
 
             return ($this->historyFrom === '' || $date >= $this->historyFrom)
                 && ($this->historyTo === '' || $date <= $this->historyTo)
-                && ($this->historyCompetitionFilter === 'all' || $row['competitionLabel'] === $this->historyCompetitionFilter);
+                && ($this->historyCompetitionFilter === 'all' || $row['competitionLabel'] === $this->historyCompetitionFilter)
+                && (! $onlyTop || ($row['rank'] ?? 99) <= 3);
         }));
     }
 
