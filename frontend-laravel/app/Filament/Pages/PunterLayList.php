@@ -128,22 +128,15 @@ class PunterLayList extends Page
 
     /**
      * As 4 sub-estratégias do LAY Placar Exato juntas dão só 79,65% de assertividade
-     * conjunta por partida (uma das 4 errar já derruba a partida inteira). Por isso o
-     * padrão já vem sem `against1` (0x1/1x0, a mais fraca) — sobe pra 88,3%.
+     * conjunta por partida (uma das 4 errar já derruba a partida inteira). `against1`
+     * (0x1/1x0) é sempre a excluída — é a mais fraca (79,7%→88,3% ao tirar ela), e
+     * testamos alternativas (tirar dinamicamente a de maior risco por partida, tirar só
+     * metade do against1) que sempre deram pior resultado que essa combinação fixa, então
+     * não é configurável pelo usuário — o "melhor 3" já vem indicado.
      *
-     * @var array<string, string>
+     * @var list<string>
      */
-    public const SCORE_STRATEGY_OPTIONS = [
-        'against1' => 'LAY 0x1/1x0',
-        'against2' => 'LAY 0x2/2x0',
-        'against31' => 'LAY 3x1/1x3',
-        'against3' => 'LAY 0x3/3x0',
-    ];
-
-    private const MAX_SCORE_STRATEGIES = 3;
-
-    /** @var list<string> */
-    public array $selectedScoreStrategies = ['against2', 'against31', 'against3'];
+    private const EXACT_SCORE_STRATEGY_KEYS = ['against2', 'against31', 'against3'];
 
     public function mount(): void
     {
@@ -234,26 +227,6 @@ class PunterLayList extends Page
     {
         $this->onlyTopOfHour = ! $this->onlyTopOfHour;
         $this->resetHistoryPage();
-    }
-
-    public function toggleScoreStrategy(string $key): void
-    {
-        if (! array_key_exists($key, self::SCORE_STRATEGY_OPTIONS)) {
-            return;
-        }
-
-        if (in_array($key, $this->selectedScoreStrategies, true)) {
-            $this->selectedScoreStrategies = array_values(array_diff($this->selectedScoreStrategies, [$key]));
-        } elseif (count($this->selectedScoreStrategies) < self::MAX_SCORE_STRATEGIES) {
-            $this->selectedScoreStrategies[] = $key;
-        } else {
-            Notification::make()->title('Máximo de 3 estratégias')->body('Desmarque uma antes de marcar outra — juntar as 4 derruba a assertividade conjunta (79,65% vs 88,3% com 3).')->warning()->send();
-
-            return;
-        }
-
-        $this->resetHistoryPage();
-        $this->reload();
     }
 
     public function updatedHistoryFrom(): void
@@ -627,7 +600,7 @@ class PunterLayList extends Page
                 }
                 $featureRow = ['homeGoalsAverage' => $form['home'], 'awayGoalsAverage' => $form['away']];
 
-                foreach ($this->exactScoreStrategies() as $strategy) {
+                foreach (self::exactScoreStrategies() as $strategy) {
                     $choice = $strategy->choice($featureRow);
                     if ($choice === null) {
                         continue;
@@ -693,27 +666,21 @@ class PunterLayList extends Page
         return 'odd '.number_format($favoriteOdd, 2).($punterAgrees ? ' · Punter concorda' : '');
     }
 
-    /** @return array<string, AgainstOneGoalStrategy> */
-    private static function allExactScoreStrategies(): array
+    /**
+     * As 3 sub-estratégias fixas do LAY Placar Exato — ver EXACT_SCORE_STRATEGY_KEYS.
+     *
+     * @return array<string, AgainstOneGoalStrategy>
+     */
+    private static function exactScoreStrategies(): array
     {
-        return [
+        $all = [
             'against1' => new AgainstOneGoalStrategy,
             'against2' => new AgainstTwoGoalsStrategy,
             'against31' => new AgainstThreeOneStrategy,
             'against3' => new AgainstThreeGoalsStrategy,
         ];
-    }
 
-    /**
-     * Só as estratégias marcadas em `$selectedScoreStrategies` — usar todas as 4 ao mesmo
-     * tempo dá só 79,65% de assertividade conjunta por partida (basta UMA das 4 errar pra
-     * derrubar a partida inteira). Tirando a mais fraca (against1, 0x1/1x0) sobe pra 88,3%.
-     *
-     * @return array<string, AgainstOneGoalStrategy>
-     */
-    private function exactScoreStrategies(): array
-    {
-        return array_intersect_key(self::allExactScoreStrategies(), array_flip($this->selectedScoreStrategies));
+        return array_intersect_key($all, array_flip(self::EXACT_SCORE_STRATEGY_KEYS));
     }
 
     /** @return list<array<string, mixed>> */
@@ -735,9 +702,7 @@ class PunterLayList extends Page
         }
 
         if ($this->market === 'lay_scores') {
-            $strategyKey = implode(',', $this->selectedScoreStrategies);
-
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v4:'.$this->periodFilter.':'.$strategyKey), function (): array {
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v5:'.$this->periodFilter), function (): array {
                 $rows = [];
 
                 foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
@@ -746,7 +711,7 @@ class PunterLayList extends Page
                         continue;
                     }
 
-                    foreach ($this->exactScoreStrategies() as $strategy) {
+                    foreach (self::exactScoreStrategies() as $strategy) {
                         $choice = $strategy->choice($row);
                         if ($choice === null) {
                             continue;

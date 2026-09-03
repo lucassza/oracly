@@ -4,7 +4,6 @@ namespace Tests\Feature\Punter;
 
 use App\Filament\Pages\PunterLayList;
 use App\Models\User;
-use App\Oracly\Services\AgainstOneGoalStrategy;
 use App\Oracly\Services\AgainstThreeGoalsStrategy;
 use App\Oracly\Services\AgainstThreeOneStrategy;
 use App\Oracly\Services\AgainstTwoGoalsStrategy;
@@ -222,32 +221,30 @@ class PunterLayListPageTest extends TestCase
      * As 4 sub-estratégias de placar exato podem gerar até 4 apostas na mesma partida — nunca
      * mais de uma delas falha por jogo (os 4 placares são sempre distintos), então a assertividade
      * CONJUNTA (nenhuma das apostas escolhidas erra) é sensível a QUAIS 3 entram na combinação.
-     * O usuário optou por travar em no máximo 3 das 4, com a 0x1/1x0 fora por padrão (a mais fraca).
+     * Testamos deixar o usuário escolher e também escolher dinamicamente a "melhor" por partida
+     * (maior probabilidade bruta, ou por percentil normalizado por estratégia) — as duas formas
+     * dinâmicas deram pior resultado (83-85%) que simplesmente travar SEMPRE a mesma combinação
+     * fixa sem against1/0x1-1x0 (88,3%), então não há seleção nenhuma: a página já indica o
+     * "melhor 3" fixo, sem configuração.
      */
-    public function test_selecao_de_ate_3_estrategias_de_placar_exato(): void
+    public function test_placar_exato_usa_sempre_a_mesma_combinacao_fixa_de_3_estrategias(): void
     {
         $this->actingAs(User::factory()->create());
         OraclyCache::forgetPrefix();
 
-        $default = Livewire::test(PunterLayList::class)
+        $component = Livewire::test(PunterLayList::class)
             ->call('setMarket', 'lay_scores')
             ->call('setMode', 'history');
-        $default->assertSet('selectedScoreStrategies', ['against2', 'against31', 'against3']);
 
-        // Tentar uma 4ª com as 3 padrão já selecionadas: fica bloqueado em 3.
-        $blocked = $default->call('toggleScoreStrategy', 'against1');
-        $this->assertCount(3, $blocked->get('selectedScoreStrategies'));
-        $this->assertNotContains('against1', $blocked->get('selectedScoreStrategies'));
+        $bets = array_unique(array_map(fn (array $r): string => (string) $r['bet'], $component->get('historyRows')));
+        sort($bets);
+        $this->assertSame(['LAY 0x2', 'LAY 0x3', 'LAY 1x3', 'LAY 2x0', 'LAY 3x0', 'LAY 3x1'], $bets, 'A combinação fixa deve cobrir só against2/against31/against3 — nunca 0x1/1x0.');
 
-        // Tirar uma e então adicionar against1: troca livre enquanto <= 3.
-        $swapped = $default->call('toggleScoreStrategy', 'against2')->call('toggleScoreStrategy', 'against1');
-        $swapped->assertSet('selectedScoreStrategies', ['against31', 'against3', 'against1']);
-
-        // A assertividade conjunta recalcula pra bater com o critério puro sobre as mesmas 3 estratégias.
+        // A assertividade conjunta bate com o critério puro sobre exatamente essas 3 estratégias.
         $strategies = [
-            'against31' => new AgainstThreeOneStrategy,
-            'against3' => new AgainstThreeGoalsStrategy,
-            'against1' => new AgainstOneGoalStrategy,
+            new AgainstTwoGoalsStrategy,
+            new AgainstThreeOneStrategy,
+            new AgainstThreeGoalsStrategy,
         ];
         $byFixture = [];
         foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
@@ -270,8 +267,8 @@ class PunterLayListPageTest extends TestCase
         }
         $expectedHitRate = count($byFixture) > 0 ? round($expectedWins / count($byFixture) * 100, 4) : null;
 
-        $joint = $swapped->get('jointAccuracyStats');
+        $joint = $component->get('jointAccuracyStats');
         $this->assertEqualsWithDelta(count($byFixture), $joint['entries'], 20);
-        $this->assertEqualsWithDelta($expectedHitRate, $joint['hitRate'], 1.0, 'Assertividade conjunta divergiu do critério puro pra essa combinação de 3 estratégias.');
+        $this->assertEqualsWithDelta($expectedHitRate, $joint['hitRate'], 1.0, 'Assertividade conjunta divergiu do critério puro pra essa combinação fixa.');
     }
 }
