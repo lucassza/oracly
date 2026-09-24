@@ -129,7 +129,7 @@ class PunterLayListPageTest extends TestCase
 
         $strategy = new PunterLayCasaForaStrategy;
         $expected = 0;
-        foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
+        foreach (app(PunterMatchPickService::class)->history(60000) as $row) {
             $choice = $strategy->choice($row);
             if ($choice === null || ! $strategy->matchesProfile($row, 'balanced')) {
                 continue;
@@ -145,7 +145,7 @@ class PunterLayListPageTest extends TestCase
             ->call('setMode', 'history')
             ->call('setProfileFilter', 'balanced');
 
-        $actual = count($component->get('historyRows'));
+        $actual = count($component->instance()->historyRows);
         $this->assertEqualsWithDelta($expected, $actual, 5, "Esperado ~{$expected}, veio {$actual} — diferença grande demais pra ser só sync do cron.");
     }
 
@@ -177,7 +177,7 @@ class PunterLayListPageTest extends TestCase
             'against3' => new AgainstThreeGoalsStrategy,
         ];
         $expected = 0;
-        foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
+        foreach (app(PunterMatchPickService::class)->history(60000) as $row) {
             if ($row['finalScore'] === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
                 continue;
             }
@@ -197,7 +197,7 @@ class PunterLayListPageTest extends TestCase
             ->call('setMarket', 'lay_scores')
             ->call('setMode', 'history');
 
-        $actual = count($component->get('historyRows'));
+        $actual = count($component->instance()->historyRows);
         $this->assertEqualsWithDelta($expected, $actual, 20, "Esperado ~{$expected}, veio {$actual} — diferença grande demais pra ser só sync do cron.");
     }
 
@@ -258,8 +258,8 @@ class PunterLayListPageTest extends TestCase
         $ft->assertSet('periodFilter', 'ft');
         $ht->assertSet('periodFilter', 'ht');
 
-        $hitsFt = array_map(fn (array $r): bool => $r['hit'], $ft->get('historyRows'));
-        $hitsHt = array_map(fn (array $r): bool => $r['hit'], $ht->get('historyRows'));
+        $hitsFt = array_map(fn (array $r): bool => $r['hit'], $ft->instance()->historyRows);
+        $hitsHt = array_map(fn (array $r): bool => $r['hit'], $ht->instance()->historyRows);
 
         $this->assertNotEmpty($hitsFt);
         $this->assertNotEmpty($hitsHt);
@@ -305,7 +305,7 @@ class PunterLayListPageTest extends TestCase
         $component = Livewire::test(PunterLayList::class)
             ->call('setMarket', 'lay_scores')
             ->call('setMode', 'history');
-        $rows = $component->get('historyRows');
+        $rows = $component->instance()->historyRows;
 
         $byFixtureBets = [];
         foreach ($rows as $row) {
@@ -336,7 +336,7 @@ class PunterLayListPageTest extends TestCase
             'against3' => new AgainstThreeGoalsStrategy,
         ];
         $byFixture = [];
-        foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
+        foreach (app(PunterMatchPickService::class)->history(60000) as $row) {
             if ($row['finalScore'] === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
                 continue;
             }

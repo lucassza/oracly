@@ -73,9 +73,6 @@ class PunterLayList extends Page
     /** @var list<array<string, mixed>> */
     public array $rows = [];
 
-    /** @var list<array<string, mixed>> */
-    public array $historyRows = [];
-
     /** @var array<string, string> */
     public const MARKET_OPTIONS = [
         'lay_2x2_0x1' => 'LAY 2x2 / LAY 0x1',
@@ -265,15 +262,35 @@ class PunterLayList extends Page
     {
         try {
             $this->rows = $this->mode === 'upcoming' ? $this->buildUpcomingRows() : [];
-            $this->historyRows = $this->mode === 'history' ? $this->buildHistoryRows() : [];
 
             if ($this->mode === 'upcoming' && $this->hourFilter !== 'all' && ! in_array($this->hourFilter, $this->hours, true)) {
                 $this->hourFilter = 'all';
             }
         } catch (\Throwable $e) {
             $this->rows = [];
-            $this->historyRows = [];
             Notification::make()->title('Erro ao montar a lista LAY Punter')->body($e->getMessage())->danger()->send();
+        }
+    }
+
+    /**
+     * Histórico apurado do mercado atual. Computed (não propriedade pública) de propósito: com o
+     * banco inteiro são dezenas de milhares de linhas, que não cabem no payload do Livewire a cada
+     * request. O peso fica no OraclyCache de buildHistoryRows(); aqui só se delega.
+     *
+     * @return list<array<string, mixed>>
+     */
+    public function getHistoryRowsProperty(): array
+    {
+        if ($this->mode !== 'history') {
+            return [];
+        }
+
+        try {
+            return $this->buildHistoryRows();
+        } catch (\Throwable $e) {
+            Notification::make()->title('Erro ao montar o histórico LAY Punter')->body($e->getMessage())->danger()->send();
+
+            return [];
         }
     }
 
@@ -697,12 +714,18 @@ class PunterLayList extends Page
         return $key === 'against1' || $probability <= (self::EXTRA_LEG_PROBABILITY_CUTOFFS[$key] ?? -1.0);
     }
 
-    /** @return list<array<string, mixed>> */
+    /**
+     * Os limites de history() precisam cobrir o banco inteiro: PunterMatchPickService::history()
+     * ordena do mais antigo pro mais novo, então um limite baixo corta justamente o período mais
+     * recente (com 20000 o histórico parava em out/2024). 60000 segue as outras páginas Punter.
+     *
+     * @return list<array<string, mixed>>
+     */
     private function buildHistoryRows(): array
     {
         if ($this->market === 'lay_2x2_0x1') {
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_signals:v4'), function (): array {
-                $rows = app(PunterLaySignalService::class)->history(5000);
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_signals:v5'), function (): array {
+                $rows = app(PunterLaySignalService::class)->history(60000);
                 foreach ($rows as &$row) {
                     $row['dateBrasilia'] = BrasiliaDate::fromKickoff($row['kickoffAt']);
                     $row['competitionLabel'] = trim(($row['country'] ?? '').' · '.($row['competition'] ?? ''), ' ·');
@@ -716,10 +739,10 @@ class PunterLayList extends Page
         }
 
         if ($this->market === 'lay_scores') {
-            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v6:'.$this->periodFilter), function (): array {
+            return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_scores:v7:'.$this->periodFilter), function (): array {
                 $rows = [];
 
-                foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
+                foreach (app(PunterMatchPickService::class)->history(60000) as $row) {
                     $targetScore = $this->periodFilter === 'ht' ? $row['htScore'] : $row['finalScore'];
                     if ($targetScore === null || $row['homeGoalsAverage'] === null || $row['awayGoalsAverage'] === null) {
                         continue;
@@ -752,11 +775,11 @@ class PunterLayList extends Page
             }, 300);
         }
 
-        return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_casa_fora:v3:'.$this->profileFilter.':'.$this->periodFilter), function (): array {
+        return OraclyCache::remember(OraclyCache::key('punter-lay-list:history:lay_casa_fora:v4:'.$this->profileFilter.':'.$this->periodFilter), function (): array {
             $strategy = app(PunterLayCasaForaStrategy::class);
             $rows = [];
 
-            foreach (app(PunterMatchPickService::class)->history(20000) as $row) {
+            foreach (app(PunterMatchPickService::class)->history(60000) as $row) {
                 $choice = $strategy->choice($row);
                 if ($choice === null || ! $strategy->matchesProfile($row, $this->profileFilter)) {
                     continue;
