@@ -16,7 +16,7 @@ class PunterBacktestLayCasaFora extends Command
 {
     protected $signature = 'punter:backtest-lay-casa-fora
         {--side=all : fora, casa ou all}
-        {--limit=20000}
+        {--limit=60000}
         {--top=10 : Quantas linhas mostrar nos recortes por liga}';
 
     protected $description = 'Mede a assertividade do critério próprio de LAY Casa/Fora (odd do favorito) sobre punter.match_history';

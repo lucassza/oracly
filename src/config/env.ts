@@ -44,6 +44,9 @@ const envSchema = z.object({
   REALTIME_DETAIL_CONCURRENCY: z.coerce.number().int().min(1).max(10).default(3),
 
   LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace']).default('info'),
+  LOG_PATH: z.string().default('storage/logs'),
+  DAILY_SCRAPE_RETRY_COUNT: z.coerce.number().int().min(0).max(10).default(3),
+  DAILY_SCRAPE_RETRY_DELAY_MS: z.coerce.number().int().min(1000).max(3_600_000).default(60_000),
   OUTPUT_PATH: z.string().default('storage/output'),
   DASHBOARD_PORT: z.coerce.number().int().min(1).max(65535).default(3000),
   SCREENSHOT_PATH: z.string().default('storage/screenshots'),

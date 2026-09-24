@@ -163,10 +163,13 @@ class DailyLayList extends Page
     /** @return list<string> */
     public function getHoursProperty(): array
     {
-        return array_values(array_unique(array_map(
-            fn (array $row): string => Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('H:i'),
+        $hours = array_values(array_unique(array_map(
+            fn (array $row): string => BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']),
             $this->rows,
         )));
+        sort($hours);
+
+        return $hours;
     }
 
     /** @return list<array<string, mixed>> */
@@ -182,7 +185,7 @@ class DailyLayList extends Page
 
         return array_values(array_filter(
             $this->rows,
-            fn (array $row): bool => Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format('H:i') === $this->hourFilter,
+            fn (array $row): bool => BrasiliaDate::hourLabelFromKickoff((string) $row['kickoffAt']) === $this->hourFilter,
         ));
     }
 

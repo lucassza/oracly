@@ -1,4 +1,5 @@
 import { getEnv } from '../config/env.js';
+import { FixturesFetchError } from './fixtures-fetch-error.js';
 import { getLogger } from '../utils/logger.js';
 import { retry } from '../utils/retry.js';
 import type {
@@ -47,10 +48,33 @@ export class SokkerProApi {
 
         if (!response.ok) {
           const text = await response.text().catch(() => '');
-          throw new Error(`HTTP ${response.status}: ${response.statusText} - ${text.slice(0, 200)}`);
+          throw new FixturesFetchError(
+            `HTTP ${response.status}: ${response.statusText} - ${text.slice(0, 200)}`,
+            {
+              date,
+              url,
+              httpStatus: response.status,
+              bodyPreview: text.slice(0, 300),
+            },
+          );
         }
 
-        return response.json() as Promise<FixturesResponse>;
+        const data = await response.json() as FixturesResponse;
+
+        if (!data.success || !data.data) {
+          throw new FixturesFetchError(
+            `Fixtures API returned success=${String(data.success)} for ${date}`,
+            {
+              date,
+              url,
+              httpStatus: response.status,
+              apiSuccess: data.success,
+              bodyPreview: JSON.stringify(data).slice(0, 300),
+            },
+          );
+        }
+
+        return data;
       },
       {
         maxRetries: getEnv().SCRAPER_MAX_RETRIES,

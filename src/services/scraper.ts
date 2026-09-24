@@ -3,6 +3,7 @@ import { mkdir, writeFile, readFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { SokkerProApi } from '../api/client.js';
+import { FixturesFetchError } from '../api/fixtures-fetch-error.js';
 import {
   normalizeFixtureFromList,
   enrichMatchWithDetail,
@@ -12,6 +13,7 @@ import {
   parseNumber,
 } from '../api/normalizer.js';
 import type { NormalizedMatch } from '../types/schemas.js';
+import type { FixtureBase, CategorizedFixtures } from '../api/schemas.js';
 import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
 import { ProgressBar } from '../utils/progress.js';
@@ -20,6 +22,15 @@ import { PostgresMatchStore, isStillPending } from '../storage/postgres-store.js
 // ============================================================
 // Scraper Execution Result
 // ============================================================
+
+export interface ScrapeError {
+  phase: 'fetch_fixtures' | 'scrape';
+  message: string;
+  httpStatus?: number;
+  apiSuccess?: boolean;
+  bodyPreview?: string;
+  url?: string;
+}
 
 export interface ScrapeResult {
   runId: string;
@@ -32,6 +43,7 @@ export interface ScrapeResult {
     matchesProcessed: number;
     matchesFailed: number;
   };
+  error?: ScrapeError;
   matches: NormalizedMatch[];
 }
 
@@ -44,6 +56,15 @@ export interface RescrapeUnsettledResult {
   checked: number;
   updated: number;
   stillUnsettled: number;
+}
+
+export interface BackfillResult {
+  date: string;
+  fixturesFound: number;
+  persisted: number;
+  skippedNoX7: number;
+  skippedPostKickoff: number;
+  failed: number;
 }
 
 // ============================================================
@@ -87,13 +108,6 @@ export class ScraperService {
       // Step 1: Fetch all fixtures for the date
       this.logger.info({ runId }, 'Fetching fixtures list');
       const fixturesResponse = await this.api.getFixtures(date);
-
-      if (!fixturesResponse.success || !fixturesResponse.data) {
-        this.logger.error({ runId }, 'Failed to fetch fixtures');
-        result.status = 'failed';
-        result.finishedAt = new Date().toISOString();
-        return result;
-      }
 
       const allFixtures = fixturesResponse.data.sortedCategorizedFixtures || [];
       const totalFound = fixturesResponse.data.fixtures_total || 0;
@@ -235,12 +249,12 @@ export class ScraperService {
 
       return result;
     } catch (error) {
-      const msg = error instanceof Error ? error.message : String(error);
-      this.logger.error({ runId, error: msg }, 'Scraper failed');
+      const scrapeError = toScrapeError(error);
+      this.logger.error({ runId, error: scrapeError }, 'Scraper failed');
       result.status = 'failed';
+      result.error = scrapeError;
       result.finishedAt = new Date().toISOString();
 
-      // Save what we have
       try {
         await this.saveResults(result);
       } catch {
@@ -301,6 +315,146 @@ export class ScraperService {
       return result;
     } finally {
       await store.close();
+    }
+  }
+
+  /**
+   * Recovers a past date the daily scrape missed entirely.
+   *
+   * Differs from scrape() in one decisive way: the snapshot is stamped with the X7
+   * model's own generated_at instead of the wall clock. Every consumer reads only
+   * snapshots collected before kickoff, so a row stamped "now" for a match played days
+   * ago is written and then ignored by everything downstream. generated_at is the
+   * timestamp the provider itself attaches to the prediction, and it precedes kickoff.
+   *
+   * Fixtures without a usable generated_at are skipped rather than guessed at — a
+   * snapshot we can't place in time is worse than a missing one.
+   */
+  async backfill(date: string): Promise<BackfillResult> {
+    const env = getEnv();
+    const runId = uuid();
+    const startedAt = new Date().toISOString();
+
+    this.logger.info({ runId, date }, 'Backfill started');
+
+    const fixturesResponse = await this.api.getFixtures(date);
+    const categories = fixturesResponse.data.sortedCategorizedFixtures || [];
+
+    const pending: Array<{ fixture: FixtureBase; category: CategorizedFixtures }> = [];
+    const seen = new Set<string>();
+    for (const category of categories) {
+      for (const fixture of category.fixtures) {
+        if (!fixture.fixtureId || seen.has(fixture.fixtureId)) continue;
+        seen.add(fixture.fixtureId);
+        pending.push({ fixture, category });
+      }
+    }
+
+    const result: BackfillResult = {
+      date,
+      fixturesFound: pending.length,
+      persisted: 0,
+      skippedNoX7: 0,
+      skippedPostKickoff: 0,
+      failed: 0,
+    };
+
+    this.logger.info({ runId, toProcess: pending.length, concurrency: env.SCRAPER_CONCURRENCY }, 'Backfilling fixtures');
+
+    const matches: NormalizedMatch[] = [];
+    const progress = new ProgressBar(pending.length);
+
+    for (let i = 0; i < pending.length; i += env.SCRAPER_CONCURRENCY) {
+      const batch = pending.slice(i, i + env.SCRAPER_CONCURRENCY);
+      const outcomes = await Promise.all(
+        batch.map(({ fixture, category }) => this.backfillFixture(fixture, category, startedAt)),
+      );
+
+      for (const outcome of outcomes) {
+        if (outcome.match) {
+          matches.push(outcome.match);
+          result.persisted++;
+        } else {
+          result[outcome.reason]++;
+        }
+      }
+      progress.update(batch.length);
+
+      if (i + env.SCRAPER_CONCURRENCY < pending.length) {
+        const delay = Math.floor(
+          Math.random() * (env.SCRAPER_DELAY_MAX_MS - env.SCRAPER_DELAY_MIN_MS) + env.SCRAPER_DELAY_MIN_MS,
+        );
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    }
+
+    if (matches.length) {
+      const store = new PostgresMatchStore({
+        host: env.POSTGRES_HOST,
+        port: env.POSTGRES_PORT,
+        database: env.POSTGRES_DB,
+        user: env.POSTGRES_USER,
+        password: env.POSTGRES_PASSWORD,
+        schema: env.POSTGRES_SCHEMA,
+      });
+      try {
+        await store.saveMatches(matches);
+      } finally {
+        await store.close();
+      }
+    }
+
+    this.logger.info({ runId, ...result }, 'Backfill finished');
+
+    return result;
+  }
+
+  /** @returns the snapshot to persist, or why it can't be placed in time. */
+  private async backfillFixture(
+    fixture: FixtureBase,
+    category: CategorizedFixtures,
+    backfilledAt: string,
+  ): Promise<{ match: NormalizedMatch; reason?: undefined } | { match?: undefined; reason: 'skippedNoX7' | 'skippedPostKickoff' | 'failed' }> {
+    const fixtureId = fixture.fixtureId as string;
+
+    let x7;
+    try {
+      x7 = await this.api.getFixtureX7(fixtureId);
+    } catch {
+      return { reason: 'skippedNoX7' };
+    }
+
+    const generatedAt = x7?.picks ? x7.generated_at : undefined;
+    const generatedAtMs = generatedAt ? Date.parse(generatedAt) : NaN;
+    if (!generatedAt || Number.isNaN(generatedAtMs)) {
+      return { reason: 'skippedNoX7' };
+    }
+
+    // Canonicalised to match the format every other snapshot uses — the downstream
+    // "collected before kickoff" checks are string comparisons, so a `+00:00` suffix
+    // where everything else has `Z` would silently order wrong.
+    const collectedAt = new Date(generatedAtMs).toISOString();
+    const match = normalizeFixtureFromList(fixture, category, collectedAt, 'utc-3');
+    if (!match.kickoffAt || generatedAtMs >= Date.parse(match.kickoffAt)) {
+      return { reason: 'skippedPostKickoff' };
+    }
+
+    try {
+      const detail = await this.api.getFixtureDetail(fixtureId);
+      const enriched = enrichMatchWithDetail(match, detail, x7, collectedAt);
+
+      return {
+        match: {
+          ...enriched,
+          odds: undefined,
+          oddsHalfTime: undefined,
+          backfilledFromX7At: backfilledAt,
+        },
+      };
+    } catch (error) {
+      const message = error instanceof Error ? error.message : String(error);
+      this.logger.warn({ fixtureId, error: message }, 'Failed to backfill fixture');
+      return { reason: 'failed' };
     }
   }
 
@@ -387,4 +541,26 @@ export class ScraperService {
 
     return filepath;
   }
+}
+
+function toScrapeError(error: unknown): ScrapeError {
+  if (error instanceof FixturesFetchError) {
+    return {
+      phase: 'fetch_fixtures',
+      message: error.message,
+      httpStatus: error.details.httpStatus,
+      apiSuccess: error.details.apiSuccess,
+      bodyPreview: error.details.bodyPreview,
+      url: error.details.url,
+    };
+  }
+
+  const message = error instanceof Error ? error.message : String(error);
+  const httpMatch = message.match(/^HTTP (\d{3}):/);
+
+  return {
+    phase: 'scrape',
+    message,
+    httpStatus: httpMatch ? Number(httpMatch[1]) : undefined,
+  };
 }

@@ -1,5 +1,6 @@
 import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
+import { scrapeDateWithRetry } from '../utils/scrape-retry.js';
 import { addDays, getBrasiliaDate, getMsUntilNextBrasiliaTime, wait } from '../utils/time.js';
 import { ScraperService } from './scraper.js';
 
@@ -17,7 +18,10 @@ export class DailyAutomationService {
     for (let offset = 0; offset < env.DAILY_UPDATE_DAYS; offset++) {
       const date = addDays(baseDate, offset);
       this.logger.info({ date, offset }, 'Running daily automated scrape');
-      await this.scraper.scrape(date);
+      const result = await scrapeDateWithRetry(this.scraper, date);
+      if (result.status === 'failed' && result.summary.matchesFound === 0) {
+        this.logger.error({ date, error: result.error }, 'Daily automated scrape exhausted retries');
+      }
     }
   }
 

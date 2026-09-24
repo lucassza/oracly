@@ -196,7 +196,7 @@
             </thead>
             <tbody class="divide-y divide-gray-100 dark:divide-white/[0.08]">
                 @forelse ($this->filteredRows as $row)
-                    <tr class="odd:bg-gray-50/60 dark:odd:bg-white/[0.025]">
+                    <tr class="odd:bg-gray-100 dark:odd:bg-white/[0.06]">
                         <td class="whitespace-nowrap px-4 py-3 font-bold text-amber-700 dark:text-amber-300">{{ \Carbon\Carbon::parse($row['kickoffAt'])->timezone('America/Sao_Paulo')->format($mode === 'history' ? 'd/m H:i' : 'H:i') }}</td>
                         <td class="px-4 py-3 font-medium text-gray-950 dark:text-white">
                             <div x-data="{ copied: '', copy(text, team) { navigator.clipboard.writeText(text).then(() => { this.copied = team; setTimeout(() => this.copied = '', 2000) }) } }" class="space-y-1">

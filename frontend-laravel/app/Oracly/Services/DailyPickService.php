@@ -86,6 +86,16 @@ final class DailyPickService
                 'awayOdd' => is_numeric($odds['away'] ?? null) ? (float) $odds['away'] : null,
                 'oddsBookmaker' => is_string($odds['bookmaker'] ?? null) ? $odds['bookmaker'] : null,
                 'over05Ht' => $lastPred('gols_1t_05_over'),
+                // Features da FirstHalfGoalsStrategy. Lidas de $predicted (um único snapshot
+                // pré-kickoff) e não de $lastPred, que preenche cada chave para frente de forma
+                // independente — o backtest usa um snapshot só, e as duas coisas precisam concordar.
+                'over15HtProbability' => X7::pred($predicted, 'gols_1t_15_over'),
+                'over25Probability' => X7::pred($predicted, 'over_25_ft_over'),
+                'bttsProbability' => X7::pred($predicted, 'btts_sim'),
+                'cornersProbability' => X7::pred($predicted, 'corners_ft_95_over'),
+                'firstHalfHomeGoalsAverage' => data_get($predicted, 'statistics.firstHalf.homeGoalsAverage'),
+                'firstHalfAwayGoalsAverage' => data_get($predicted, 'statistics.firstHalf.awayGoalsAverage'),
+                'over05HtSeals' => data_get($predicted, 'statistics.additional.x7Predictions.gols_1t_05_over.selo'),
                 'over05' => $lastPred('over_05_ft_over'),
                 'under35' => $lastPred('over_35_ft_under'),
                 'over15' => $lastPred('over_15_ft_over'),

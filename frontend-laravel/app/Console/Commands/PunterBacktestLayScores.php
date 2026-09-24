@@ -20,7 +20,7 @@ use Illuminate\Console\Command;
 class PunterBacktestLayScores extends Command
 {
     protected $signature = 'punter:backtest-lay-scores
-        {--limit=20000}
+        {--limit=60000}
         {--top=10 : Quantas linhas mostrar nos recortes por liga}';
 
     protected $description = 'Mede a assertividade de AgainstOneGoalStrategy e subclasses usando as médias de gols do punter.match_history';

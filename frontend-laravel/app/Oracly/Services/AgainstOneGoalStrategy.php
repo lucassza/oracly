@@ -63,7 +63,12 @@ class AgainstOneGoalStrategy
 
     protected function poisson(float $average, int $goals): float
     {
-        return exp(-$average) * ($average ** $goals);
+        $factorial = 1;
+        for ($i = 2; $i <= $goals; $i++) {
+            $factorial *= $i;
+        }
+
+        return exp(-$average) * ($average ** $goals) / $factorial;
     }
 
     protected function number(mixed $value): ?float

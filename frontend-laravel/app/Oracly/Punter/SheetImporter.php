@@ -31,8 +31,6 @@ final class SheetImporter
         if ($source === null) {
             throw new RuntimeException("Fonte Punter desconhecida: {$sourceKey}");
         }
-        $spreadsheet = config("punter.spreadsheets.{$source['spreadsheet']}");
-
         $sheetSourceRow = PunterDb::connection()->table('sheet_sources')->where('source_key', $sourceKey)->first();
         if ($sheetSourceRow === null) {
             throw new RuntimeException("sheet_sources não tem registro para '{$sourceKey}'. Rode o seeder PunterSheetSourcesSeeder.");
@@ -49,7 +47,9 @@ final class SheetImporter
         $fetched = null;
 
         try {
-            $fetched = $this->fetcher->fetch($spreadsheet['id'], $source['sheet'], $source['range'] ?? null);
+            // Planilha/aba/intervalo vêm de punter.sheet_sources (editáveis no admin em
+            // "Fontes Punter"); config/punter.php só define o formato e a semente inicial.
+            $fetched = $this->fetcher->fetch($sheetSourceRow->spreadsheet_id, $sheetSourceRow->sheet_name, $sheetSourceRow->range);
 
             if (! $force && $sheetSourceRow->last_status === 'success') {
                 $lastRun = PunterDb::connection()->table('import_runs')

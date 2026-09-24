@@ -78,9 +78,9 @@ class SheetSourceResource extends Resource
             ])
             ->headerActions([
                 Action::make('updateSpreadsheetUrl')
-                    ->label('Atualizar URL de uma planilha')
+                    ->label('Trocar link de uma planilha')
                     ->icon('heroicon-o-link')
-                    ->color('gray')
+                    ->color('primary')
                     ->schema([
                         Select::make('spreadsheet_key')
                             ->label('Planilha')
@@ -91,7 +91,7 @@ class SheetSourceResource extends Resource
                             ->label('Nova URL do Google Sheets')
                             ->required()
                             ->url()
-                            ->helperText('Todas as fontes dessa planilha são revalidadas (cabeçalho de cada aba) e só são atualizadas se todas baterem.'),
+                            ->helperText('Todas as fontes dessa planilha são revalidadas (cabeçalho de cada aba), só são atualizadas se todas baterem, e já são sincronizadas em seguida.'),
                     ])
                     ->action(function (array $data): void {
                         $spreadsheetKey = $data['spreadsheet_key'];
@@ -146,10 +146,24 @@ class SheetSourceResource extends Resource
                             'spreadsheet_url' => $data['new_url'],
                         ]);
 
+                        // Já importa da nova planilha, sem esperar o próximo sync agendado.
+                        // Várias abas grandes em sequência passam fácil dos 30s padrão do PHP.
+                        set_time_limit(300);
+                        $syncErrors = [];
+                        foreach ($rows as $row) {
+                            try {
+                                app(SheetImporter::class)->run($row->source_key, force: true);
+                            } catch (Throwable $e) {
+                                $syncErrors[] = "{$row->label}: {$e->getMessage()}";
+                            }
+                        }
+
                         Notification::make()
-                            ->title('Planilha atualizada')
-                            ->body(count($rows).' fonte(s) revalidada(s) e apontada(s) para a nova URL.')
-                            ->success()
+                            ->title($syncErrors === [] ? 'Planilha atualizada e sincronizada' : 'Planilha atualizada, mas alguma aba falhou ao sincronizar')
+                            ->body($syncErrors === []
+                                ? count($rows).' fonte(s) apontada(s) para a nova URL e importada(s).'
+                                : implode("\n", $syncErrors))
+                            ->status($syncErrors === [] ? 'success' : 'warning')
                             ->send();
                     }),
             ])

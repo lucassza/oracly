@@ -48,6 +48,18 @@ class AgainstOneGoalStrategyTest extends TestCase
         ], 'strong'));
     }
 
+    public function test_the_reported_probability_divides_by_the_goal_factorial(): void
+    {
+        $row = ['homeGoalsAverage' => 1.8, 'awayGoalsAverage' => 0.9];
+        $exact = fn (float $home, int $homeGoals, float $away, int $awayGoals): float => exp(-$home) * ($home ** $homeGoals) / array_product(range(1, max(1, $homeGoals)))
+            * exp(-$away) * ($away ** $awayGoals) / array_product(range(1, max(1, $awayGoals)));
+
+        $this->assertEqualsWithDelta($exact(1.8, 0, 0.9, 1), (new AgainstOneGoalStrategy())->choice($row)['probability'], 1e-12);
+        $this->assertEqualsWithDelta($exact(1.8, 0, 0.9, 2), (new AgainstTwoGoalsStrategy())->choice($row)['probability'], 1e-12);
+        $this->assertEqualsWithDelta($exact(1.8, 0, 0.9, 3), (new AgainstThreeGoalsStrategy())->choice($row)['probability'], 1e-12);
+        $this->assertEqualsWithDelta($exact(1.8, 1, 0.9, 3), (new AgainstThreeOneStrategy())->choice($row)['probability'], 1e-12);
+    }
+
     public function test_it_can_choose_the_less_likely_two_goal_score(): void
     {
         $choice = (new AgainstTwoGoalsStrategy())->choice([

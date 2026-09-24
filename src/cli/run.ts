@@ -6,6 +6,7 @@ import { RealtimeAutomationService } from '../services/realtime-automation.js';
 import { SokkerProApi } from '../api/client.js';
 import { getEnv } from '../config/env.js';
 import { getLogger } from '../utils/logger.js';
+import { scrapeDateWithRetry } from '../utils/scrape-retry.js';
 import { PostgresMatchStore } from '../storage/postgres-store.js';
 import { importOutputDirectory } from '../storage/import-output.js';
 import { backfillHalfTimeStats } from './backfill-ht.js';
@@ -138,6 +139,22 @@ async function runScrape(date: string, from?: string, to?: string, days = 1): Pr
   );
 }
 
+async function runBackfill(date: string, days: number): Promise<void> {
+  const logger = getLogger();
+  const scraper = new ScraperService();
+
+  for (let i = 0; i < days; i++) {
+    const target = shiftDate(date, -i);
+    logger.info({ date: target }, `Backfilling ${target}...`);
+    const result = await scraper.backfill(target);
+    logger.info(result, `Completed ${target}`);
+    console.log(
+      `backfill ${target}: ${result.persisted}/${result.fixturesFound} gravados | ` +
+        `${result.skippedNoX7} sem X7 | ${result.skippedPostKickoff} sem previsão pré-jogo | ${result.failed} falhas`,
+    );
+  }
+}
+
 // Adiciona/subtrai dias de calendário sobre uma string YYYY-MM-DD, sem depender de
 // fuso horário (aritmética pura em UTC — a string já representa um dia civil).
 function shiftDate(dateStr: string, days: number): string {
@@ -161,16 +178,16 @@ async function runDaily(): Promise<void> {
   logger.info(recheck, 'Step 1/3 done');
 
   logger.info({ date: today }, 'Step 2/3: scraping today');
-  const todayResult = await scraper.scrape(today);
+  const todayResult = await scrapeDateWithRetry(scraper, today);
   logger.info(
-    { status: todayResult.status, found: todayResult.summary.matchesFound, processed: todayResult.summary.matchesProcessed },
+    { status: todayResult.status, found: todayResult.summary.matchesFound, processed: todayResult.summary.matchesProcessed, error: todayResult.error },
     'Step 2/3 done',
   );
 
   logger.info({ date: tomorrow }, 'Step 3/3: scraping tomorrow');
-  const tomorrowResult = await scraper.scrape(tomorrow);
+  const tomorrowResult = await scrapeDateWithRetry(scraper, tomorrow);
   logger.info(
-    { status: tomorrowResult.status, found: tomorrowResult.summary.matchesFound, processed: tomorrowResult.summary.matchesProcessed },
+    { status: tomorrowResult.status, found: tomorrowResult.summary.matchesFound, processed: tomorrowResult.summary.matchesProcessed, error: tomorrowResult.error },
     'Step 3/3 done',
   );
 
@@ -634,6 +651,9 @@ async function main(): Promise<void> {
     case 'daily':
       await runDaily();
       break;
+    case 'backfill':
+      await runBackfill(date, days);
+      break;
     case 'dashboard':
       await runDashboard();
       break;
@@ -668,7 +688,7 @@ async function main(): Promise<void> {
       break;
     default:
       console.error(`Unknown command: ${command}`);
-      console.log('Available commands: scrape, daily, dashboard, inspect, database:import, backfill:ht, session:create, session:validate, automation:daily, automation:daily:daemon, automation:realtime, automation:realtime:daemon');
+      console.log('Available commands: scrape, backfill, daily, dashboard, inspect, database:import, backfill:ht, session:create, session:validate, automation:daily, automation:daily:daemon, automation:realtime, automation:realtime:daemon');
       process.exit(1);
   }
 }

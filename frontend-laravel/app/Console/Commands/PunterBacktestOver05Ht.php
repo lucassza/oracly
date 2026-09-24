@@ -15,7 +15,7 @@ use Illuminate\Console\Command;
  */
 class PunterBacktestOver05Ht extends Command
 {
-    protected $signature = 'punter:backtest-over05ht {--limit=20000} {--top=10}';
+    protected $signature = 'punter:backtest-over05ht {--limit=60000} {--top=10}';
 
     protected $description = 'Mede a assertividade de Over 0.5 HT (odd de mercado vs. recomendação do Punter) sobre punter.match_history';
 

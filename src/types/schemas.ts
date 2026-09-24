@@ -131,6 +131,14 @@ export const normalizedMatchSchema = z.object({
   // team form as of the original collectedAt. Absent on everything collected by the normal
   // scrape pipeline. See the half-time exclusion plan, Etapa 5.
   backfilledHalfTimeStatsAt: z.string().optional(),
+  // Set only by the `backfill` CLI when it recovers a date the daily scrape missed.
+  // On these snapshots collectedAt is the X7 model's own generated_at rather than the
+  // wall clock, because every consumer reads only snapshots collected before kickoff —
+  // stamping the recovery time would make the row invisible. This field holds the real
+  // wall-clock time of the recovery. `odds`/`oddsHalfTime` are deliberately absent: what
+  // the API serves for a past fixture are closing odds, not what was on offer when the
+  // prediction was generated, and mixing the two would be look-ahead.
+  backfilledFromX7At: z.string().optional(),
 
   raw: z.record(z.unknown()).optional(),
 });

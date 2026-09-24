@@ -9,7 +9,7 @@ use RuntimeException;
  * endereçado por nome de aba — dispensa descobrir o gid. Nunca guarda o conteúdo
  * inteiro em memória: grava direto em arquivo temporário.
  */
-final class SheetFetcher
+class SheetFetcher
 {
     private const MAX_ATTEMPTS = 3;
 

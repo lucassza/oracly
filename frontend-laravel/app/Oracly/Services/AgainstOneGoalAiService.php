@@ -107,19 +107,7 @@ final class AgainstOneGoalAiService
     /** @param array<string, mixed> $row */
     public function baselineMethodology(array $row): ?string
     {
-        $homeAverage = $this->number($row['homeGoalsAverage'] ?? null);
-        $awayAverage = $this->number($row['awayGoalsAverage'] ?? null);
-        if ($homeAverage === null || $awayAverage === null) {
-            return null;
-        }
-
-        $homeAverage = max(0.08, $homeAverage);
-        $awayAverage = max(0.08, $awayAverage);
-
-        return $this->poisson($homeAverage, 0) * $this->poisson($awayAverage, 1)
-            <= $this->poisson($homeAverage, 1) * $this->poisson($awayAverage, 0)
-            ? '0-1'
-            : '1-0';
+        return app(AgainstOneGoalStrategy::class)->choice($row)['score'] ?? null;
     }
 
     /** @param array<string, mixed> $row
@@ -213,11 +201,6 @@ PROMPT;
     private function storedResult(array $payload, bool $cached): array
     {
         return [...$this->validateResult($payload), 'cached' => $cached];
-    }
-
-    private function poisson(float $average, int $goals): float
-    {
-        return exp(-$average) * ($average ** $goals);
     }
 
     private function number(mixed $value): ?float

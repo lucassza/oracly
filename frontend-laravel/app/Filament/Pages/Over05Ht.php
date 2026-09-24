@@ -4,7 +4,8 @@ namespace App\Filament\Pages;
 
 use App\Oracly\Services\FavoritesService;
 use App\Oracly\Services\DailyPickService;
-use App\Oracly\Services\PredictionService;
+use App\Oracly\Services\FirstHalfGoalsHistoryService;
+use App\Oracly\Services\FirstHalfGoalsStrategy;
 use App\Oracly\Support\BrasiliaDate;
 use App\Oracly\Support\HistoryCsv;
 use App\Oracly\Support\OraclyCache;
@@ -41,6 +42,10 @@ class Over05Ht extends Page
 
     public string $scoreFilter = 'all';
 
+    public string $signalProfile = 'baseline';
+
+    public int $backfillFilter = 0;
+
     /** @var list<array<string, mixed>> */
     public array $rows = [];
 
@@ -72,6 +77,15 @@ class Over05Ht extends Page
         1 => 'Somente favoritas',
     ];
 
+    /** @var array<string, string> */
+    public const SIGNAL_PROFILES = FirstHalfGoalsStrategy::PROFILES;
+
+    /** @var array<int, string> */
+    public const BACKFILL_OPTIONS = [
+        0 => 'Somente dados limpos',
+        1 => 'Incluir trilha backfill',
+    ];
+
     private const MIN_SAMPLE_FOR_RECOMMENDATION = 20;
 
     public function mount(): void
@@ -83,8 +97,12 @@ class Over05Ht extends Page
     public function reload(): void
     {
         try {
-            $service = app(PredictionService::class);
-            $this->historyRows = $this->mode === 'history' ? $service->history('over_05_ht', 0) : [];
+            // FirstHalfGoalsHistoryService, e não PredictionService::history('over_05_ht'):
+            // aquele conta placar de HT ausente como 0-0 (PredictionService.php:154) e não
+            // emite as features que os perfis exigem.
+            $this->historyRows = $this->mode === 'history'
+                ? app(FirstHalfGoalsHistoryService::class)->history()
+                : [];
             $this->favoriteLeagues = app(FavoritesService::class)->get()['leagues'];
             $this->rows = $this->mode === 'history'
                 ? $this->historyRows
@@ -125,6 +143,20 @@ class Over05Ht extends Page
         }
     }
 
+    public function setSignalProfile(string $value): void
+    {
+        if (array_key_exists($value, self::SIGNAL_PROFILES)) {
+            $this->signalProfile = $value;
+        }
+    }
+
+    public function setBackfillFilter(int $value): void
+    {
+        if (array_key_exists($value, self::BACKFILL_OPTIONS)) {
+            $this->backfillFilter = $value;
+        }
+    }
+
     public function toggleLeague(string $country, string $competition): void
     {
         try {
@@ -155,7 +187,9 @@ class Over05Ht extends Page
     public function getFilteredRowsProperty(): array
     {
         $rows = array_values(array_filter($this->rows, fn (array $row): bool => (float) ($row['probability'] ?? 0) >= $this->minProbability
+            && $this->strategy()->matchesProfile($row, $this->signalProfile)
             && ($this->mode !== 'history' || $this->scoreFilter === 'all' || $this->scoreKey($row) === $this->scoreFilter)
+            && $this->matchesBackfill($row)
             && $this->matchesFavorite($row)));
         return $this->mode === 'upcoming'
             ? $this->rankUpcomingRowsByHour($rows, fn (array $a, array $b): int => (float) ($b['probability'] ?? 0) <=> (float) ($a['probability'] ?? 0))
@@ -167,7 +201,10 @@ class Over05Ht extends Page
     {
         $stats = [];
         foreach (array_keys(self::THRESHOLDS) as $threshold) {
-            $entries = array_filter($this->historyRows, fn (array $row): bool => (float) ($row['probability'] ?? 0) >= $threshold && $this->matchesFavorite($row));
+            $entries = array_filter($this->historyRows, fn (array $row): bool => (float) ($row['probability'] ?? 0) >= $threshold
+                && $this->strategy()->matchesProfile($row, $this->signalProfile)
+                && $this->matchesBackfill($row)
+                && $this->matchesFavorite($row));
             $count = count($entries);
             $wins = count(array_filter($entries, fn (array $row): bool => ! empty($row['hit'])));
             $stats[$threshold] = [
@@ -243,6 +280,17 @@ class Over05Ht extends Page
         }
 
         return sprintf('%d-%d', (int) $row['homeScore'], (int) $row['awayScore']);
+    }
+
+    private function strategy(): FirstHalfGoalsStrategy
+    {
+        return app(FirstHalfGoalsStrategy::class);
+    }
+
+    /** @param array<string, mixed> $row */
+    private function matchesBackfill(array $row): bool
+    {
+        return $this->backfillFilter === 1 || empty($row['usedBackfilledFeatures']);
     }
 
     /** @param array<string, mixed> $row */

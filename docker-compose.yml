@@ -48,7 +48,11 @@ services:
     command: ["scrape"]
 
   automation-daily:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: oracly-scraper:latest
+    container_name: oracly-automation-daily
     profiles: ["automation"]
     env_file: .env
     environment: &automation-env
@@ -57,12 +61,15 @@ services:
       DAILY_UPDATE_HOUR_BRASILIA: "6"
       DAILY_UPDATE_MINUTE_BRASILIA: "0"
       DAILY_UPDATE_DAYS: "1"
+      DAILY_SCRAPE_RETRY_COUNT: "3"
+      DAILY_SCRAPE_RETRY_DELAY_MS: "60000"
       REALTIME_UPDATE_ENABLED: "true"
       REALTIME_UPDATE_INTERVAL_SECONDS: "60"
       REALTIME_LOOKBACK_HOURS: "3"
       REALTIME_LOOKAHEAD_HOURS: "6"
       REALTIME_DETAIL_CONCURRENCY: "3"
       LOG_LEVEL: info
+      LOG_PATH: /app/storage/logs
       OUTPUT_PATH: /app/storage/output
       SCREENSHOT_PATH: /app/storage/screenshots
     volumes:
@@ -73,7 +80,11 @@ services:
     command: ["automation:daily:daemon"]
 
   automation-realtime:
+    build:
+      context: .
+      dockerfile: Dockerfile
     image: oracly-scraper:latest
+    container_name: oracly-automation-realtime
     profiles: ["automation"]
     env_file: .env
     environment: *automation-env

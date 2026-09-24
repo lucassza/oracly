@@ -9,7 +9,25 @@
 
     <x-oracly.chip-group :options="$this::MODE_OPTIONS" :active="$mode" method="setMode" />
     <x-oracly.chip-group :options="$this::THRESHOLDS" :active="$minProbability" method="setMinProbability" />
+    <x-oracly.chip-group :options="$this::SIGNAL_PROFILES" :active="$signalProfile" method="setSignalProfile" />
     <x-oracly.chip-group :options="$this::FAVORITE_OPTIONS" :active="$favoriteFilter" method="setFavoriteFilter" />
+    @if ($mode === 'history')<x-oracly.chip-group :options="$this::BACKFILL_OPTIONS" :active="$backfillFilter" method="setBackfillFilter" />@endif
+
+    <p class="text-xs text-gray-500 dark:text-gray-400">
+        @if ($signalProfile === 'balanced')
+            Ataque confirmado: X7 ≥ 70%, média de gols do 1º tempo ≥ 1,4 e O1.5 HT ≥ 45%. Medido em 80,4% de acerto.
+        @elseif ($signalProfile === 'strong')
+            Sinal forte: X7 ≥ 75%, média de gols do 1º tempo ≥ 1,6 e O1.5 HT ≥ 50%. Medido em 85,2% de acerto, com bem menos entradas.
+        @elseif ($signalProfile === 'legacy80')
+            Legado: apenas X7 ≥ 80%, a regra que roda hoje no card diário. Serve para comparar com os perfis acima.
+        @else
+            Base: apenas X7 ≥ 70%, sem filtro próprio. Medido em 75,8% de acerto.
+        @endif
+        @if ($mode === 'history' && $backfillFilter === 1)
+            <span class="text-amber-600 dark:text-amber-400">Incluindo partidas cujas médias de 1º tempo foram buscadas depois do jogo — podem não refletir a forma do time antes da partida.</span>
+        @endif
+    </p>
+
     @if ($mode === 'upcoming')<x-oracly.chip-group :options="$this::BEST_PER_HOUR_OPTIONS" :active="$bestPerHourFilter" method="setBestPerHourFilter" />@endif
 
     @if ($mode === 'history' && $this->bestCutoff)

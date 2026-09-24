@@ -35,7 +35,11 @@ final class PunterMatchPickService
                 'gour_lay_fora', 'gour_lay_casa', 'gour_ht_lay_fora', 'gour_ht_lay_casa',
                 'media_gols_total_casa', 'media_gols_total_visitante', 'resultado_ft',
                 'ht_goals_team_a', 'ht_goals_team_b',
-                'odds_1st_half_over05', 'tendencia_over_ht', 'gour_over_05_ht',
+                'odds_1st_half_over05', 'odds_1st_half_under05', 'tendencia_over_ht', 'gour_over_05_ht',
+                'gour_over_2_5_ft',
+                'home_goal_count', 'away_goal_count', 'odds_btts_yes', 'odds_btts_no',
+                'odds_ft_over25', 'odds_ft_under25', 'odds_ft_under05', 'odds_ft_over05',
+                'odds_ft_over15', 'odds_ft_under15',
             ])
             ->whereNotNull('data_hora_jogo')
             ->orderBy('data_hora_jogo')
@@ -64,9 +68,62 @@ final class PunterMatchPickService
                 ? ((int) $row->ht_goals_team_a).'-'.((int) $row->ht_goals_team_b)
                 : null,
             'oddOver05Ht' => $row->odds_1st_half_over05 !== null ? (float) $row->odds_1st_half_over05 : null,
+            'oddUnder05Ht' => $row->odds_1st_half_under05 !== null ? (float) $row->odds_1st_half_under05 : null,
+            'resultOver25' => $row->gour_over_2_5_ft !== null ? strtolower($row->gour_over_2_5_ft) : null,
             'punterFlagsOver05Ht' => ! empty($row->tendencia_over_ht),
             'resultOver05Ht' => $row->gour_over_05_ht !== null ? strtolower($row->gour_over_05_ht) : null,
+            'homeGoals' => $row->home_goal_count !== null ? (int) $row->home_goal_count : null,
+            'awayGoals' => $row->away_goal_count !== null ? (int) $row->away_goal_count : null,
+            'oddBttsYes' => $row->odds_btts_yes !== null ? (float) $row->odds_btts_yes : null,
+            'oddBttsNo' => $row->odds_btts_no !== null ? (float) $row->odds_btts_no : null,
+            'oddOver25' => $row->odds_ft_over25 !== null ? (float) $row->odds_ft_over25 : null,
+            'oddUnder25' => $row->odds_ft_under25 !== null ? (float) $row->odds_ft_under25 : null,
+            'oddUnder05' => $row->odds_ft_under05 !== null ? (float) $row->odds_ft_under05 : null,
+            'oddOver05' => $row->odds_ft_over05 !== null ? (float) $row->odds_ft_over05 : null,
+            'oddOver15' => $row->odds_ft_over15 !== null ? (float) $row->odds_ft_over15 : null,
+            'oddUnder15' => $row->odds_ft_under15 !== null ? (float) $row->odds_ft_under15 : null,
         ])->all();
+    }
+
+    /**
+     * Placar final de partidas identificadas por data + mandante + visitante.
+     *
+     * Serve para apurar cotações registradas a partir da lista do dia: panel_fixtures e
+     * match_history não compartilham chave, mas vêm do mesmo painel e usam os mesmos nomes.
+     * Partida ainda não apurada simplesmente não aparece no retorno.
+     *
+     * As odds de 1X2 vêm junto porque o LAY da goleada precisa saber quem era o favorito para
+     * apurar. São as do match_history, não as de abertura em que a odd foi registrada; nos
+     * perfis da goleada o favorito é claro demais para trocar de lado entre uma e outra.
+     *
+     * @param list<array{date: string, home: string, away: string}> $matches
+     * @return array<string, array{homeGoals: int, awayGoals: int, oddHome: ?float, oddAway: ?float}> chave "data|mandante|visitante"
+     */
+    public function finalScores(array $matches): array
+    {
+        if ($matches === []) {
+            return [];
+        }
+
+        $rows = PunterDb::connection()->table('match_history')
+            ->select(['data_hora_jogo', 'home_name', 'away_name', 'home_goal_count', 'away_goal_count', 'odds_ft_1', 'odds_ft_2'])
+            ->whereIn('data_hora_jogo', array_values(array_unique(array_column($matches, 'date'))))
+            ->whereIn('home_name', array_values(array_unique(array_column($matches, 'home'))))
+            ->whereNotNull('home_goal_count')
+            ->whereNotNull('away_goal_count')
+            ->get();
+
+        $scores = [];
+        foreach ($rows as $row) {
+            $scores[$row->data_hora_jogo.'|'.$row->home_name.'|'.$row->away_name] = [
+                'homeGoals' => (int) $row->home_goal_count,
+                'awayGoals' => (int) $row->away_goal_count,
+                'oddHome' => $row->odds_ft_1 !== null ? (float) $row->odds_ft_1 : null,
+                'oddAway' => $row->odds_ft_2 !== null ? (float) $row->odds_ft_2 : null,
+            ];
+        }
+
+        return $scores;
     }
 
     /**
@@ -122,7 +179,8 @@ final class PunterMatchPickService
             ->select([
                 'match_date', 'match_label', 'home_team', 'away_team', 'league',
                 'opening_odd_home', 'opening_odd_draw', 'opening_odd_away', 'match_odds_tendency',
-                'ht_tendency',
+                'ht_tendency', 'opening_odd_btts', 'goals_tendency', 'opening_odd_over25_ft',
+                'opening_odd_over15_ft',
             ])
             ->whereDate('match_date', $dateBrasilia)
             ->orderBy('match_label')
@@ -146,6 +204,21 @@ final class PunterMatchPickService
             'oddOver05Ht' => null,
             'punterFlagsOver05Ht' => ! empty($row->ht_tendency),
             'resultOver05Ht' => null,
+            // panel_fixtures só traz o lado "sim" do BTTS, e de ABERTURA. Sem o lado "não" não
+            // dá pra tirar a margem, então a probabilidade daqui sai na escala crua — ver
+            // AgainstFavouriteCleanSheetStrategy::bttsProbability().
+            'oddBttsYes' => $row->opening_odd_btts !== null ? (float) $row->opening_odd_btts : null,
+            'oddBttsNo' => null,
+            'punterFlagsGoals' => $row->goals_tendency !== null ? (string) $row->goals_tendency : null,
+            // Mesmo caso do BTTS: só o lado over, de abertura. AgainstTwoTwoStrategy tira a margem
+            // pela média medida no histórico (MarketPoisson::OVER25_OVERROUND).
+            'oddOver25' => $row->opening_odd_over25_ft !== null ? (float) $row->opening_odd_over25_ft : null,
+            'oddUnder25' => null,
+            // Idem: só o over 1,5 de abertura. Over15ValueStrategy tira a margem por faixa de odd.
+            'oddOver15' => $row->opening_odd_over15_ft !== null ? (float) $row->opening_odd_over15_ft : null,
+            'oddUnder15' => null,
+            'homeGoals' => null,
+            'awayGoals' => null,
         ])->all();
     }
 
